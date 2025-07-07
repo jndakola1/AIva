@@ -27,11 +27,13 @@ const PopularPromptChip = ({ text }: { text: string }) => (
     </Button>
 );
 
-const SectionHeader = ({ title }: { title: string }) => (
+const SectionHeader = ({ title, href }: { title: string, href?: string }) => (
     <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-bold">{title}</h2>
-        <Button variant="ghost" size="icon">
-            <ArrowRight className="h-5 w-5" />
+        <Button asChild variant="ghost" size="icon">
+            <Link href={href || "#"}>
+                <ArrowRight className="h-5 w-5" />
+            </Link>
         </Button>
     </div>
 );
@@ -96,7 +98,7 @@ export default function HomePage() {
         </Button>
         
         <div className="mb-10">
-            <SectionHeader title="Prompt Categories" />
+            <SectionHeader title="Prompt Categories" href="/categories" />
             <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6">
                 {categories.map((category) => (
                     <CategoryCard key={category.title} {...category} />

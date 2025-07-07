@@ -46,7 +46,7 @@ export default function OnboardingPage() {
                         <ArrowLeft className="h-7 w-7" />
                     </Button>
                     <Button asChild variant="secondary" className="rounded-full h-14 px-8 font-semibold text-lg">
-                        <Link href="/dashboard">Get Started</Link>
+                        <Link href="/get-started">Get Started</Link>
                     </Button>
                 </footer>
             </div>

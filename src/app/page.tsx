@@ -1,55 +1,32 @@
 'use client';
 
-import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 
-export default function OnboardingPage() {
-    const router = useRouter();
-
+export default function SplashPage() {
     return (
-        <div className="bg-primary text-white min-h-dvh flex flex-col font-sans relative overflow-hidden">
-            
-            <div className="absolute inset-0 z-0">
-                <Image
-                    src="https://placehold.co/800x1200.png"
-                    data-ai-hint="man portrait suit"
-                    alt="A man in a suit smiling"
-                    layout="fill"
-                    objectFit="cover"
-                    className="transform -rotate-[15deg] scale-125 opacity-70"
-                />
-            </div>
-            
-            <div className="absolute inset-0 z-10">
-                <svg className="w-full h-full" viewBox="0 0 390 844" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M0 0H390V460C390 460 353.5 544 195 544C36.5 544 0 460 0 460V0Z" fill="hsl(var(--background))"/>
-                </svg>
-            </div>
+        <div className="bg-background text-white min-h-dvh flex flex-col">
+            <main className="flex-1 flex flex-col items-center justify-center text-center px-6">
+                <div className="h-40 w-40 mb-8 flex items-center justify-center">
+                    <div className="relative h-full w-full">
+                        <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse"></div>
+                        <div className="absolute inset-[10%] rounded-full bg-primary/30 animate-pulse [animation-delay:0.2s]"></div>
+                        <div className="absolute inset-[20%] rounded-full bg-primary/40 animate-pulse [animation-delay:0.4s]"></div>
+                        <div className="absolute inset-[30%] rounded-full bg-primary flex items-center justify-center">
+                            <span className="text-7xl font-bold text-primary-foreground -mt-2">A</span>
+                        </div>
+                    </div>
+                </div>
 
-            <div className="relative z-20 flex flex-col flex-1 text-foreground p-8">
-                <main className="pt-16 flex-1">
-                    <h1 className="text-6xl font-bold leading-none tracking-tight">
-                        Empowering<br />
-                        Your Digital<br />
-                        Life with AI
-                    </h1>
-                    <p className="mt-6 text-muted-foreground text-base max-w-[300px]">
-                        Aiva's interactive chatbot feature enables seamless communication between users and the virtual assistant
-                    </p>
-                </main>
-
-                <footer className="w-full flex justify-between items-center mt-auto">
-                    <Button variant="outline" size="icon" onClick={() => router.back()} className="bg-white/10 rounded-full h-14 w-14 backdrop-blur-sm border-white/20 text-white hover:bg-white/30">
-                        <ArrowLeft className="h-7 w-7" />
-                    </Button>
-                    <Button asChild variant="secondary" className="rounded-full h-14 px-8 font-semibold text-lg">
-                        <Link href="/dashboard">Get Started</Link>
-                    </Button>
-                </footer>
-            </div>
+                <h1 className="text-6xl font-bold text-white">Aiva</h1>
+                <p className="mt-2 text-muted-foreground text-lg">How Can I Help You Today?</p>
+            </main>
+            
+            <footer className="px-6 pb-8 pt-4 shrink-0">
+                <Button asChild className="w-full bg-primary text-primary-foreground rounded-full text-lg font-semibold h-14 hover:bg-primary/90">
+                    <Link href="/onboarding">Get Started</Link>
+                </Button>
+            </footer>
         </div>
     );
 }

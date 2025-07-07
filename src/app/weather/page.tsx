@@ -155,8 +155,10 @@ export default function ConversationPage() {
                             className="bg-transparent border-none focus-visible:ring-0 text-base text-white placeholder:text-muted-foreground flex-1 h-auto py-2 px-0"
                         />
                     </div>
-                    <Button variant="ghost" size="icon" className="rounded-full bg-card h-12 w-12 shrink-0">
-                        <Mic className="h-6 w-6 text-muted-foreground" />
+                    <Button asChild variant="ghost" size="icon" className="rounded-full bg-card h-12 w-12 shrink-0">
+                        <Link href="/audio">
+                            <Mic className="h-6 w-6 text-muted-foreground" />
+                        </Link>
                     </Button>
                     <Button
                         size="icon"

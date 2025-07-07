@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bell, Menu, X, Plus, AudioLines } from 'lucide-react';
@@ -56,8 +57,10 @@ export default function AudioPage() {
                     <Button variant="secondary" size="icon" className="rounded-full bg-white h-20 w-20">
                         <AudioLines className="h-10 w-10 text-black" />
                     </Button>
-                    <Button variant="outline" size="icon" className="rounded-full bg-card h-16 w-16 border-gray-700">
-                        <Plus className="h-8 w-8 text-white" />
+                    <Button asChild variant="outline" size="icon" className="rounded-full bg-card h-16 w-16 border-gray-700">
+                        <Link href="/new-prompt">
+                            <Plus className="h-8 w-8 text-white" />
+                        </Link>
                     </Button>
                 </div>
                  <div className="pt-8">

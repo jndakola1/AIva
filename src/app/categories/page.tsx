@@ -1,5 +1,7 @@
+
 'use client';
 
+import React from 'react';
 import { Bell, CalendarDays, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -36,14 +38,26 @@ export default function CategoriesPage() {
             icon: <CalendarDays className="h-7 w-7 text-white" />,
             title: "Schedule",
             description: "Manage your appointments, set reminders, and organize your day.",
-            prompts: [],
+            prompts: [
+                "What's on my schedule for tomorrow?",
+                "Set a reminder for my meeting at 3 PM.",
+                "Do I have any appointments next week?",
+                "Create a new event for a doctor's appointment.",
+                "Show me my free time today.",
+            ],
         },
         {
             value: 'health',
             icon: <HeartPulse className="h-7 w-7 text-white" />,
             title: "Health",
             description: "Get information on symptoms, find doctors, and track your fitness goals.",
-            prompts: [],
+            prompts: [
+                "What are the symptoms of the flu?",
+                "Find a pediatrician near me.",
+                "Log my workout for today.",
+                "What's a healthy recipe for dinner?",
+                "How many calories did I burn today?",
+            ],
         }
     ];
 
@@ -74,33 +88,29 @@ export default function CategoriesPage() {
                                 </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-2 pb-6">
-                                {category.value === 'weather' && (
-                                    <>
-                                        <div className="flex items-start gap-6 mb-6">
-                                            <Sun className="h-20 w-20 text-white shrink-0 mt-2" />
-                                            <div>
-                                                <h2 className="text-4xl font-bold mb-2">Weather</h2>
-                                                <p className="text-muted-foreground text-sm leading-relaxed">
-                                                    {category.description}
-                                                </p>
-                                            </div>
-                                        </div>
+                                <div className="flex items-start gap-6 mb-6">
+                                    {React.cloneElement(category.icon, { className: 'h-20 w-20 text-white shrink-0 mt-2' })}
+                                    <div>
+                                        <h2 className="text-4xl font-bold mb-2">{category.title}</h2>
+                                        <p className="text-muted-foreground text-sm leading-relaxed">
+                                            {category.description}
+                                        </p>
+                                    </div>
+                                </div>
 
-                                        <div className="space-y-3 mb-4">
-                                            {category.prompts.map(prompt => (
-                                                <Button key={prompt} variant="outline" className="w-full justify-start rounded-full border-gray-700 bg-transparent h-auto py-3 px-5 text-sm font-normal text-white hover:bg-gray-800 hover:text-white">
-                                                    {prompt}
-                                                </Button>
-                                            ))}
-                                        </div>
+                                <div className="space-y-3 mb-4">
+                                    {category.prompts.map(prompt => (
+                                        <Button key={prompt} variant="outline" className="w-full justify-start rounded-full border-gray-700 bg-transparent h-auto py-3 px-5 text-sm font-normal text-white hover:bg-gray-800 hover:text-white">
+                                            {prompt}
+                                        </Button>
+                                    ))}
+                                </div>
 
-                                        <div className="flex justify-center items-center gap-2 mt-6">
-                                            <span className="h-2 w-2 rounded-full bg-white"></span>
-                                            <span className="h-2 w-2 rounded-full bg-gray-600"></span>
-                                            <span className="h-2 w-2 rounded-full bg-gray-600"></span>
-                                        </div>
-                                    </>
-                                )}
+                                <div className="flex justify-center items-center gap-2 mt-6">
+                                    <span className="h-2 w-2 rounded-full bg-white"></span>
+                                    <span className="h-2 w-2 rounded-full bg-gray-600"></span>
+                                    <span className="h-2 w-2 rounded-full bg-gray-600"></span>
+                                </div>
                             </AccordionContent>
                         </AccordionItem>
                     ))}

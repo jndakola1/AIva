@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useSearchParams } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -59,9 +58,6 @@ const ChatMessage = ({ role, content, isLoading = false }: Message & { isLoading
 
 
 export default function WeatherPage() {
-    const searchParams = useSearchParams();
-    const initialPrompt = searchParams.get('prompt');
-
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -97,16 +93,12 @@ export default function WeatherPage() {
     }
 
     useEffect(() => {
-        if (initialPrompt && messages.length === 0) {
-            setMessages([{ role: 'user', content: initialPrompt }]);
-            setIsLoading(true);
-            setTimeout(() => {
-                const aiResponse = "The weather in New York is currently sunny with a temperature of 24°C. The wind is blowing from the west at 10 km/h.";
-                setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
-                setIsLoading(false);
-            }, 1500);
+        if (messages.length === 0) {
+            setMessages([
+                { role: 'ai', content: 'Hello! How can I help you with the weather today?' }
+            ]);
         }
-    }, [initialPrompt]);
+    }, []);
     
     return (
         <div className="bg-black text-white min-h-screen flex flex-col font-sans">

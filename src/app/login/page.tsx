@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -46,8 +45,10 @@ export default function LoginPage() {
 
                 <div className="flex justify-between items-center mt-6">
                     <Link href="#" className="text-sm font-semibold text-foreground hover:underline">Forgot Password?</Link>
-                    <Button variant="secondary" size="icon" className="rounded-full h-12 w-12 text-secondary-foreground">
-                        <ArrowRight className="h-6 w-6" />
+                    <Button asChild variant="secondary" size="icon" className="rounded-full h-12 w-12 text-secondary-foreground">
+                        <Link href="/dashboard">
+                            <ArrowRight className="h-6 w-6" />
+                        </Link>
                     </Button>
                 </div>
 

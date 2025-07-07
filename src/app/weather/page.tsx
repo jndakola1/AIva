@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Bot, Copy, Menu, Mic, Pencil, RefreshCw, Send, Volume2, Image as ImageIcon } from 'lucide-react';
+import { Bell, Bot, Copy, Menu, Mic, Pencil, RefreshCw, Send, Volume2, Image as ImageIcon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -9,32 +9,77 @@ import { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { Progress } from '@/components/ui/progress';
 
-const Message = ({ msg }: { msg: { role: 'user' | 'ai', content: string } }) => {
+const WeatherStat = ({ label, value, unit = '' }: { label: string, value: number, unit?: string }) => {
+    const markers = unit === '%' ? ['0%', '50%', '100%'] : (unit === '°F' ? ['0', '50', '100'] : ['0', '50', '100']);
+    return (
+        <div className="space-y-2">
+            <label className="text-sm font-medium text-white/90">{label}</label>
+            <Progress value={value} className="h-1 bg-white/20 [&>div]:bg-white" />
+            <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{markers[0]}</span>
+                <span>{markers[1]}</span>
+                <span>{markers[2]}</span>
+            </div>
+        </div>
+    );
+};
+
+const Message = ({ msg }: { msg: { role: 'user' | 'ai', content: string, timestamp: string, weatherData?: any, notes?: string } }) => {
     const isAi = msg.role === 'ai';
 
     return (
-        <div className={cn("flex items-start gap-3", !isAi && "justify-end")}>
+        <div className={cn("flex items-start gap-3 w-full", !isAi && "justify-end")}>
             {isAi && (
-                <Avatar className="h-10 w-10 bg-accent shrink-0 border-2 border-accent/50">
+                <Avatar className="h-10 w-10 bg-green-400/20 shrink-0 border-2 border-green-400/50">
                     <AvatarFallback className="bg-transparent">
-                        <Bot className="h-6 w-6 text-white" />
+                        <Bot className="h-6 w-6 text-green-400" />
                     </AvatarFallback>
                 </Avatar>
             )}
 
-            <div className={cn("flex-1 max-w-[85%]", !isAi && "text-right")}>
-                <p className="font-bold mb-2">{isAi ? "Aiva AI" : "You"}</p>
-                <p className="text-muted-foreground leading-relaxed">{msg.content}</p>
-                 <div className={cn("flex items-center gap-4 mt-3 text-muted-foreground", isAi ? "justify-start" : "justify-end")}>
+            <div className={cn("flex flex-col w-full max-w-[85%]", !isAi && "items-end")}>
+                <div className={cn("flex-1", !isAi && "text-right")}>
+                    <p className="font-bold mb-2">{isAi ? "Aiva AI" : "You"}</p>
+                    <p className="text-muted-foreground leading-relaxed">{msg.content}</p>
+                </div>
+                
+                {isAi && msg.weatherData && (
+                    <div className="text-left w-full mt-4">
+                        <div className="border-t border-gray-700 mb-4"></div>
+                        <div className="flex items-center gap-2 mb-4">
+                            {msg.weatherData.icon}
+                            <p className="font-semibold">{msg.weatherData.condition}</p>
+                        </div>
+                        <div className="space-y-4">
+                            <WeatherStat label="Temperature" value={msg.weatherData.temperature} unit="°F" />
+                            <WeatherStat label="Humidity" value={msg.weatherData.humidity} unit="%" />
+                            <WeatherStat label="Air Quality Index (AQI)" value={msg.weatherData.aqi} />
+                        </div>
+                    </div>
+                )}
+                
+                {isAi && msg.notes && (
+                    <div className="text-left w-full mt-4">
+                         <p className="text-sm font-semibold mb-1">*Notes</p>
+                         <p className="text-xs text-muted-foreground">{msg.notes}</p>
+                    </div>
+                )}
+                
+                <div className={cn("flex items-center gap-2 mt-3 text-muted-foreground", isAi ? "w-full" : "")}>
                     {isAi ? (
                         <>
                             <Volume2 className="h-5 w-5 cursor-pointer hover:text-white" />
                             <Copy className="h-5 w-5 cursor-pointer hover:text-white" />
                             <RefreshCw className="h-5 w-5 cursor-pointer hover:text-white" />
+                            <span className="text-xs ml-auto">{msg.timestamp}</span>
                         </>
                     ) : (
-                        <Pencil className="h-4 w-4 cursor-pointer hover:text-white" />
+                        <>
+                           <span className="text-xs">{msg.timestamp}</span>
+                           <Pencil className="h-4 w-4 cursor-pointer hover:text-white" />
+                        </>
                     )}
                 </div>
             </div>
@@ -48,17 +93,27 @@ const Message = ({ msg }: { msg: { role: 'user' | 'ai', content: string } }) => 
     );
 }
 
+
 export default function ConversationPage() {
     const conversation = [
-        { type: 'timestamp', value: '11:45 AM' },
-        { type: 'message', role: 'user' as const, content: "Can you give me the forecast for the weekend?" },
-        { type: 'message', role: 'ai' as const, content: "The forecast for the weekend predicts mostly sunny skies with temperatures ranging from 75 to 80 degrees Fahrenheit. There's a slight chance of showers on Saturday afternoon, but overall, it should be a pleasant weekend for outdoor activities." },
-        { type: 'timestamp', value: '01:15 PM' },
-        { type: 'message', role: 'user' as const, content: "Can you tell me about the air quality index?" },
-        { type: 'message', role: 'ai' as const, content: "The Air Quality Index (AQI) for your area is currently rated as 'Good'. This means the air quality is acceptable; however, there may be some pollutants that pose a moderate health concern for a very small number of people who are unusually sensitive to air pollution." },
+        { type: 'message', role: 'user' as const, content: "Can you give me the forecast for the weekend? with graphics level.", timestamp: "02:05 PM" },
+        { 
+            type: 'message', 
+            role: 'ai' as const, 
+            content: "The forecast for the weekend predicts mostly sunny skies with temperatures ranging from 75 to 80 degrees Fahrenheit. Enjoy the sunshine!", 
+            weatherData: {
+                condition: 'Mostly Sunny',
+                icon: <Sun className="h-5 w-5 text-white" />,
+                temperature: 78,
+                humidity: 50,
+                aqi: 40
+            },
+            notes: "There may be some pollutants present that could pose a risk for sensitive individuals.",
+            timestamp: "02:05 PM"
+        },
     ];
 
-    const [input, setInput] = useState('');
+    const [input, setInput] = useState('Are there any weather...');
 
     return (
         <div className="bg-background text-white min-h-dvh flex flex-col font-sans">
@@ -78,13 +133,10 @@ export default function ConversationPage() {
 
             <main className="flex-1 px-4 flex flex-col overflow-y-auto no-scrollbar">
                 <ScrollArea className="h-full">
-                    <div className="space-y-6 py-6">
+                    <div className="space-y-8 py-6">
                         {conversation.map((item, index) => {
-                            if (item.type === 'timestamp') {
-                                return <p key={index} className="text-center text-muted-foreground text-xs">{item.value}</p>;
-                            }
                             if (item.type === 'message') {
-                                return <Message key={index} msg={item as { role: 'user' | 'ai', content: string }} />;
+                                return <Message key={index} msg={item as { role: 'user' | 'ai', content: string, timestamp: string, weatherData?: any, notes?: string }} />;
                             }
                             return null;
                         })}

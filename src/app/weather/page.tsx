@@ -1,15 +1,17 @@
+
 'use client';
 
-import { Bell, Bot, Copy, Menu, Mic, Pencil, RefreshCw, Send, Volume2, Image as ImageIcon, Sun } from 'lucide-react';
+import { Bell, Bot, Copy, Menu, Mic, Pencil, RefreshCw, Send, Volume2, Image as ImageIcon, Sun, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 
 const WeatherStat = ({ label, value, unit = '' }: { label: string, value: number, unit?: string }) => {
     const markers = unit === '%' ? ['0%', '50%', '100%'] : (unit === '°F' ? ['0', '50', '100'] : ['0', '50', '100']);
@@ -89,6 +91,26 @@ const Message = ({ msg }: { msg: { role: 'user' | 'ai', content: string, timesta
 
 
 export default function ConversationPage() {
+    const [isOffline, setIsOffline] = useState(false);
+
+    useEffect(() => {
+        const handleOnline = () => setIsOffline(false);
+        const handleOffline = () => setIsOffline(true);
+
+        if (typeof window !== "undefined") {
+            window.addEventListener("online", handleOnline);
+            window.addEventListener("offline", handleOffline);
+            setIsOffline(!navigator.onLine);
+        }
+
+        return () => {
+            if (typeof window !== "undefined") {
+                window.removeEventListener("online", handleOnline);
+                window.removeEventListener("offline", handleOffline);
+            }
+        };
+    }, []);
+
     const conversation = [
         { type: 'message', role: 'user' as const, content: "Can you give me the forecast for the weekend? with graphics level.", timestamp: "02:05 PM" },
         { 
@@ -117,9 +139,15 @@ export default function ConversationPage() {
                       <Menu className="h-7 w-7" />
                     </Link>
                 </Button>
-                <Button variant="outline" className="rounded-full bg-transparent border-border text-white text-base px-6 py-2 h-auto">
-                    Aiva AI 2.0
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" className="rounded-full bg-transparent border-border text-white text-base px-6 py-2 h-auto">
+                        Aiva AI 2.0
+                    </Button>
+                     <Badge variant={isOffline ? "destructive" : "secondary"} className="items-center gap-2 hidden md:flex">
+                        {isOffline ? <WifiOff className="h-4 w-4" /> : <Wifi className="h-4 w-4 text-accent" />}
+                        <span className="font-semibold">{isOffline ? "Offline" : "Online"}</span>
+                    </Badge>
+                </div>
                 <Button variant="ghost" size="icon">
                     <Bell className="h-7 w-7" />
                 </Button>

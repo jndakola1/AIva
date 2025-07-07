@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -128,18 +129,18 @@ export default function ChatInterface() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background text-foreground font-body">
+    <div className="flex flex-col h-full bg-background text-foreground">
       <main className="flex-1 overflow-hidden">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
           <div className="py-8 px-4 space-y-4 max-w-3xl mx-auto">
-             <Badge variant={isOffline ? "destructive" : "default"} className="absolute top-4 right-4 z-10 items-center gap-2">
-                {isOffline ? <WifiOff className="h-4 w-4" /> : <Wifi className="h-4 w-4 text-accent" />}
-                <span className="font-semibold">{isOffline ? "Offline" : "Online"}</span>
-            </Badge>
             {messages.length === 0 && (
                 <div className="flex flex-col h-full items-center justify-center text-center pt-32">
-                    <p className="text-5xl font-bold text-foreground mb-4">Aiva</p>
-                    <p className="text-lg text-muted-foreground">How can I help you today?</p>
+                    <Badge variant={isOffline ? "destructive" : "secondary"} className="items-center gap-2 mb-4">
+                      {isOffline ? <WifiOff className="h-4 w-4" /> : <Wifi className="h-4 w-4" />}
+                      <span className="font-semibold">{isOffline ? "Offline" : "Online"}</span>
+                  </Badge>
+                  <p className="text-lg text-muted-foreground">This is the beginning of your conversation.
+                  <br/>Ask me anything!</p>
                 </div>
             )}
             {messages.map((msg, i) => (

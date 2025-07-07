@@ -57,8 +57,10 @@ export default function SignupPage() {
                         <Link href="#" className="text-sm font-semibold text-foreground hover:underline">Terms of Use</Link>
                         <Link href="#" className="text-sm font-semibold text-foreground hover:underline">Privacy Policy</Link>
                     </div>
-                    <Button variant="secondary" size="icon" className="rounded-full h-12 w-12 text-secondary-foreground">
-                        <ArrowRight className="h-6 w-6" />
+                    <Button asChild variant="secondary" size="icon" className="rounded-full h-12 w-12 text-secondary-foreground">
+                        <Link href="/dashboard">
+                           <ArrowRight className="h-6 w-6" />
+                        </Link>
                     </Button>
                 </div>
             </main>

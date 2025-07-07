@@ -11,6 +11,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { useRouter } from 'next/navigation';
 
 const BottomNavItem = ({ icon, active = false, href }: { icon: React.ReactNode, active?: boolean, href?: string }) => (
     <Link href={href || "#"} className={`flex-1 h-auto py-2 flex flex-col items-center justify-center gap-1 rounded-none text-xs ${active ? 'text-white' : 'text-muted-foreground'}`}>
@@ -19,6 +20,12 @@ const BottomNavItem = ({ icon, active = false, href }: { icon: React.ReactNode, 
 );
 
 export default function CategoriesPage() {
+    const router = useRouter();
+
+    const handlePromptClick = (prompt: string) => {
+        router.push(`/dashboard?prompt=${encodeURIComponent(prompt)}`);
+    };
+
     const categories = [
         {
             value: 'weather',
@@ -100,7 +107,12 @@ export default function CategoriesPage() {
 
                                 <div className="space-y-3 mb-4">
                                     {category.prompts.map(prompt => (
-                                        <Button key={prompt} variant="outline" className="w-full justify-start rounded-full border-gray-700 bg-transparent h-auto py-3 px-5 text-sm font-normal text-white hover:bg-gray-800 hover:text-white">
+                                        <Button 
+                                            key={prompt} 
+                                            variant="outline" 
+                                            className="w-full justify-start rounded-full border-gray-700 bg-transparent h-auto py-3 px-5 text-sm font-normal text-white hover:bg-gray-800 hover:text-white"
+                                            onClick={() => handlePromptClick(prompt)}
+                                        >
                                             {prompt}
                                         </Button>
                                     ))}

@@ -1,97 +1,83 @@
-import { Bell, CalendarDays, Check, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User } from 'lucide-react';
+import { Bell, CalendarDays, Film, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 const BottomNavItem = ({ icon, active = false }: { icon: React.ReactNode, active?: boolean }) => (
-  <Button asChild variant="ghost" className={`rounded-full p-3 h-auto ${active ? 'text-white' : 'text-gray-500'} hover:text-white hover:bg-gray-800`}>
-    <Link href="#">
+  <Button variant="ghost" className={`flex-1 h-auto py-2 flex flex-col items-center justify-center gap-1 rounded-none text-xs ${active ? 'text-white' : 'text-muted-foreground'}`}>
       {icon}
-    </Link>
   </Button>
 );
 
-const CategoryCard = ({ icon, title, description, href }: { icon: React.ReactNode; title: string; description: string, href: string }) => (
-    <Link href={href} className="block h-full">
-        <Card className="bg-gray-900 border-gray-800 hover:bg-gray-800 transition-colors text-white flex flex-col h-full">
-            <CardHeader>
+const CategoryCard = ({ icon, title, promptCount, href }: { icon: React.ReactNode; title: string; promptCount: string, href: string }) => (
+    <Link href={href} className="block flex-shrink-0 w-36">
+        <Card className="bg-card border-none hover:bg-muted transition-colors text-white flex flex-col h-full p-4 aspect-square justify-center items-center">
+            <CardContent className="p-0 flex flex-col items-center justify-center text-center gap-2">
                 {icon}
-            </CardHeader>
-            <CardContent className="flex flex-col flex-grow">
-                <h3 className="text-xl font-semibold mb-2">{title}</h3>
-                <p className="text-muted-foreground text-sm flex-grow">{description}</p>
+                <h3 className="font-semibold">{title}</h3>
+                <p className="text-muted-foreground text-xs">{promptCount} Prompts</p>
             </CardContent>
         </Card>
     </Link>
 );
 
-const ProCard = ({ title, price, features, popular = false }: { title: string; price: string; features: string[]; popular?: boolean; }) => (
-    <Card className={`bg-gray-900 border-gray-800 text-white flex flex-col ${popular ? 'border-blue-500' : ''}`}>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <h3 className="text-2xl font-bold">{title}</h3>
-          {popular && <div className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">POPULAR</div>}
-        </div>
-        <p className="text-4xl font-bold">{price}<span className="text-base font-normal text-muted-foreground">/ month</span></p>
-      </CardHeader>
-      <CardContent className="flex flex-col flex-grow">
-        <ul className="space-y-3 mb-6 flex-grow">
-          {features.map((feature, i) => (
-            <li key={i} className="flex items-center gap-3">
-              <Check className="h-5 w-5 text-green-500" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-        <Button className={`w-full ${popular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-white text-black hover:bg-gray-200'}`}>
-          Upgrade to {title}
+const PopularPromptChip = ({ text }: { text: string }) => (
+    <Button variant="outline" className="rounded-full border-muted-foreground/50 bg-transparent text-muted-foreground h-auto py-2 px-4 text-sm font-normal hover:bg-muted hover:text-white">
+        {text}
+    </Button>
+);
+
+const SectionHeader = ({ title }: { title: string }) => (
+    <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">{title}</h2>
+        <Button variant="ghost" size="icon">
+            <ArrowRight className="h-5 w-5" />
         </Button>
-      </CardContent>
-    </Card>
-  );
+    </div>
+);
 
 export default function HomePage() {
     const categories = [
         {
           href: "/weather",
-          icon: <Sun className="h-8 w-8 mb-4 text-white" />,
+          icon: <Sun className="h-7 w-7 text-white" />,
           title: "Weather",
-          description: "Get real-time weather forecasts and updates.",
+          promptCount: "100",
         },
         {
           href: "#",
-          icon: <CalendarDays className="h-8 w-8 mb-4 text-white" />,
+          icon: <CalendarDays className="h-7 w-7 text-white" />,
           title: "Schedule",
-          description: "Manage your events, meetings, and plans.",
+          promptCount: "120",
         },
         {
           href: "#",
-          icon: <HeartPulse className="h-8 w-8 mb-4 text-white" />,
+          icon: <HeartPulse className="h-7 w-7 text-white" />,
           title: "Health",
-          description: "Track fitness, nutrition, and well-being.",
+          promptCount: "130",
+        },
+        {
+          href: "#",
+          icon: <Film className="h-7 w-7 text-white" />,
+          title: "Entertainment",
+          promptCount: "140",
         },
     ];
 
-    const proFeatures = [
-        "Access to all AI models",
-        "Unlimited message history",
-        "Faster response times",
-        "Priority support",
-    ];
-    
-    const proMaxFeatures = [
-        ...proFeatures,
-        "Advanced data analysis",
-        "Early access to new features",
+    const popularPrompts = [
+        "What's the weather forecast for today?",
+        "How can I maintain good health?",
+        "Can you explain complex physics concepts?",
+        "Any suggestions for a weekend trip?",
     ];
 
   return (
-    <div className="bg-black text-white min-h-screen flex flex-col font-sans">
+    <div className="bg-background text-white min-h-dvh flex flex-col font-sans">
       <header className="flex justify-between items-center p-4 pt-8 md:pt-4 z-10 shrink-0">
         <Button variant="ghost" size="icon">
           <Menu className="h-7 w-7" />
         </Button>
-        <Button variant="outline" className="rounded-full bg-gray-800 border-gray-700 text-white text-base px-6 py-2 h-auto">
+        <Button variant="outline" className="rounded-full bg-transparent border-border text-white text-base px-6 py-2 h-auto">
           Aiva AI 2.0
         </Button>
         <Button variant="ghost" size="icon">
@@ -100,35 +86,49 @@ export default function HomePage() {
       </header>
 
       <main className="flex-1 px-6 flex flex-col overflow-y-auto no-scrollbar pb-8">
-        <div className="text-left py-8">
-            <h1 className="text-3xl font-bold">Hello, Guest</h1>
-            <p className="text-muted-foreground text-lg">How can I help you today?</p>
+        <div className="text-left py-10">
+            <h1 className="text-5xl font-bold leading-tight">How Can I</h1>
+            <h1 className="text-5xl font-bold text-accent">Help You Today?</h1>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-            {categories.map((category) => (
-                <CategoryCard key={category.title} {...category} />
-            ))}
-        </div>
-
-        <div>
-            <h2 className="text-2xl font-bold text-center mb-2">Upgrade to Pro</h2>
-            <p className="text-muted-foreground text-center mb-8">Unlock more features and enhance your AI experience.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <ProCard title="Pro" price="$10" features={proFeatures} />
-                <ProCard title="Pro Max" price="$20" features={proMaxFeatures} popular />
+        <Button className="w-full bg-primary text-primary-foreground rounded-full text-lg font-semibold h-14 mb-10 hover:bg-primary/90">
+            Generate new Prompt
+        </Button>
+        
+        <div className="mb-10">
+            <SectionHeader title="Prompt Categories" />
+            <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6">
+                {categories.map((category) => (
+                    <CategoryCard key={category.title} {...category} />
+                ))}
             </div>
         </div>
+
+        <div className="mb-10">
+            <SectionHeader title="Popular Prompt" />
+            <div className="flex flex-wrap gap-3">
+                {popularPrompts.map((prompt) => (
+                    <PopularPromptChip key={prompt} text={prompt} />
+                ))}
+            </div>
+        </div>
+        
+        <div className="mt-auto pt-10">
+            <div className="bg-card p-8 rounded-t-3xl text-center">
+                <h2 className="text-4xl font-bold">Upgrade to</h2>
+            </div>
+        </div>
+
       </main>
 
-      <footer className="bg-black sticky bottom-0 w-full border-t border-gray-800 shrink-0">
-        <div className="flex justify-around items-center text-gray-400 py-2">
+      <footer className="bg-black sticky bottom-0 w-full border-t border-border shrink-0">
+        <div className="flex justify-around items-center text-gray-400">
             <BottomNavItem icon={<LayoutGrid size={28} />} active />
             <BottomNavItem icon={<MessageSquare size={28} />} />
             <BottomNavItem icon={<History size={28} />} />
             <BottomNavItem icon={<User size={28} />} />
         </div>
-        <div className="pb-4 pt-1">
+        <div className="pb-4 pt-2">
             <div className="w-32 h-1.5 bg-white rounded-full mx-auto"></div>
         </div>
       </footer>

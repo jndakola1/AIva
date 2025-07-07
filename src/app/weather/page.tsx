@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Bot, Copy, History, Image as ImageIcon, LayoutGrid, Menu, MessageSquare, Mic, Pencil, RefreshCw, Send, User, Volume2 } from 'lucide-react';
+import { Bell, Bot, Copy, Menu, Mic, Pencil, RefreshCw, Send, Volume2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -9,15 +9,6 @@ import { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import React from 'react';
-
-const BottomNavItem = ({ icon, active = false, href }: { icon: React.ReactNode, active?: boolean, href: string }) => (
-    <Link href={href} className={cn(
-        'flex-1 h-auto py-2 flex flex-col items-center justify-center gap-1 rounded-none text-xs',
-        active ? 'text-white' : 'text-muted-foreground'
-    )}>
-        {icon}
-    </Link>
-);
 
 const Message = ({ msg }: { msg: { role: 'user' | 'ai', content: string } }) => {
     const isAi = msg.role === 'ai';
@@ -101,40 +92,28 @@ export default function ConversationPage() {
                 </ScrollArea>
             </main>
             
-            <footer className="px-4 py-2 shrink-0 bg-background">
-                <div className="bg-card p-2 rounded-full flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <ImageIcon className="h-6 w-6" />
+            <footer className="px-4 py-3 shrink-0 bg-background">
+                <div className="flex items-center gap-3">
+                    <div className="flex-1 bg-card rounded-full flex items-center px-4 h-12">
+                        <ImageIcon className="h-6 w-6 text-muted-foreground mr-3" />
+                        <Input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Type your prompts here"
+                            className="bg-transparent border-none focus-visible:ring-0 text-base text-white placeholder:text-muted-foreground flex-1 h-auto py-2 px-0"
+                        />
+                    </div>
+                    <Button variant="ghost" size="icon" className="rounded-full bg-card h-12 w-12 shrink-0">
+                        <Mic className="h-6 w-6 text-muted-foreground" />
                     </Button>
-                    <Input
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Type your prompts here"
-                        className="bg-transparent border-none focus-visible:ring-0 text-base text-white placeholder:text-muted-foreground flex-1 h-auto py-2 px-0"
-                    />
-                     <Button variant="ghost" size="icon" className="rounded-full bg-muted/20">
-                        <Mic className="h-6 w-6" />
-                    </Button>
-                    <Button 
+                    <Button
                         size="icon"
-                        className="bg-white hover:bg-gray-200 rounded-full h-10 w-10 shrink-0"
+                        className="bg-white hover:bg-gray-200 rounded-full h-12 w-12 shrink-0"
                     >
                         <Send className="h-5 w-5 text-black" />
                     </Button>
                 </div>
             </footer>
-
-            <nav className="bg-black sticky bottom-0 w-full border-t border-border shrink-0">
-                <div className="flex justify-around items-center text-gray-400">
-                    <BottomNavItem href="/" icon={<LayoutGrid size={28} />} />
-                    <BottomNavItem href="/weather" icon={<MessageSquare size={28} />} active />
-                    <BottomNavItem href="#" icon={<History size={28} />} />
-                    <BottomNavItem href="#" icon={<User size={28} />} />
-                </div>
-                <div className="pb-4 pt-2">
-                    <div className="w-32 h-1.5 bg-white rounded-full mx-auto"></div>
-                </div>
-            </nav>
         </div>
     );
 }

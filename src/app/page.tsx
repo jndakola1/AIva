@@ -11,11 +11,23 @@ const BottomNavItem = ({ icon, active = false }: { icon: React.ReactNode, active
   </Button>
 );
 
-const PromptButton = ({ text }: { text: string }) => (
-    <Button variant="outline" className="rounded-full bg-transparent border-gray-700 text-white h-auto py-3 px-5 text-sm font-normal w-full text-left justify-start hover:bg-gray-800 hover:text-white">
-        {text}
-    </Button>
-);
+const PromptButton = ({ text, href }: { text: string; href?: string }) => {
+    const button = (
+        <Button variant="outline" className="w-full justify-start rounded-full border-gray-700 bg-transparent py-3 px-5 text-left text-sm font-normal text-white h-auto hover:bg-gray-800 hover:text-white">
+            {text}
+        </Button>
+    );
+
+    if (href) {
+        return (
+            <Link href={href} className="w-full">
+                {button}
+            </Link>
+        );
+    }
+
+    return button;
+};
 
 const PromptCategoryAccordion = () => {
     const categories = [
@@ -76,7 +88,11 @@ const PromptCategoryAccordion = () => {
                             <p className="text-muted-foreground mb-6 max-w-sm">{category.description}</p>
                             <div className="flex flex-col items-start gap-3 mb-4">
                                 {category.prompts.map((prompt, i) => (
-                                     <PromptButton key={i} text={prompt} />
+                                     <PromptButton 
+                                        key={i} 
+                                        text={prompt} 
+                                        href={category.value === 'weather' ? `/weather?prompt=${encodeURIComponent(prompt)}` : undefined} 
+                                    />
                                 ))}
                             </div>
                             <div className="flex justify-center items-center gap-2 mt-6">

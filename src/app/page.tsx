@@ -1,20 +1,7 @@
-import { ArrowRight, Bell, CalendarDays, Check, Film, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User } from 'lucide-react';
+import { Bell, CalendarDays, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-
-const CategoryCard = ({ icon, title, prompts }: { icon: React.ReactNode, title: string, prompts: string }) => (
-  <div className="bg-card rounded-2xl p-4 flex-shrink-0 w-36 flex flex-col justify-center items-center gap-2 text-center">
-      {icon}
-      <p className="font-semibold text-sm">{title}</p>
-      <p className="text-xs text-muted-foreground">{prompts}</p>
-  </div>
-);
-
-const PopularPrompt = ({ text }: { text: string }) => (
-  <Button variant="outline" className="rounded-full bg-transparent border-border text-foreground h-auto py-2 px-4 text-sm font-normal">
-      {text}
-  </Button>
-);
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const BottomNavItem = ({ icon, active = false }: { icon: React.ReactNode, active?: boolean }) => (
   <Button asChild variant="ghost" className={`rounded-full p-3 h-auto ${active ? 'text-white' : 'text-gray-500'} hover:text-white hover:bg-gray-800`}>
@@ -24,33 +11,96 @@ const BottomNavItem = ({ icon, active = false }: { icon: React.ReactNode, active
   </Button>
 );
 
-const UpgradeCard = ({ planName, price, features, buttonText, isFeatured }: { planName: string, price: string, features: string[], buttonText: string, isFeatured: boolean }) => (
-  <div className={`rounded-2xl p-6 w-72 flex-shrink-0 flex flex-col ${isFeatured ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
-    <h4 className="text-2xl font-bold">{planName}</h4>
-    <p className="text-4xl font-bold my-4">{price}<span className={`text-lg font-normal ${isFeatured ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>/month</span></p>
-    <ul className="space-y-3 mb-6 flex-1">
-      {features.map((feature, index) => (
-        <li key={index} className="flex items-center gap-3">
-          <Check size={18} className={isFeatured ? 'text-primary-foreground' : 'text-primary'}/>
-          <span>{feature}</span>
-        </li>
-      ))}
-    </ul>
-    <Button asChild className={`mt-auto rounded-full h-12 text-base font-semibold ${isFeatured ? 'bg-primary-foreground text-primary hover:bg-gray-200' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}>
-      <Link href="#">{buttonText}</Link>
+const PromptButton = ({ text }: { text: string }) => (
+    <Button variant="outline" className="rounded-full bg-transparent border-gray-700 text-white h-auto py-3 px-5 text-sm font-normal w-full text-left justify-start hover:bg-gray-800 hover:text-white">
+        {text}
     </Button>
-  </div>
 );
+
+const PromptCategoryAccordion = () => {
+    const categories = [
+        {
+          value: "weather",
+          icon: <Sun className="h-7 w-7 text-white" />,
+          largeIcon: <Sun className="h-20 w-20 mb-4 text-white" />,
+          title: "Weather",
+          description: "Questions about the current or future weather forecast, including information such as temperature, humidity, and weather conditions.",
+          prompts: [
+            "What's the weather forecast for today?",
+            "Is it going to be sunny this afternoon?",
+            "What's the temperature right now?",
+            "Do I need an umbrella today?",
+            "How windy is it outside?",
+          ]
+        },
+        {
+          value: "schedule",
+          icon: <CalendarDays className="h-7 w-7 text-white" />,
+          largeIcon: <CalendarDays className="h-20 w-20 mb-4 text-white" />,
+          title: "Schedule",
+          description: "Questions about your events, meetings, and plans.",
+          prompts: [
+              "What's on my schedule for today?",
+              "Do I have any meetings tomorrow?",
+              "Create a new event for a team lunch next Friday.",
+          ]
+        },
+        {
+          value: "health",
+          icon: <HeartPulse className="h-7 w-7 text-white" />,
+          largeIcon: <HeartPulse className="h-20 w-20 mb-4 text-white" />,
+          title: "Health",
+          description: "Questions about fitness, nutrition, and well-being.",
+          prompts: [
+              "What are some healthy breakfast ideas?",
+              "Suggest a 30-minute workout I can do at home.",
+              "How can I improve my sleep quality?",
+          ]
+        },
+      ];
+      
+    return (
+        <Accordion type="single" collapsible defaultValue="weather" className="w-full">
+            {categories.map((category) => (
+                <AccordionItem value={category.value} key={category.value} className="border-b border-gray-700 last:border-b-0">
+                    <AccordionTrigger className="py-6 hover:no-underline text-left">
+                        <div className="flex items-center gap-4 text-white">
+                            {category.icon}
+                            <span className="text-xl font-semibold">{category.title}</span>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-6">
+                        <div className="text-white">
+                            {category.largeIcon}
+                            <h2 className="text-4xl font-bold mb-2">{category.title}</h2>
+                            <p className="text-muted-foreground mb-6 max-w-sm">{category.description}</p>
+                            <div className="flex flex-col items-start gap-3 mb-4">
+                                {category.prompts.map((prompt, i) => (
+                                     <PromptButton key={i} text={prompt} />
+                                ))}
+                            </div>
+                            <div className="flex justify-center items-center gap-2 mt-6">
+                                <div className="w-2 h-2 rounded-full bg-white"></div>
+                                <div className="w-2 h-2 rounded-full bg-gray-600"></div>
+                                <div className="w-2 h-2 rounded-full bg-gray-600"></div>
+                            </div>
+                        </div>
+                    </AccordionContent>
+                </AccordionItem>
+            ))}
+        </Accordion>
+    );
+};
 
 
 export default function HomePage() {
   return (
-    <div className="bg-background text-foreground min-h-screen flex flex-col font-sans">
-      <header className="flex justify-between items-center p-4 pt-8 md:pt-4 z-10">
+    <div className="bg-black text-white min-h-screen flex flex-col font-sans">
+      <header className="flex justify-between items-center p-4 pt-8 md:pt-4 z-10 shrink-0">
         <Button variant="ghost" size="icon">
           <Menu className="h-7 w-7" />
         </Button>
-        <Button variant="outline" className="rounded-full bg-transparent border-border text-foreground text-base px-6 py-2 h-auto">
+        <Button variant="outline" className="rounded-full bg-gray-800 border-gray-700 text-white text-base px-6 py-2 h-auto">
           Aiva AI 2.0
         </Button>
         <Button variant="ghost" size="icon">
@@ -58,68 +108,11 @@ export default function HomePage() {
         </Button>
       </header>
 
-      <main className="flex-1 p-6 flex flex-col gap-8 overflow-y-auto no-scrollbar">
-        <div className="text-left">
-          <h1 className="text-5xl font-bold tracking-tight">How Can I</h1>
-          <h1 className="text-5xl font-bold tracking-tight text-primary">Help You Today?</h1>
-        </div>
-
-        <Button asChild className="w-full bg-white text-black font-semibold rounded-full h-14 text-lg hover:bg-gray-200">
-          <Link href="#">Generate new Prompt</Link>
-        </Button>
-
-        <section>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Prompt Categories</h2>
-            <Button asChild variant="ghost" size="icon" className="text-muted-foreground">
-                <Link href="#"><ArrowRight className="h-5 w-5" /></Link>
-            </Button>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 -mx-6 px-6 no-scrollbar">
-              <CategoryCard icon={<Sun size={28} className="text-amber-400"/>} title="Weather" prompts="100 Prompts" />
-              <CategoryCard icon={<CalendarDays size={28} className="text-sky-400"/>} title="Schedule" prompts="120 Prompts" />
-              <CategoryCard icon={<HeartPulse size={28} className="text-red-400"/>} title="Health" prompts="130 Prompts" />
-              <CategoryCard icon={<Film size={28} className="text-indigo-400"/>} title="Entertainment" prompts="140 Prompts" />
-          </div>
-        </section>
-
-        <section>
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Popular Prompt</h2>
-            <Button asChild variant="ghost" size="icon" className="text-muted-foreground">
-                <Link href="#"><ArrowRight className="h-5 w-5" /></Link>
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <PopularPrompt text="What's the weather forecast for today?" />
-            <PopularPrompt text="How can I maintain good health?" />
-            <PopularPrompt text="Explain complex physics concepts" />
-            <PopularPrompt text="Any suggestions for a weekend trip?" />
-          </div>
-        </section>
-        
-        <div className="bg-card p-6 rounded-t-3xl -mx-6 mt-auto">
-            <h3 className="text-2xl font-bold mb-4">Upgrade to Pro</h3>
-            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                <UpgradeCard
-                  planName="Pro"
-                  price="$10"
-                  features={['Unlock All Prompts', 'Unlimited Generations', 'Priority Support']}
-                  buttonText="Get Started"
-                  isFeatured={false}
-                />
-                <UpgradeCard
-                  planName="Pro Max"
-                  price="$20"
-                  features={['Unlock All Prompts', 'Unlimited Generations', 'Priority Support', 'Advanced Features']}
-                  buttonText="Get Started"
-                  isFeatured={true}
-                />
-            </div>
-        </div>
+      <main className="flex-1 px-6 flex flex-col overflow-y-auto no-scrollbar">
+        <PromptCategoryAccordion />
       </main>
 
-      <footer className="bg-black sticky bottom-0 w-full border-t border-gray-800">
+      <footer className="bg-black sticky bottom-0 w-full border-t border-gray-800 shrink-0">
         <div className="flex justify-around items-center text-gray-400 py-2">
             <BottomNavItem icon={<LayoutGrid size={28} />} active />
             <BottomNavItem icon={<MessageSquare size={28} />} />

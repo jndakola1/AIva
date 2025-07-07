@@ -1,167 +1,140 @@
 'use client';
 
-import { ArrowLeft, Mic, MoreVertical, Send, Sun } from 'lucide-react';
+import { Bell, Bot, Copy, History, Image as ImageIcon, LayoutGrid, Menu, MessageSquare, Mic, Pencil, RefreshCw, Send, User, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import React from 'react';
 
-type Message = {
-    role: "user" | "ai";
-    content: string;
-};
-
-const AiAvatar = () => (
-    <Avatar className="h-8 w-8 bg-white shrink-0">
-        <AvatarFallback className="bg-black">
-            <Sun className="h-5 w-5 text-white" />
-        </AvatarFallback>
-    </Avatar>
+const BottomNavItem = ({ icon, active = false, href }: { icon: React.ReactNode, active?: boolean, href: string }) => (
+    <Link href={href} className={cn(
+        'flex-1 h-auto py-2 flex flex-col items-center justify-center gap-1 rounded-none text-xs',
+        active ? 'text-white' : 'text-muted-foreground'
+    )}>
+        {icon}
+    </Link>
 );
 
-const UserAvatar = () => (
-    <Avatar className="h-8 w-8 shrink-0">
-        <AvatarFallback className="bg-gray-700 text-white">
-            Y
-        </AvatarFallback>
-    </Avatar>
-);
+const Message = ({ msg }: { msg: { role: 'user' | 'ai', content: string } }) => {
+    const isAi = msg.role === 'ai';
 
-const ChatMessage = ({ role, content, isLoading = false }: Message & { isLoading?: boolean }) => {
-    const isAi = role === "ai";
     return (
-        <div className={cn('flex items-start gap-3', !isAi && 'justify-end')}>
-            {isAi && <AiAvatar />}
-            <div className={cn(
-                'rounded-2xl p-4 max-w-[80%] text-white', 
-                isAi ? 'bg-gray-800' : 'bg-blue-600',
-                !isAi && 'rounded-br-none',
-                isAi && 'rounded-bl-none'
-            )}>
-                 {isLoading ? (
-                    <div className="flex items-center space-x-1 p-1">
-                        <div className="w-2 h-2 rounded-full bg-white animate-bounce [animation-delay:-0.3s]" />
-                        <div className="w-2 h-2 rounded-full bg-white animate-bounce [animation-delay:-0.15s]" />
-                        <div className="w-2 h-2 rounded-full bg-white animate-bounce" />
-                    </div>
-                ) : (
-                    <p className="text-sm">{content}</p>
-                )}
+        <div className={cn("flex items-start gap-3", !isAi && "justify-end")}>
+            {isAi && (
+                <Avatar className="h-10 w-10 bg-accent shrink-0 border-2 border-accent/50">
+                    <AvatarFallback className="bg-transparent">
+                        <Bot className="h-6 w-6 text-white" />
+                    </AvatarFallback>
+                </Avatar>
+            )}
+
+            <div className={cn("flex-1 max-w-[85%]", !isAi && "text-right")}>
+                <p className="font-bold mb-2">{isAi ? "Aiva AI" : "You"}</p>
+                <p className="text-muted-foreground leading-relaxed">{msg.content}</p>
+                 <div className={cn("flex items-center gap-4 mt-3 text-muted-foreground", isAi ? "justify-start" : "justify-end")}>
+                    {isAi ? (
+                        <>
+                            <Volume2 className="h-5 w-5 cursor-pointer hover:text-white" />
+                            <Copy className="h-5 w-5 cursor-pointer hover:text-white" />
+                            <RefreshCw className="h-5 w-5 cursor-pointer hover:text-white" />
+                        </>
+                    ) : (
+                        <Pencil className="h-4 w-4 cursor-pointer hover:text-white" />
+                    )}
+                </div>
             </div>
-            {!isAi && <UserAvatar />}
+
+            {!isAi && (
+                 <Avatar className="h-10 w-10 bg-gray-700 shrink-0">
+                    <AvatarFallback className="bg-transparent text-white" />
+                </Avatar>
+            )}
         </div>
     );
-};
+}
 
+export default function ConversationPage() {
+    const conversation = [
+        { type: 'timestamp', value: '11:45 AM' },
+        { type: 'message', role: 'user' as const, content: "Can you give me the forecast for the weekend?" },
+        { type: 'message', role: 'ai' as const, content: "The forecast for the weekend predicts mostly sunny skies with temperatures ranging from 75 to 80 degrees Fahrenheit. There's a slight chance of showers on Saturday afternoon, but overall, it should be a pleasant weekend for outdoor activities." },
+        { type: 'timestamp', value: '01:15 PM' },
+        { type: 'message', role: 'user' as const, content: "Can you tell me about the air quality index?" },
+        { type: 'message', role: 'ai' as const, content: "The Air Quality Index (AQI) for your area is currently rated as 'Good'. This means the air quality is acceptable; however, there may be some pollutants that pose a moderate health concern for a very small number of people who are unusually sensitive to air pollution." },
+    ];
 
-export default function WeatherPage() {
-    const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const scrollAreaRef = useRef<HTMLDivElement>(null);
 
-    const scrollToBottom = () => {
-        if (scrollAreaRef.current) {
-            const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-            if (viewport) {
-              viewport.scrollTop = viewport.scrollHeight;
-            }
-        }
-    };
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages, isLoading]);
-
-    const handleSendMessage = async (prompt: string) => {
-        if (!prompt.trim() || isLoading) return;
-        
-        const newMessages: Message[] = [...messages, { role: 'user', content: prompt }];
-        setMessages(newMessages);
-        setInput('');
-        setIsLoading(true);
-
-        // Simulate AI response
-        setTimeout(() => {
-            const aiResponse = "The weather in New York is currently sunny with a temperature of 24°C. The wind is blowing from the west at 10 km/h.";
-            setMessages(prev => [...prev, { role: 'ai', content: aiResponse }]);
-            setIsLoading(false);
-        }, 1500);
-    }
-
-    useEffect(() => {
-        if (messages.length === 0) {
-            setMessages([
-                { role: 'ai', content: 'Hello! How can I help you with the weather today?' }
-            ]);
-        }
-    }, []);
-    
     return (
-        <div className="bg-black text-white min-h-screen flex flex-col font-sans">
-            <header className="flex justify-between items-center p-4 z-10 shrink-0 border-b border-gray-800">
-                <Button asChild variant="ghost" size="icon">
+        <div className="bg-background text-white min-h-dvh flex flex-col font-sans">
+            <header className="flex justify-between items-center p-4 pt-8 md:pt-4 z-10 shrink-0">
+                <Button variant="ghost" size="icon" asChild>
                     <Link href="/">
-                        <ArrowLeft className="h-6 w-6" />
+                      <Menu className="h-7 w-7" />
                     </Link>
                 </Button>
-                <div className="flex flex-col items-center">
-                    <h1 className="text-lg font-semibold">Weather</h1>
-                    <p className="text-xs text-green-400">Online</p>
-                </div>
+                <Button variant="outline" className="rounded-full bg-transparent border-border text-white text-base px-6 py-2 h-auto">
+                    Aiva AI 2.0
+                </Button>
                 <Button variant="ghost" size="icon">
-                    <MoreVertical className="h-6 w-6" />
+                    <Bell className="h-7 w-7" />
                 </Button>
             </header>
 
-            <main className="flex-1 px-4 py-6 flex flex-col overflow-y-auto no-scrollbar">
-                <ScrollArea className="h-full" ref={scrollAreaRef}>
-                    <div className="space-y-6">
-                        {messages.map((msg, index) => (
-                            <ChatMessage key={index} role={msg.role} content={msg.content} />
-                        ))}
-                        {isLoading && (
-                           <ChatMessage role="ai" content="" isLoading={true} />
-                        )}
+            <main className="flex-1 px-4 flex flex-col overflow-y-auto no-scrollbar">
+                <ScrollArea className="h-full">
+                    <div className="space-y-6 py-6">
+                        {conversation.map((item, index) => {
+                            if (item.type === 'timestamp') {
+                                return <p key={index} className="text-center text-muted-foreground text-xs">{item.value}</p>;
+                            }
+                            if (item.type === 'message') {
+                                return <Message key={index} msg={item as { role: 'user' | 'ai', content: string }} />;
+                            }
+                            return null;
+                        })}
                     </div>
                 </ScrollArea>
             </main>
-
-            <footer className="p-4 shrink-0 border-t border-gray-800 bg-black">
-                <div className="relative">
+            
+            <footer className="px-4 py-2 shrink-0 bg-background">
+                <div className="bg-card p-2 rounded-full flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                        <ImageIcon className="h-6 w-6" />
+                    </Button>
                     <Input
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSendMessage(input);
-                            }
-                        }}
-                        placeholder="Type a message..."
-                        className="bg-gray-900 border-gray-700 rounded-full pl-12 pr-20 h-14 text-base focus-visible:ring-blue-600"
-                        disabled={isLoading}
+                        placeholder="Type your prompts here"
+                        className="bg-transparent border-none focus-visible:ring-0 text-base text-white placeholder:text-muted-foreground flex-1 h-auto py-2 px-0"
                     />
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2">
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                            <Mic className="h-6 w-6" />
-                        </Button>
-                    </div>
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <Button 
-                            onClick={() => handleSendMessage(input)}
-                            disabled={!input.trim() || isLoading}
-                            size="icon"
-                            className="bg-blue-600 hover:bg-blue-700 rounded-full h-10 w-10"
-                        >
-                            <Send className="h-5 w-5" />
-                        </Button>
-                    </div>
+                     <Button variant="ghost" size="icon" className="rounded-full bg-muted/20">
+                        <Mic className="h-6 w-6" />
+                    </Button>
+                    <Button 
+                        size="icon"
+                        className="bg-white hover:bg-gray-200 rounded-full h-10 w-10 shrink-0"
+                    >
+                        <Send className="h-5 w-5 text-black" />
+                    </Button>
                 </div>
             </footer>
+
+            <nav className="bg-black sticky bottom-0 w-full border-t border-border shrink-0">
+                <div className="flex justify-around items-center text-gray-400">
+                    <BottomNavItem href="/" icon={<LayoutGrid size={28} />} />
+                    <BottomNavItem href="/weather" icon={<MessageSquare size={28} />} active />
+                    <BottomNavItem href="#" icon={<History size={28} />} />
+                    <BottomNavItem href="#" icon={<User size={28} />} />
+                </div>
+                <div className="pb-4 pt-2">
+                    <div className="w-32 h-1.5 bg-white rounded-full mx-auto"></div>
+                </div>
+            </nav>
         </div>
     );
 }

@@ -10,10 +10,10 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 
-const BottomNavItem = ({ icon, active = false }: { icon: React.ReactNode, active?: boolean }) => (
-    <Button variant="ghost" className={`flex-1 h-auto py-2 flex flex-col items-center justify-center gap-1 rounded-none text-xs ${active ? 'text-white' : 'text-muted-foreground'}`}>
+const BottomNavItem = ({ icon, active = false, href }: { icon: React.ReactNode, active?: boolean, href?: string }) => (
+    <Link href={href || "#"} className={`flex-1 h-auto py-2 flex flex-col items-center justify-center gap-1 rounded-none text-xs ${active ? 'text-white' : 'text-muted-foreground'}`}>
         {icon}
-    </Button>
+    </Link>
 );
 
 export default function CategoriesPage() {
@@ -109,10 +109,10 @@ export default function CategoriesPage() {
             
             <footer className="bg-black sticky bottom-0 w-full border-t border-border shrink-0">
                 <div className="flex justify-around items-center text-gray-400">
-                    <BottomNavItem icon={<LayoutGrid size={28} />} active />
-                    <BottomNavItem icon={<MessageSquare size={28} />} />
-                    <BottomNavItem icon={<History size={28} />} />
-                    <BottomNavItem icon={<User size={28} />} />
+                    <BottomNavItem href="/" icon={<LayoutGrid size={28} />} />
+                    <BottomNavItem href="/weather" icon={<MessageSquare size={28} />} />
+                    <BottomNavItem href="#" icon={<History size={28} />} />
+                    <BottomNavItem href="#" icon={<User size={28} />} />
                 </div>
                 <div className="pb-4 pt-2">
                     <div className="w-32 h-1.5 bg-white rounded-full mx-auto"></div>

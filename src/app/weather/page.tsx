@@ -83,12 +83,6 @@ const Message = ({ msg }: { msg: { role: 'user' | 'ai', content: string, timesta
                     )}
                 </div>
             </div>
-
-            {!isAi && (
-                 <Avatar className="h-10 w-10 bg-gray-700 shrink-0">
-                    <AvatarFallback className="bg-transparent text-white" />
-                </Avatar>
-            )}
         </div>
     );
 }

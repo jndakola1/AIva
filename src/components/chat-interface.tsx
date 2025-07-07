@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Send, Sparkles, Wifi, WifiOff } from "lucide-react";
+import { Send, Sparkles, Wifi, WifiOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "@/components/chat-message";
 import { enhancePrompt } from "@/ai/flows/enhance-prompt";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type Message = {
   role: "You" | "AI";
@@ -20,9 +21,20 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const promptFromQuery = searchParams.get('prompt');
+    if (promptFromQuery) {
+      setInput(decodeURIComponent(promptFromQuery));
+      router.replace('/dashboard', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
@@ -112,7 +124,7 @@ export default function ChatInterface() {
 
   const handleEnhancePrompt = async () => {
     if (!input.trim()) return;
-    setIsSending(true);
+    setIsEnhancing(true);
     try {
       const result = await enhancePrompt({ prompt: input });
       setInput(result.enhancedPrompt);
@@ -124,9 +136,11 @@ export default function ChatInterface() {
         description: "Could not enhance the prompt. This is an online-only feature.",
       });
     } finally {
-      setIsSending(false);
+      setIsEnhancing(false);
     }
   };
+
+  const isDisabled = isSending || isEnhancing;
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
@@ -166,14 +180,14 @@ export default function ChatInterface() {
                 sendMessage(input);
               }
             }}
-            disabled={isSending}
+            disabled={isDisabled}
             rows={1}
           />
           <div className="absolute top-1/2 right-3 -translate-y-1/2 flex gap-1">
-            <Button variant="ghost" size="icon" onClick={handleEnhancePrompt} disabled={isSending || !input.trim() || isOffline} title="Enhance Prompt (Online only)">
-              <Sparkles className="h-5 w-5 text-accent" />
+            <Button variant="ghost" size="icon" onClick={handleEnhancePrompt} disabled={isDisabled || !input.trim() || isOffline} title="Enhance Prompt (Online only)">
+              {isEnhancing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-accent" />}
             </Button>
-            <Button onClick={() => sendMessage(input)} disabled={isSending || !input.trim()} size="icon" className="rounded-full bg-primary hover:bg-primary/90 disabled:bg-muted">
+            <Button onClick={() => sendMessage(input)} disabled={isDisabled || !input.trim()} size="icon" className="rounded-full bg-primary hover:bg-primary/90 disabled:bg-muted">
               <Send className="h-5 w-5" />
             </Button>
           </div>

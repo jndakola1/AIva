@@ -129,20 +129,17 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground font-body">
-      <header className="flex items-center justify-between p-4 border-b shadow-sm">
-        <h1 className="text-xl font-headline font-bold text-primary">Gemini Switch</h1>
-        <Badge variant={isOffline ? "destructive" : "default"} className="flex items-center gap-2">
-          {isOffline ? <WifiOff className="h-4 w-4" /> : <Wifi className="h-4 w-4 text-green-500" />}
-          <span className="font-semibold">{isOffline ? "Offline Mode (Ollama)" : "Online Mode (Gemini)"}</span>
-        </Badge>
-      </header>
-
       <main className="flex-1 overflow-hidden">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
-          <div className="p-4 space-y-6">
+          <div className="py-8 px-4 space-y-4 max-w-3xl mx-auto">
+             <Badge variant={isOffline ? "destructive" : "default"} className="absolute top-4 right-4 z-10 items-center gap-2">
+                {isOffline ? <WifiOff className="h-4 w-4" /> : <Wifi className="h-4 w-4 text-accent" />}
+                <span className="font-semibold">{isOffline ? "Offline" : "Online"}</span>
+            </Badge>
             {messages.length === 0 && (
-                <div className="flex h-full items-center justify-center text-muted-foreground pt-32">
-                    <p className="text-lg">Start a conversation by typing below.</p>
+                <div className="flex flex-col h-full items-center justify-center text-center pt-32">
+                    <p className="text-5xl font-bold text-foreground mb-4">Aiva</p>
+                    <p className="text-lg text-muted-foreground">How can I help you today?</p>
                 </div>
             )}
             {messages.map((msg, i) => (
@@ -155,13 +152,13 @@ export default function ChatInterface() {
         </ScrollArea>
       </main>
 
-      <footer className="p-4 border-t bg-card/50">
-        <div className="relative">
+      <footer className="p-4 border-t bg-background">
+        <div className="relative max-w-3xl mx-auto">
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            className="pr-28 min-h-[48px] rounded-full resize-none"
+            placeholder="Message Aiva..."
+            className="pr-28 min-h-[52px] rounded-2xl resize-none p-4"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
@@ -171,11 +168,11 @@ export default function ChatInterface() {
             disabled={isSending}
             rows={1}
           />
-          <div className="absolute top-1/2 right-2 -translate-y-1/2 flex gap-1">
+          <div className="absolute top-1/2 right-3 -translate-y-1/2 flex gap-1">
             <Button variant="ghost" size="icon" onClick={handleEnhancePrompt} disabled={isSending || !input.trim() || isOffline} title="Enhance Prompt (Online only)">
               <Sparkles className="h-5 w-5 text-accent" />
             </Button>
-            <Button onClick={() => sendMessage(input)} disabled={isSending || !input.trim()} size="icon" className="rounded-full">
+            <Button onClick={() => sendMessage(input)} disabled={isSending || !input.trim()} size="icon" className="rounded-full bg-primary hover:bg-primary/90 disabled:bg-muted">
               <Send className="h-5 w-5" />
             </Button>
           </div>

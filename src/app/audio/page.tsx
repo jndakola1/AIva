@@ -25,7 +25,7 @@ export default function AudioPage() {
         <div className="bg-background text-white min-h-dvh flex flex-col font-sans">
             <header className="flex justify-between items-center p-4 pt-8 md:pt-4 z-10 shrink-0">
                 <Button variant="ghost" size="icon" asChild>
-                    <Link href="/">
+                    <Link href="/dashboard">
                       <Menu className="h-7 w-7" />
                     </Link>
                 </Button>

@@ -51,7 +51,7 @@ export default function CategoriesPage() {
         <div className="bg-background text-white min-h-dvh flex flex-col font-sans">
             <header className="flex justify-between items-center p-4 pt-8 md:pt-4 z-10 shrink-0">
                 <Button variant="ghost" size="icon" asChild>
-                    <Link href="/">
+                    <Link href="/dashboard">
                       <Menu className="h-7 w-7" />
                     </Link>
                 </Button>
@@ -109,7 +109,7 @@ export default function CategoriesPage() {
             
             <footer className="bg-black sticky bottom-0 w-full border-t border-border shrink-0">
                 <div className="flex justify-around items-center text-gray-400">
-                    <BottomNavItem href="/" icon={<LayoutGrid size={28} />} />
+                    <BottomNavItem href="/dashboard" icon={<LayoutGrid size={28} />} />
                     <BottomNavItem href="/weather" icon={<MessageSquare size={28} />} />
                     <BottomNavItem href="#" icon={<History size={28} />} />
                     <BottomNavItem href="#" icon={<User size={28} />} />

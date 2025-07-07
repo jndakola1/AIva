@@ -1,192 +1,38 @@
+'use client';
 
-import { Bell, CalendarDays, Film, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User, ArrowRight, Check } from 'lucide-react';
+import { X, MoreHorizontal, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
 
-const BottomNavItem = ({ icon, active = false, href }: { icon: React.ReactNode, active?: boolean, href?: string }) => (
-  <Link href={href || "#"} className={`flex-1 h-auto py-2 flex flex-col items-center justify-center gap-1 rounded-none text-xs ${active ? 'text-white' : 'text-muted-foreground'}`}>
-      {icon}
-  </Link>
-);
-
-const CategoryCard = ({ icon, title, promptCount, href }: { icon: React.ReactNode; title: string; promptCount: string, href: string }) => (
-    <Link href={href} className="block flex-shrink-0 w-36">
-        <Card className="bg-card border-none hover:bg-muted transition-colors text-white flex flex-col h-full p-4 aspect-square justify-center items-center">
-            <CardContent className="p-0 flex flex-col items-center justify-center text-center gap-2">
-                {icon}
-                <h3 className="font-semibold">{title}</h3>
-                <p className="text-muted-foreground text-xs">{promptCount} Prompts</p>
-            </CardContent>
-        </Card>
-    </Link>
-);
-
-const PopularPromptChip = ({ text }: { text: string }) => (
-    <Button variant="outline" className="rounded-full border-muted-foreground/50 bg-transparent text-muted-foreground h-auto py-2 px-4 text-sm font-normal hover:bg-muted hover:text-white">
-        {text}
-    </Button>
-);
-
-const SectionHeader = ({ title, href }: { title: string, href?: string }) => (
-    <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold">{title}</h2>
-        <Button asChild variant="ghost" size="icon">
-            <Link href={href || "#"}>
-                <ArrowRight className="h-5 w-5" />
-            </Link>
-        </Button>
-    </div>
-);
-
-const PricingCard = ({ plan, price, features, isRecommended, buttonText }: { plan: string, price: string, features: string[], isRecommended: boolean, buttonText: string }) => (
-    <Card className={cn(
-        "p-6 flex flex-col text-left border-2 rounded-2xl",
-        isRecommended ? "bg-card border-accent" : "bg-card border-border"
-    )}>
-        <CardContent className="p-0 flex-1">
-            <h3 className="text-xl font-bold mb-2">{plan}</h3>
-            <p className="text-3xl font-bold mb-4">{price}<span className="text-sm font-normal text-muted-foreground">/month</span></p>
-            <ul className="space-y-3 text-left">
-                {features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                        <div className={cn(
-                            "h-5 w-5 rounded-full flex items-center justify-center", 
-                            isRecommended ? "bg-accent/20" : "bg-muted"
-                        )}>
-                           <Check className={cn("h-3.5 w-3.5", isRecommended ? "text-accent" : "text-white")} />
-                        </div>
-                        <span className="text-sm text-white/80">{feature}</span>
-                    </li>
-                ))}
-            </ul>
-        </CardContent>
-        <Button className={cn(
-            "w-full mt-6 rounded-full h-12 text-base font-semibold", 
-            isRecommended ? "bg-accent hover:bg-accent/90 text-accent-foreground" : "bg-primary hover:bg-primary/90 text-primary-foreground"
-        )}>{buttonText}</Button>
-    </Card>
-);
-
-export default function HomePage() {
-    const categories = [
-        {
-          href: "/weather",
-          icon: <Sun className="h-7 w-7 text-white" />,
-          title: "Weather",
-          promptCount: "100",
-        },
-        {
-          href: "#",
-          icon: <CalendarDays className="h-7 w-7 text-white" />,
-          title: "Schedule",
-          promptCount: "120",
-        },
-        {
-          href: "#",
-          icon: <HeartPulse className="h-7 w-7 text-white" />,
-          title: "Health",
-          promptCount: "130",
-        },
-        {
-          href: "#",
-          icon: <Film className="h-7 w-7 text-white" />,
-          title: "Entertainment",
-          promptCount: "140",
-        },
-    ];
-
-    const popularPrompts = [
-        "What's the weather forecast for today?",
-        "How can I maintain good health?",
-        "Can you explain complex physics concepts?",
-        "Any suggestions for a weekend trip?",
-    ];
-
-    const pricingPlans = [
-        {
-            plan: "Pro",
-            price: "$12",
-            features: ["Access to all features", "Unlimited Prompts", "Early access to new features"],
-            isRecommended: true,
-            buttonText: "Try for free"
-        },
-        {
-            plan: "Premium",
-            price: "$24",
-            features: ["Access to all features", "Unlimited Prompts", "24/7 support"],
-            isRecommended: false,
-            buttonText: "Get Premium"
-        }
-    ];
-
-  return (
-    <div className="bg-background text-white min-h-dvh flex flex-col font-sans">
-      <header className="flex justify-between items-center p-4 pt-8 md:pt-4 z-10 shrink-0">
-        <Button variant="ghost" size="icon">
-          <Menu className="h-7 w-7" />
-        </Button>
-        <Button variant="outline" className="rounded-full bg-transparent border-border text-white text-base px-6 py-2 h-auto">
-          Aiva AI 2.0
-        </Button>
-        <Button variant="ghost" size="icon">
-          <Bell className="h-7 w-7" />
-        </Button>
-      </header>
-
-      <main className="flex-1 px-6 flex flex-col overflow-y-auto no-scrollbar pb-8">
-        <div className="text-left py-10">
-            <h1 className="text-5xl font-bold leading-tight">How Can I</h1>
-            <h1 className="text-5xl font-bold text-accent">Help You Today?</h1>
-        </div>
-
-        <Button asChild className="w-full bg-primary text-primary-foreground rounded-full text-lg font-semibold h-14 mb-10 hover:bg-primary/90">
-            <Link href="/new-prompt">Generate new Prompt</Link>
-        </Button>
-        
-        <div className="mb-10">
-            <SectionHeader title="Prompt Categories" href="/categories" />
-            <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6">
-                {categories.map((category) => (
-                    <CategoryCard key={category.title} {...category} />
-                ))}
-            </div>
-        </div>
-
-        <div className="mb-10">
-            <SectionHeader title="Popular Prompt" />
-            <div className="flex flex-wrap gap-3">
-                {popularPrompts.map((prompt) => (
-                    <PopularPromptChip key={prompt} text={prompt} />
-                ))}
-            </div>
-        </div>
-        
-        <div className="mt-auto pt-10 -mx-6">
-            <div className="bg-card px-6 py-8 rounded-t-3xl text-center">
-                <h2 className="text-3xl font-bold">Upgrade to</h2>
-                <h2 className="text-5xl font-bold bg-gradient-to-r from-accent to-green-400 bg-clip-text text-transparent pb-2">Pro</h2>
-                <p className="text-muted-foreground text-sm mb-8 max-w-xs mx-auto">Get access to all features by upgrading your plan</p>
-                <div className="grid sm:grid-cols-2 gap-4">
-                    {pricingPlans.map(plan => <PricingCard key={plan.plan} {...plan} />)}
+export default function SplashPage() {
+    return (
+        <div className="bg-background text-white min-h-dvh flex flex-col font-sans p-6">
+            <header className="flex-1 pt-20">
+                <h1 className="text-7xl font-bold">Aiva</h1>
+                <p className="text-2xl text-accent mt-1">AI Virtual Assistant</p>
+                <div className="w-full h-px bg-border my-8"></div>
+            </header>
+            
+            <footer className="pb-8">
+                <div className="flex justify-between items-center">
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="icon" className="rounded-full bg-card h-14 w-14 border-border">
+                            <X className="h-7 w-7 text-white" />
+                        </Button>
+                        <Button variant="outline" size="icon" className="rounded-full bg-card h-14 w-14 border-border">
+                            <MoreHorizontal className="h-7 w-7 text-white" />
+                        </Button>
+                    </div>
+                    <Button asChild variant="secondary" size="icon" className="rounded-full bg-white h-16 w-16">
+                        <Link href="/dashboard">
+                            <ArrowUpRight className="h-8 w-8 text-black" />
+                        </Link>
+                    </Button>
                 </div>
-            </div>
+                <div className="pt-8 mt-4">
+                    <div className="w-32 h-1.5 bg-white rounded-full mx-auto"></div>
+                </div>
+            </footer>
         </div>
-
-      </main>
-
-      <footer className="bg-black sticky bottom-0 w-full border-t border-border shrink-0">
-        <div className="flex justify-around items-center text-gray-400">
-            <BottomNavItem href="/" icon={<LayoutGrid size={28} />} active />
-            <BottomNavItem href="/weather" icon={<MessageSquare size={28} />} />
-            <BottomNavItem href="#" icon={<History size={28} />} />
-            <BottomNavItem href="#" icon={<User size={28} />} />
-        </div>
-        <div className="pb-4 pt-2">
-            <div className="w-32 h-1.5 bg-white rounded-full mx-auto"></div>
-        </div>
-      </footer>
-    </div>
-  );
+    );
 }

@@ -1,7 +1,8 @@
-import { Bell, CalendarDays, Film, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User, ArrowRight } from 'lucide-react';
+import { Bell, CalendarDays, Film, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User, ArrowRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const BottomNavItem = ({ icon, active = false, href }: { icon: React.ReactNode, active?: boolean, href?: string }) => (
   <Link href={href || "#"} className={`flex-1 h-auto py-2 flex flex-col items-center justify-center gap-1 rounded-none text-xs ${active ? 'text-white' : 'text-muted-foreground'}`}>
@@ -38,6 +39,35 @@ const SectionHeader = ({ title, href }: { title: string, href?: string }) => (
     </div>
 );
 
+const PricingCard = ({ plan, price, features, isRecommended, buttonText }: { plan: string, price: string, features: string[], isRecommended: boolean, buttonText: string }) => (
+    <Card className={cn(
+        "p-6 flex flex-col text-left border-2 rounded-2xl",
+        isRecommended ? "bg-card border-accent" : "bg-card border-border"
+    )}>
+        <CardContent className="p-0 flex-1">
+            <h3 className="text-xl font-bold mb-2">{plan}</h3>
+            <p className="text-3xl font-bold mb-4">{price}<span className="text-sm font-normal text-muted-foreground">/month</span></p>
+            <ul className="space-y-3 text-left">
+                {features.map((feature, i) => (
+                    <li key={i} className="flex items-center gap-3">
+                        <div className={cn(
+                            "h-5 w-5 rounded-full flex items-center justify-center", 
+                            isRecommended ? "bg-accent/20" : "bg-muted"
+                        )}>
+                           <Check className={cn("h-3.5 w-3.5", isRecommended ? "text-accent" : "text-white")} />
+                        </div>
+                        <span className="text-sm text-white/80">{feature}</span>
+                    </li>
+                ))}
+            </ul>
+        </CardContent>
+        <Button className={cn(
+            "w-full mt-6 rounded-full h-12 text-base font-semibold", 
+            isRecommended ? "bg-accent hover:bg-accent/90 text-accent-foreground" : "bg-primary hover:bg-primary/90 text-primary-foreground"
+        )}>{buttonText}</Button>
+    </Card>
+);
+
 export default function HomePage() {
     const categories = [
         {
@@ -71,6 +101,23 @@ export default function HomePage() {
         "How can I maintain good health?",
         "Can you explain complex physics concepts?",
         "Any suggestions for a weekend trip?",
+    ];
+
+    const pricingPlans = [
+        {
+            plan: "Pro",
+            price: "$12",
+            features: ["Access to all features", "Unlimited Prompts", "Early access to new features"],
+            isRecommended: true,
+            buttonText: "Try for free"
+        },
+        {
+            plan: "Premium",
+            price: "$24",
+            features: ["Access to all features", "Unlimited Prompts", "24/7 support"],
+            isRecommended: false,
+            buttonText: "Get Premium"
+        }
     ];
 
   return (
@@ -115,9 +162,14 @@ export default function HomePage() {
             </div>
         </div>
         
-        <div className="mt-auto pt-10">
-            <div className="bg-card p-8 rounded-t-3xl text-center">
-                <h2 className="text-4xl font-bold">Upgrade to</h2>
+        <div className="mt-auto pt-10 -mx-6">
+            <div className="bg-card px-6 py-8 rounded-t-3xl text-center">
+                <h2 className="text-3xl font-bold">Upgrade to</h2>
+                <h2 className="text-5xl font-bold bg-gradient-to-r from-accent to-green-400 bg-clip-text text-transparent pb-2">Pro</h2>
+                <p className="text-muted-foreground text-sm mb-8 max-w-xs mx-auto">Get access to all features by upgrading your plan</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                    {pricingPlans.map(plan => <PricingCard key={plan.plan} {...plan} />)}
+                </div>
             </div>
         </div>
 

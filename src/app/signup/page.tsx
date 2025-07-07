@@ -64,7 +64,6 @@ export default function SignupPage() {
             </main>
 
             <footer className="pb-4 pt-8 px-8 shrink-0">
-                <div className="w-32 h-1.5 bg-white rounded-full mx-auto"></div>
             </footer>
         </div>
     );

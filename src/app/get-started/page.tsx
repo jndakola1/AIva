@@ -26,7 +26,7 @@ export default function GetStartedPage() {
                             <Link href="/login">Login to Account</Link>
                         </Button>
                         <Button asChild variant="default" className="w-full rounded-full font-semibold h-14 text-base">
-                           <Link href="#">Create new Account</Link>
+                           <Link href="/signup">Create new Account</Link>
                         </Button>
                     </div>
 

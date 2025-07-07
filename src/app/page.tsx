@@ -1,4 +1,4 @@
-import { ArrowRight, Bell, CalendarDays, Film, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User } from 'lucide-react';
+import { ArrowRight, Bell, CalendarDays, Check, Film, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
@@ -23,6 +23,25 @@ const BottomNavItem = ({ icon, active = false }: { icon: React.ReactNode, active
     </Link>
   </Button>
 );
+
+const UpgradeCard = ({ planName, price, features, buttonText, isFeatured }: { planName: string, price: string, features: string[], buttonText: string, isFeatured: boolean }) => (
+  <div className={`rounded-2xl p-6 w-72 flex-shrink-0 flex flex-col ${isFeatured ? 'bg-primary text-primary-foreground' : 'bg-background'}`}>
+    <h4 className="text-2xl font-bold">{planName}</h4>
+    <p className="text-4xl font-bold my-4">{price}<span className={`text-lg font-normal ${isFeatured ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>/month</span></p>
+    <ul className="space-y-3 mb-6 flex-1">
+      {features.map((feature, index) => (
+        <li key={index} className="flex items-center gap-3">
+          <Check size={18} className={isFeatured ? 'text-primary-foreground' : 'text-primary'}/>
+          <span>{feature}</span>
+        </li>
+      ))}
+    </ul>
+    <Button asChild className={`mt-auto rounded-full h-12 text-base font-semibold ${isFeatured ? 'bg-primary-foreground text-primary hover:bg-gray-200' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}>
+      <Link href="#">{buttonText}</Link>
+    </Button>
+  </div>
+);
+
 
 export default function HomePage() {
   return (
@@ -79,11 +98,25 @@ export default function HomePage() {
           </div>
         </section>
         
-        <section className="mt-4">
-            <div className="bg-card p-6 rounded-t-3xl -mx-6">
-                <h3 className="text-2xl font-bold">Upgrade to</h3>
+        <div className="bg-card p-6 rounded-t-3xl -mx-6 mt-auto">
+            <h3 className="text-2xl font-bold mb-4">Upgrade to Pro</h3>
+            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+                <UpgradeCard
+                  planName="Pro"
+                  price="$10"
+                  features={['Unlock All Prompts', 'Unlimited Generations', 'Priority Support']}
+                  buttonText="Get Started"
+                  isFeatured={false}
+                />
+                <UpgradeCard
+                  planName="Pro Max"
+                  price="$20"
+                  features={['Unlock All Prompts', 'Unlimited Generations', 'Priority Support', 'Advanced Features']}
+                  buttonText="Get Started"
+                  isFeatured={true}
+                />
             </div>
-        </section>
+        </div>
       </main>
 
       <footer className="bg-black sticky bottom-0 w-full border-t border-gray-800">

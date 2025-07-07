@@ -48,9 +48,6 @@ export default function GetStartedPage() {
                     </div>
                 </div>
             </main>
-            <footer className="w-full pt-8 flex-shrink-0">
-                <div className="w-32 h-1.5 bg-foreground/80 rounded-full mx-auto"></div>
-            </footer>
         </div>
     );
 }

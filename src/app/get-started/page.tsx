@@ -23,7 +23,7 @@ export default function GetStartedPage() {
 
                     <div className="space-y-4">
                         <Button asChild variant="secondary" className="w-full rounded-full font-semibold h-14 text-base">
-                            <Link href="/dashboard">Login to Account</Link>
+                            <Link href="/login">Login to Account</Link>
                         </Button>
                         <Button asChild variant="default" className="w-full rounded-full font-semibold h-14 text-base">
                            <Link href="#">Create new Account</Link>

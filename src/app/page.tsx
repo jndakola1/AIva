@@ -1,3 +1,4 @@
+
 import { Bell, CalendarDays, Film, HeartPulse, History, LayoutGrid, Menu, MessageSquare, Sun, User, ArrowRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -140,8 +141,8 @@ export default function HomePage() {
             <h1 className="text-5xl font-bold text-accent">Help You Today?</h1>
         </div>
 
-        <Button className="w-full bg-primary text-primary-foreground rounded-full text-lg font-semibold h-14 mb-10 hover:bg-primary/90">
-            Generate new Prompt
+        <Button asChild className="w-full bg-primary text-primary-foreground rounded-full text-lg font-semibold h-14 mb-10 hover:bg-primary/90">
+            <Link href="/new-prompt">Generate new Prompt</Link>
         </Button>
         
         <div className="mb-10">

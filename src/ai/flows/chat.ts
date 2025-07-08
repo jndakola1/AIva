@@ -24,12 +24,50 @@ const searchForImageTool = ai.defineTool(
     }),
   },
   async ({query}) => {
-    console.log(`Searching for image with query: ${query}`);
-    return {
-      imageUrl: `https://placehold.co/600x400.png`,
-      altText: `An image of ${query}`,
-      dataAiHint: query.split(' ').slice(0, 2).join(' '),
-    };
+    console.log(`Searching for real image with query: ${query}`);
+    const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+
+    if (!accessKey) {
+      console.warn('UNSPLASH_ACCESS_KEY not found. Returning placeholder image.');
+      return {
+        imageUrl: `https://placehold.co/600x400.png`,
+        altText: `A placeholder image for: ${query}`,
+        dataAiHint: query.split(' ').slice(0, 2).join(' '),
+      };
+    }
+    
+    try {
+      const response = await fetch(
+        `https://api.unsplash.com/photos/random?query=${encodeURIComponent(
+          query
+        )}&client_id=${accessKey}`
+      );
+
+      if (!response.ok) {
+        console.error(`Unsplash API error: ${response.status} ${response.statusText}`);
+        throw new Error('Failed to fetch image from Unsplash.');
+      }
+      
+      const data = await response.json();
+      
+      if (!data.urls || !data.urls.regular) {
+        console.error('Invalid or incomplete data from Unsplash API:', data);
+        throw new Error('Invalid response from Unsplash API.');
+      }
+
+      return {
+        imageUrl: data.urls.regular,
+        altText: data.alt_description || `An image of ${query}`,
+        dataAiHint: query.split(' ').slice(0, 2).join(' '),
+      };
+    } catch (error) {
+      console.error('Error fetching from Unsplash, returning placeholder.', error);
+      return {
+        imageUrl: `https://placehold.co/600x400.png`,
+        altText: `A placeholder image for: ${query}`,
+        dataAiHint: query.split(' ').slice(0, 2).join(' '),
+      };
+    }
   }
 );
 
@@ -78,15 +116,12 @@ const prompt = ai.definePrompt({
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
   tools: [searchForImageTool, researchTopic],
-  prompt: `You are a helpful AI assistant named Aiva. Your goal is to provide concise and accurate answers.
-
-Based on the user's prompt, decide if you need to use one of the available tools: 'searchForImage' for pictures, or 'researchTopic' for up-to-date information (especially if 'performResearch' is true).
-
-After gathering all necessary information, formulate a final answer.
-
-**Critically, your entire output must be a single, valid JSON object that conforms to the required output schema.**
-- For a text response, use the 'response' field.
-- If you found an image, include 'imageUrl', 'altText', and 'dataAiHint'.
+  prompt: `You are a helpful AI assistant named Aiva. Your goal is to provide concise and accurate answers. Your process is as follows:
+1.  **Analyze**: Carefully analyze the user's prompt to understand their intent.
+2.  **Formulate**: Decide if you need to use one of the available tools: 'searchForImage' for pictures, or 'researchTopic' for up-to-date information (especially if 'performResearch' is true). After gathering all necessary information, formulate a final, comprehensive response.
+3.  **Format**: Your entire output must be a single, valid JSON object that conforms to the required output schema. This is critical.
+    - For a text response, use the 'response' field.
+    - If you used the searchForImage tool and found an image, you must include the 'imageUrl', 'altText', and 'dataAiHint' fields in your final JSON output.
 
 User Prompt: {{{prompt}}}`,
 });
@@ -103,8 +138,8 @@ const chatFlow = ai.defineFlow(
       throw new Error('The chat flow failed to produce a valid output. The model may have returned an empty or invalid response.');
     }
     
-    // Safeguard: If the LLM hallucinates an image URL, replace it with a placeholder to prevent crashes.
-    if (output.imageUrl && !output.imageUrl.startsWith('https://placehold.co')) {
+    // Safeguard: If the LLM hallucinates an image URL from a non-approved domain, replace it with a placeholder to prevent crashes.
+    if (output.imageUrl && !output.imageUrl.startsWith('https://placehold.co') && !output.imageUrl.startsWith('https://images.unsplash.com')) {
       // Try to extract a query from the prompt for better alt text.
       const queryMatch = input.prompt.match(/(?:image|picture) of (?:a|an|the)?\s*([^.?!]*)/i);
       const query = queryMatch ? queryMatch[1].trim() : 'a visual representation';

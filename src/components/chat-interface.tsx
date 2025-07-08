@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Send } from "lucide-react";
+import { AudioLines, Mic, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -90,16 +90,16 @@ export default function ChatInterface() {
         </ScrollArea>
       </main>
 
-      <footer className="p-4 bg-background">
+      <footer className="p-4 bg-background border-t border-border">
         <div className="max-w-3xl mx-auto">
-          <div className="relative">
+          <div className="bg-card rounded-2xl p-2 sm:p-3 shadow-sm border border-input">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Message Aiva..."
-              className="pr-16 rounded-2xl resize-none p-4 border-border/60 bg-card focus-visible:ring-1 focus-visible:ring-ring"
+              className="bg-transparent border-0 focus-visible:ring-0 resize-none w-full p-2 text-base"
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   sendMessage(input);
                 }
@@ -107,16 +107,35 @@ export default function ChatInterface() {
               disabled={isDisabled}
               rows={1}
             />
-            <Button 
-              onClick={() => sendMessage(input)} 
-              disabled={isDisabled || !input.trim()} 
-              size="icon" 
-              className="absolute top-1/2 right-3 -translate-y-1/2 w-8 h-8 rounded-lg bg-primary hover:bg-primary/90 disabled:bg-muted"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            <div className="flex justify-between items-center mt-2">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
+                  <Plus className="h-5 w-5" />
+                </Button>
+                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
+                  <SlidersHorizontal className="h-5 w-5" />
+                </Button>
+                <Button variant="outline" className="rounded-full text-muted-foreground border-border/60">
+                  <Search className="h-4 w-4 mr-2" />
+                  Research
+                </Button>
+              </div>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
+                  <Mic className="h-5 w-5" />
+                </Button>
+                <Button
+                  onClick={() => sendMessage(input)}
+                  disabled={isDisabled || !input.trim()}
+                  size="icon"
+                  className="rounded-full w-10 h-10 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted"
+                >
+                  <AudioLines className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
           </div>
-           <p className="text-xs text-center text-muted-foreground mt-2">
+          <p className="text-xs text-center text-muted-foreground mt-3">
             Aiva can make mistakes. Consider checking important information.
           </p>
         </div>

@@ -2,13 +2,11 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Send, Sparkles, Wifi, WifiOff, Loader2 } from "lucide-react";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "@/components/chat-message";
-import { enhancePrompt } from "@/ai/flows/enhance-prompt";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -21,8 +19,6 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [isOffline, setIsOffline] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -32,27 +28,11 @@ export default function ChatInterface() {
     const promptFromQuery = searchParams.get('prompt');
     if (promptFromQuery) {
       setInput(decodeURIComponent(promptFromQuery));
-      router.replace('/dashboard', { scroll: false });
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('prompt');
+      router.replace(newUrl.toString(), { scroll: false });
     }
   }, [searchParams, router]);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-
-    if (typeof window !== "undefined" && typeof navigator !== "undefined") {
-      window.addEventListener("online", handleOnline);
-      window.addEventListener("offline", handleOffline);
-      setIsOffline(!navigator.onLine);
-    }
-
-    return () => {
-      if (typeof window !== "undefined" && typeof navigator !== "undefined") {
-        window.removeEventListener("online", handleOnline);
-        window.removeEventListener("offline", handleOffline);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -69,92 +49,45 @@ export default function ChatInterface() {
     setMessages((prev) => [...prev, { role: "You", content: prompt }]);
     setInput("");
     setIsSending(true);
-
-    let responseText = "";
     
     try {
-      if (!isOffline) {
-        const res = await fetch("/api/gemini", {
-          method: "POST",
-          body: JSON.stringify({ prompt }),
-          headers: { "Content-Type": "application/json" },
-        });
+      const res = await fetch("/api/gemini", {
+        method: "POST",
+        body: JSON.stringify({ prompt }),
+        headers: { "Content-Type": "application/json" },
+      });
 
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}));
-          throw new Error(`Gemini API error: ${res.statusText} - ${errorData.error || 'No additional info'}`);
-        }
-
-        const data = await res.json();
-        responseText = data.response;
-      } else {
-        const res = await fetch("http://localhost:11434/api/generate", {
-          method: "POST",
-          body: JSON.stringify({
-            model: "tinyllama",
-            prompt,
-            stream: false,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        
-        if (!res.ok) {
-          throw new Error(`Ollama API error: ${res.statusText}`);
-        }
-
-        const data = await res.json();
-        responseText = data.response;
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(`API error: ${res.statusText} - ${errorData.error || 'No additional info'}`);
       }
-      setMessages((prev) => [...prev, { role: "AI", content: responseText }]);
+
+      const data = await res.json();
+      setMessages((prev) => [...prev, { role: "AI", content: data.response }]);
     } catch (error) {
       console.error(error);
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-      setMessages((prev) => [...prev, { role: "AI", content: `Sorry, I ran into an error. Please check the console for details.` }]);
+      setMessages((prev) => [...prev, { role: "AI", content: `Sorry, I ran into an error. Please check your API key and network connection.` }]);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Could not get a response. ${isOffline ? "Please ensure Ollama is running." : "Please check your connection and API key."}`,
+        description: `Could not get a response. Please check your connection and API key.`,
       });
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleEnhancePrompt = async () => {
-    if (!input.trim()) return;
-    setIsEnhancing(true);
-    try {
-      const result = await enhancePrompt({ prompt: input });
-      setInput(result.enhancedPrompt);
-    } catch (error) {
-       console.error("Failed to enhance prompt:", error);
-       toast({
-        variant: "destructive",
-        title: "Enhancement Failed",
-        description: "Could not enhance the prompt. This is an online-only feature.",
-      });
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
-
-  const isDisabled = isSending || isEnhancing;
+  const isDisabled = isSending;
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
       <main className="flex-1 overflow-hidden">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
-          <div className="py-8 px-4 space-y-4 max-w-3xl mx-auto">
+          <div className="py-8 px-4 space-y-8 max-w-3xl mx-auto">
             {messages.length === 0 && (
-                <div className="flex flex-col h-full items-center justify-center text-center pt-32">
-                    <Badge variant={isOffline ? "destructive" : "secondary"} className="items-center gap-2 mb-4">
-                      {isOffline ? <WifiOff className="h-4 w-4" /> : <Wifi className="h-4 w-4" />}
-                      <span className="font-semibold">{isOffline ? "Offline" : "Online"}</span>
-                  </Badge>
-                  <p className="text-lg text-muted-foreground">This is the beginning of your conversation.
-                  <br/>Ask me anything!</p>
+                <div className="flex flex-col h-full items-center justify-center text-center pt-20">
+                  <div className="h-16 w-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-3xl font-bold mb-6">A</div>
+                  <h1 className="text-3xl font-semibold">How can I help you today?</h1>
                 </div>
             )}
             {messages.map((msg, i) => (
@@ -167,30 +100,35 @@ export default function ChatInterface() {
         </ScrollArea>
       </main>
 
-      <footer className="p-4 border-t bg-background">
-        <div className="relative max-w-3xl mx-auto">
-          <Textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Message Aiva..."
-            className="pr-28 min-h-[52px] rounded-2xl resize-none p-4"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage(input);
-              }
-            }}
-            disabled={isDisabled}
-            rows={1}
-          />
-          <div className="absolute top-1/2 right-3 -translate-y-1/2 flex gap-1">
-            <Button variant="ghost" size="icon" onClick={handleEnhancePrompt} disabled={isDisabled || !input.trim() || isOffline} title="Enhance Prompt (Online only)">
-              {isEnhancing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5 text-accent" />}
-            </Button>
-            <Button onClick={() => sendMessage(input)} disabled={isDisabled || !input.trim()} size="icon" className="rounded-full bg-primary hover:bg-primary/90 disabled:bg-muted">
-              <Send className="h-5 w-5" />
+      <footer className="p-4 bg-background">
+        <div className="max-w-3xl mx-auto">
+          <div className="relative">
+            <Textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Message Aiva..."
+              className="pr-16 rounded-2xl resize-none p-4 border-border/60 bg-card focus-visible:ring-1 focus-visible:ring-ring"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage(input);
+                }
+              }}
+              disabled={isDisabled}
+              rows={1}
+            />
+            <Button 
+              onClick={() => sendMessage(input)} 
+              disabled={isDisabled || !input.trim()} 
+              size="icon" 
+              className="absolute top-1/2 right-3 -translate-y-1/2 w-8 h-8 rounded-lg bg-primary hover:bg-primary/90 disabled:bg-muted"
+            >
+              <Send className="h-4 w-4" />
             </Button>
           </div>
+           <p className="text-xs text-center text-muted-foreground mt-2">
+            Aiva can make mistakes. Consider checking important information.
+          </p>
         </div>
       </footer>
     </div>

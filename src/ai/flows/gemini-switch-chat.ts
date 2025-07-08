@@ -28,13 +28,46 @@ const GeminiSwitchChatOutputSchema = z.object({
 });
 
 async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {
-  // In a real app, you would call the Ollama API here.
-  // For this demo, we'll return a mock response.
-  console.log(`Using mock Ollama for prompt: ${prompt}`);
-  return {
-    response: `I am currently offline and using the local Ollama model to respond. You said: "${prompt}"`,
-  };
+  try {
+    const res = await fetch('http://127.0.0.1:11434/api/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama3', // Using a more common default model
+        prompt: prompt,
+        stream: false,
+      }),
+    });
+
+    if (!res.ok) {
+        console.error("Ollama API Error:", res.status, res.statusText);
+        return {
+            response: "Sorry, I'm having trouble connecting to the local AI model. Please ensure Ollama is running.",
+        };
+    }
+    
+    const data = await res.json();
+
+    if (!data.response) {
+      console.error("Invalid Ollama response format:", data);
+      return {
+          response: "Sorry, I received an unexpected response from the local AI model."
+      }
+    }
+
+    return {
+      response: data.response,
+    };
+  } catch (error) {
+    console.error('Failed to fetch from Ollama:', error);
+    return {
+      response: "It seems you're offline, but I can't reach the local AI model. Please make sure Ollama is running on your machine.",
+    };
+  }
 }
+
 
 export async function geminiSwitchChat(
   input: GeminiSwitchChatInput

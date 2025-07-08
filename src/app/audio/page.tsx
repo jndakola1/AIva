@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Sparkles,
-  RefreshCw,
   Video,
   Upload,
   X,
@@ -78,6 +77,15 @@ export default function LiveVideoPage() {
     }
   }, [toast]);
   
+  const handleStartOver = useCallback(async () => {
+    setConversation([]);
+    setSummary(null);
+    setIsListening(false);
+    setIsAIThinking(false);
+    // This will trigger the useEffect to re-initialize
+    setChatEnded(false); 
+  }, []);
+
   const initializeMedia = useCallback(async () => {
     if (typeof window !== 'undefined' && navigator.mediaDevices) {
         try {
@@ -232,15 +240,6 @@ export default function LiveVideoPage() {
       setIsAIThinking(false);
     }
   };
-  
-  const handleStartOver = useCallback(async () => {
-    setConversation([]);
-    setSummary(null);
-    setIsListening(false);
-    setIsAIThinking(false);
-    // This will trigger the useEffect to re-initialize
-    setChatEnded(false); 
-  }, []);
 
   // 4. Render component
   if (hasPermissions === undefined) {
@@ -322,8 +321,8 @@ export default function LiveVideoPage() {
             Live
           </div>
         </div>
-        <Button size="icon" variant="ghost" className="text-white hover:bg-white/20 rounded-full">
-          <RefreshCw className="w-5 h-5" />
+        <Button onClick={handleStartOver} size="icon" variant="ghost" className="text-white hover:bg-white/20 rounded-full" title="Start Over">
+          <RotateCcw className="w-5 h-5" />
         </Button>
       </div>
 
@@ -333,7 +332,7 @@ export default function LiveVideoPage() {
             <Button onClick={toggleCamera} size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
               {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
             </Button>
-            <Button size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
+            <Button disabled title="Upload not available" size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
               <Upload className="w-6 h-6" />
             </Button>
             
@@ -366,3 +365,5 @@ export default function LiveVideoPage() {
     </div>
   );
 }
+
+    

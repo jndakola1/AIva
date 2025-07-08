@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect, useRef} from 'react';
+import {useState, useEffect, useRef, useCallback} from 'react';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent} from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
@@ -43,39 +43,44 @@ export default function AudioVisualChatPage() {
   const recognitionRef = useRef<any>(null);
   const introPlayedRef = useRef(false);
 
+  const isProcessingRef = useRef(isProcessing);
+  isProcessingRef.current = isProcessing;
+
   const {toast} = useToast();
 
-  const sendMessage = async (messageToSend?: string) => {
-    const currentMessage = messageToSend || input;
-    if (!currentMessage.trim() || isProcessing) return;
+  const sendMessage = useCallback(
+    async (messageToSend: string) => {
+      if (!messageToSend.trim() || isProcessingRef.current) return;
 
-    const userMessage = currentMessage;
-    setInput('');
-    setIsProcessing(true);
-    setAudioSrc(null);
+      const userMessage = messageToSend;
+      setInput('');
+      setIsProcessing(true);
+      setAudioSrc(null);
 
-    setMessages(prev => [...prev, {role: 'You', content: userMessage}]);
+      setMessages(prev => [...prev, {role: 'You', content: userMessage}]);
 
-    try {
-      const {response} = await chat({prompt: userMessage});
-      setMessages(prev => [...prev, {role: 'AI', content: response}]);
+      try {
+        const {response} = await chat({prompt: userMessage});
+        setMessages(prev => [...prev, {role: 'AI', content: response}]);
 
-      const {media} = await tts({text: response});
-      setAudioSrc(media);
-    } catch (error) {
-      console.error(error);
-      const errorMessage =
-        'Sorry, I encountered an error. Please try again.';
-      setMessages(prev => [...prev, {role: 'AI', content: errorMessage}]);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to get a response from the AI.',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+        const {media} = await tts({text: response});
+        setAudioSrc(media);
+      } catch (error) {
+        console.error(error);
+        const errorMessage =
+          'Sorry, I encountered an error. Please try again.';
+        setMessages(prev => [...prev, {role: 'AI', content: errorMessage}]);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to get a response from the AI.',
+        });
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [toast]
+  );
 
   // Initialize SpeechRecognition
   useEffect(() => {
@@ -112,11 +117,10 @@ export default function AudioVisualChatPage() {
         });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  }, [toast, sendMessage]);
 
-  const playAivaIntro = async () => {
-    if (introPlayedRef.current) return;
+  const playAivaIntro = useCallback(async () => {
+    if (introPlayedRef.current || isProcessingRef.current) return;
     introPlayedRef.current = true;
 
     const introMessage = "Hello! I'm Aiva. How can I assist you today?";
@@ -136,7 +140,7 @@ export default function AudioVisualChatPage() {
     } finally {
       setIsProcessing(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     async function getCameraPermission() {
@@ -165,8 +169,7 @@ export default function AudioVisualChatPage() {
       }
     }
     getCameraPermission();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  }, [toast, playAivaIntro]);
 
   useEffect(() => {
     if (audioSrc && audioRef.current) {
@@ -272,7 +275,7 @@ export default function AudioVisualChatPage() {
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  sendMessage();
+                  sendMessage(input);
                 }
               }}
               disabled={
@@ -292,7 +295,7 @@ export default function AudioVisualChatPage() {
               <Mic className="h-5 w-5" />
             </Button>
             <Button
-              onClick={() => sendMessage()}
+              onClick={() => sendMessage(input)}
               disabled={
                 isProcessing ||
                 !input.trim() ||

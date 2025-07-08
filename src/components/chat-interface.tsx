@@ -15,6 +15,9 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 type Message = {
   role: "You" | "AI";
   content: string;
+  imageUrl?: string;
+  altText?: string;
+  dataAiHint?: string;
 };
 
 export default function ChatInterface() {
@@ -54,8 +57,14 @@ export default function ChatInterface() {
     setIsSending(true);
     
     try {
-      const { response } = await geminiSwitchChat({ prompt, isOnline });
-      setMessages((prev) => [...prev, { role: "AI", content: response }]);
+      const aiResponse = await geminiSwitchChat({ prompt, isOnline });
+      setMessages((prev) => [...prev, { 
+        role: "AI",
+        content: aiResponse.response,
+        imageUrl: aiResponse.imageUrl,
+        altText: aiResponse.altText,
+        dataAiHint: aiResponse.dataAiHint,
+      }]);
     } catch (error) {
       console.error(error);
       setMessages((prev) => [...prev, { role: "AI", content: `Sorry, I ran into an error. Please try again later.` }]);
@@ -83,7 +92,7 @@ export default function ChatInterface() {
                 </div>
             )}
             {messages.map((msg, i) => (
-              <ChatMessage key={i} role={msg.role} content={msg.content} />
+              <ChatMessage key={i} {...msg} />
             ))}
             {isSending && messages[messages.length-1]?.role === 'You' && (
                 <ChatMessage role="AI" content="" isLoading={true} />

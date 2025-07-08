@@ -1,14 +1,18 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Bot, User } from "lucide-react";
+import Image from "next/image";
 
 type ChatMessageProps = {
   role: "You" | "AI";
   content: string;
   isLoading?: boolean;
+  imageUrl?: string;
+  altText?: string;
+  dataAiHint?: string;
 };
 
-export default function ChatMessage({ role, content, isLoading }: ChatMessageProps) {
+export default function ChatMessage({ role, content, isLoading, imageUrl, altText, dataAiHint }: ChatMessageProps) {
   const isAi = role === "AI";
   return (
     <div className="flex items-start gap-4">
@@ -27,7 +31,21 @@ export default function ChatMessage({ role, content, isLoading }: ChatMessagePro
                 <div className="w-2 h-2 rounded-full bg-current animate-bounce" />
             </div>
           ) : (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">{content}</p>
+            <>
+              {content && <p className="whitespace-pre-wrap text-sm leading-relaxed">{content}</p>}
+              {imageUrl && (
+                <div className="mt-2">
+                  <Image
+                    src={imageUrl}
+                    alt={altText || "AI generated image"}
+                    width={600}
+                    height={400}
+                    className="rounded-lg border border-border"
+                    data-ai-hint={dataAiHint}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

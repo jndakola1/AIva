@@ -17,7 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Bot, History, Menu, MessageSquare, Settings } from 'lucide-react';
+import { Bot, History, Menu, MessageSquare, Settings, Video } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
@@ -31,6 +31,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   const navLinks = [
     { href: '/', label: 'Chat', icon: MessageSquare },
+    { href: '/audio', label: 'Video Chat', icon: Video },
     { href: '/history', label: 'History', icon: History },
   ];
 

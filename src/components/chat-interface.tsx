@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "@/components/chat-message";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
+import { chat } from "@/ai/flows/chat";
 
 type Message = {
   role: "You" | "AI";
@@ -51,26 +52,15 @@ export default function ChatInterface() {
     setIsSending(true);
     
     try {
-      const res = await fetch("/api/gemini", {
-        method: "POST",
-        body: JSON.stringify({ prompt }),
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(`API error: ${res.statusText} - ${errorData.error || 'No additional info'}`);
-      }
-
-      const data = await res.json();
-      setMessages((prev) => [...prev, { role: "AI", content: data.response }]);
+      const { response } = await chat({ prompt });
+      setMessages((prev) => [...prev, { role: "AI", content: response }]);
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [...prev, { role: "AI", content: `Sorry, I ran into an error. Please check your API key and network connection.` }]);
+      setMessages((prev) => [...prev, { role: "AI", content: `Sorry, I ran into an error. Please try again later.` }]);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Could not get a response. Please check your connection and API key.`,
+        description: `Could not get a response. Please check your connection and try again.`,
       });
     } finally {
       setIsSending(false);

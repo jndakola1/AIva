@@ -19,7 +19,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <header className="p-4 border-b">
+      <header className="p-4">
         <h1 className="text-xl font-semibold">Settings</h1>
       </header>
       <main className="flex-1 p-6">
@@ -48,7 +48,7 @@ export default function SettingsPage() {
               <CardTitle>Data Management</CardTitle>
               <CardDescription>
                 Manage your conversation data.
-              </d   escription>
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">

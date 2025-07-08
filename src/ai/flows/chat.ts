@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview A simple chat AI agent that can also display images.
+ * @fileOverview A simple chat AI agent that can also display images and perform research.
  *
  * - chat - A function that handles a chat conversation.
  * - ChatInput - The input type for the chat function.
@@ -33,9 +33,31 @@ const searchForImageTool = ai.defineTool(
   }
 );
 
+const researchTopic = ai.defineTool(
+  {
+    name: 'researchTopic',
+    description: 'Performs a web search to find up-to-date information on a given topic.',
+    inputSchema: z.object({
+      topic: z.string().describe('The topic to research.'),
+    }),
+    outputSchema: z.object({
+      summary: z.string().describe('A summary of the research findings.'),
+    }),
+  },
+  async ({ topic }) => {
+    console.log(`Researching topic: ${topic}`);
+    // In a real app, this would perform a web search.
+    // For this demo, we'll return a mock response.
+    return {
+      summary: `After researching "${topic}", I found that it is a complex subject with many different viewpoints. The most recent developments indicate a trend towards increased adoption and integration into mainstream platforms. Key figures in the field have expressed both optimism and caution.`,
+    };
+  }
+);
+
 
 const ChatInputSchema = z.object({
   prompt: z.string().describe('The user prompt.'),
+  performResearch: z.boolean().optional().describe('Whether to force the use of the research tool.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -55,8 +77,14 @@ const prompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
-  tools: [searchForImageTool],
-  prompt: `You are a helpful AI assistant named Aiva. Respond to the following prompt concisely. If the user asks to see an image or a picture of something, use the searchForImage tool. When you use the tool, its output will be provided back to you. Use that information to formulate your final response in the required JSON format, including the imageUrl, altText, and dataAiHint if a tool was used. Also provide a short text response, like "Of course, here is a picture of a cat."
+  tools: [searchForImageTool, researchTopic],
+  prompt: `You are a helpful AI assistant named Aiva. Respond to the following prompt concisely.
+
+If the user asks to see an image or a picture of something, use the searchForImage tool. When you use the tool, its output will be provided back to you. Use that information to formulate your final response in the required JSON format, including the imageUrl, altText, and dataAiHint if a tool was used. Also provide a short text response, like "Of course, here is a picture of a cat."
+
+If the 'performResearch' flag is true, you MUST use the researchTopic tool to answer the user's prompt. If the user's prompt seems to ask for recent or up-to-date information, you should also use the researchTopic tool. After getting the research summary, present it to the user in a clear and helpful way.
+
+Otherwise, answer from your existing knowledge.
 
 Prompt: {{{prompt}}}`,
 });

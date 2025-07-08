@@ -51,15 +51,18 @@ export default function ChatInterface() {
     }
   }, [messages]);
 
-  const sendMessage = async (prompt: string) => {
+  const sendMessage = async (prompt: string, options?: { performResearch?: boolean }) => {
     if (!prompt.trim()) return;
 
-    setMessages((prev) => [...prev, { role: "You", content: prompt }]);
+    const performResearch = options?.performResearch || false;
+    const userMessage = performResearch ? `Research: ${prompt}` : prompt;
+
+    setMessages((prev) => [...prev, { role: "You", content: userMessage }]);
     setInput("");
     setIsSending(true);
     
     try {
-      const aiResponse = await geminiSwitchChat({ prompt, isOnline });
+      const aiResponse = await geminiSwitchChat({ prompt, isOnline, performResearch });
       setMessages((prev) => [...prev, { 
         role: "AI",
         content: aiResponse.response,
@@ -69,7 +72,10 @@ export default function ChatInterface() {
       }]);
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [...prev, { role: "AI", content: `Sorry, I ran into an error. Please try again later.` }]);
+      const errorMessage = performResearch
+        ? `Sorry, I ran into an error during research. Please try again later.`
+        : `Sorry, I ran into an error. Please try again later.`;
+      setMessages((prev) => [...prev, { role: "AI", content: errorMessage }]);
       toast({
         variant: "destructive",
         title: "Error",
@@ -161,7 +167,12 @@ export default function ChatInterface() {
                 >
                   {isEnhancing ? <Loader className="h-5 w-5 animate-spin" /> : <SlidersHorizontal className="h-5 w-5" />}
                 </Button>
-                <Button variant="outline" className="rounded-full text-muted-foreground border-border/60" disabled={isDisabled}>
+                <Button 
+                  variant="outline" 
+                  className="rounded-full text-muted-foreground border-border/60"
+                  onClick={() => sendMessage(input, { performResearch: true })}
+                  disabled={isDisabled || !input.trim()}
+                >
                   <Search className="h-4 w-4 mr-2" />
                   Research
                 </Button>

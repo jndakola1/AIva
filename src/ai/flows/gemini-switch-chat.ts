@@ -14,6 +14,7 @@ import { chat as onlineChat, ChatOutput } from './chat';
 const GeminiSwitchChatInputSchema = z.object({
   prompt: z.string().describe('The user prompt.'),
   isOnline: z.boolean().describe('The network status of the client.'),
+  performResearch: z.boolean().optional().describe('Whether to force the use of the research tool.'),
 });
 export type GeminiSwitchChatInput = z.infer<typeof GeminiSwitchChatInputSchema>;
 
@@ -47,10 +48,11 @@ const geminiSwitchChatFlow = ai.defineFlow(
     inputSchema: GeminiSwitchChatInputSchema,
     outputSchema: GeminiSwitchChatOutputSchema,
   },
-  async ({ prompt, isOnline }) => {
+  async ({ prompt, isOnline, performResearch }) => {
     if (isOnline) {
-      return onlineChat({ prompt });
+      return onlineChat({ prompt, performResearch });
     } else {
+      // The offline model can't do research.
       return ollamaChat(prompt);
     }
   }

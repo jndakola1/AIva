@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { AudioLines, Mic, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { Loader, Mic, Plus, Search, Send, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { geminiSwitchChat } from "@/ai/flows/gemini-switch-chat";
 import { useOnlineStatus } from "@/hooks/use-online-status";
+import { enhancePrompt } from "@/ai/flows/enhance-prompt";
 
 type Message = {
   role: "You" | "AI";
@@ -24,6 +25,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isEnhancing, setIsEnhancing] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
@@ -78,7 +80,33 @@ export default function ChatInterface() {
     }
   };
 
-  const isDisabled = isSending;
+  const handleEnhancePrompt = async () => {
+    if (!input.trim() || isSending || isEnhancing) return;
+
+    setIsEnhancing(true);
+    try {
+      const result = await enhancePrompt({ prompt: input });
+      if (result.enhancedPrompt) {
+        setInput(result.enhancedPrompt);
+      }
+      toast({
+        title: "Prompt Enhanced",
+        description: "Your prompt has been improved.",
+      });
+    } catch (error) {
+      console.error("Failed to enhance prompt:", error);
+      toast({
+        variant: "destructive",
+        title: "Enhancement Failed",
+        description: "Could not enhance the prompt. Please try again.",
+      });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+
+  const isDisabled = isSending || isEnhancing;
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
@@ -120,19 +148,26 @@ export default function ChatInterface() {
             />
             <div className="flex justify-between items-center mt-2">
               <div className="flex items-center gap-1 sm:gap-2">
-                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
+                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground" disabled={isDisabled}>
                   <Plus className="h-5 w-5" />
                 </Button>
-                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
-                  <SlidersHorizontal className="h-5 w-5" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-full text-muted-foreground"
+                  onClick={handleEnhancePrompt}
+                  disabled={isDisabled || !input.trim()}
+                  title="Enhance Prompt"
+                >
+                  {isEnhancing ? <Loader className="h-5 w-5 animate-spin" /> : <SlidersHorizontal className="h-5 w-5" />}
                 </Button>
-                <Button variant="outline" className="rounded-full text-muted-foreground border-border/60">
+                <Button variant="outline" className="rounded-full text-muted-foreground border-border/60" disabled={isDisabled}>
                   <Search className="h-4 w-4 mr-2" />
                   Research
                 </Button>
               </div>
               <div className="flex items-center gap-1 sm:gap-2">
-                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
+                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground" disabled={isDisabled}>
                   <Mic className="h-5 w-5" />
                 </Button>
                 <Button
@@ -141,7 +176,7 @@ export default function ChatInterface() {
                   size="icon"
                   className="rounded-full w-10 h-10 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted"
                 >
-                  <AudioLines className="h-5 w-5" />
+                  {isSending ? <Loader className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
                 </Button>
               </div>
             </div>

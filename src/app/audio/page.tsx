@@ -44,6 +44,9 @@ export default function LiveVideoPage() {
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [chatEnded, setChatEnded] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [currentDeviceIndex, setCurrentDeviceIndex] = useState(0);
+
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -95,6 +98,12 @@ export default function LiveVideoPage() {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
+
+          // Enumerate devices now that we have permission
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoInputs = devices.filter(device => device.kind === 'videoinput');
+          setVideoDevices(videoInputs);
+
           return stream;
         } catch (error) {
           console.error('Error accessing media devices:', error);
@@ -110,6 +119,45 @@ export default function LiveVideoPage() {
     setHasPermissions(false);
     return null;
   }, [toast]);
+
+  const handleSwitchCamera = useCallback(async () => {
+    if (videoDevices.length < 2) {
+      toast({
+        title: "No Other Camera Found",
+        description: "Only one camera is available.",
+      });
+      return;
+    }
+
+    // Stop current tracks to release the camera
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+
+    const nextDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+    const nextDeviceId = videoDevices[nextDeviceIndex].deviceId;
+
+    try {
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { deviceId: { exact: nextDeviceId } },
+        audio: true, // We still need audio for the mic
+      });
+      streamRef.current = newStream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = newStream;
+      }
+      setCurrentDeviceIndex(nextDeviceIndex);
+    } catch (error) {
+      console.error('Error switching camera:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Could Not Switch Camera',
+        description: 'There was an error accessing the other camera.',
+      });
+      // As a fallback, try to re-initialize with default settings
+      await initializeMedia();
+    }
+  }, [videoDevices, currentDeviceIndex, toast, initializeMedia]);
 
 
   // 1. Permissions and Initial Greeting
@@ -321,7 +369,7 @@ export default function LiveVideoPage() {
             Live
           </div>
         </div>
-        <Button onClick={handleStartOver} size="icon" variant="ghost" className="text-white hover:bg-white/20 rounded-full" title="Start Over">
+        <Button onClick={handleSwitchCamera} size="icon" variant="ghost" className="text-white hover:bg-white/20 rounded-full" title="Switch Camera" disabled={videoDevices.length < 2}>
           <RotateCcw className="w-5 h-5" />
         </Button>
       </div>
@@ -365,5 +413,7 @@ export default function LiveVideoPage() {
     </div>
   );
 }
+
+    
 
     

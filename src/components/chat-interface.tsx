@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Loader, Mic, Plus, Search, Send, SlidersHorizontal } from "lucide-react";
+import { Loader, Mic, Search, Send, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { geminiSwitchChat } from "@/ai/flows/gemini-switch-chat";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { enhancePrompt } from "@/ai/flows/enhance-prompt";
+import AttachmentMenu from "@/components/attachment-menu";
 
 type Message = {
   role: "You" | "AI";
@@ -154,9 +155,7 @@ export default function ChatInterface() {
             />
             <div className="flex justify-between items-center mt-2">
               <div className="flex items-center gap-1 sm:gap-2">
-                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground" disabled={isDisabled}>
-                  <Plus className="h-5 w-5" />
-                </Button>
+                <AttachmentMenu disabled={isDisabled} />
                 <Button 
                   variant="ghost" 
                   size="icon" 

@@ -78,11 +78,15 @@ const prompt = ai.definePrompt({
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
   tools: [searchForImageTool, researchTopic],
-  prompt: `You are a helpful AI assistant named Aiva. Your goal is to provide concise and accurate answers. You MUST always respond in the specified JSON format.
+  prompt: `You are a helpful AI assistant named Aiva. Your goal is to provide concise and accurate answers.
 
-- If the user asks for an image, use the 'searchForImage' tool. Once you receive the image details from the tool, include 'imageUrl', 'altText', and 'dataAiHint' in your final JSON response, along with a brief text 'response'.
-- If the 'performResearch' flag is true, or if the user's prompt asks for recent or up-to-date information, you MUST use the 'researchTopic' tool. Use the summary from the tool to formulate your final text 'response' in the required JSON format.
-- For all other requests, answer from your existing knowledge, providing the answer in the 'response' field of the JSON output.
+Based on the user's prompt, decide if you need to use one of the available tools: 'searchForImage' for pictures, or 'researchTopic' for up-to-date information (especially if 'performResearch' is true).
+
+After gathering all necessary information, formulate a final answer.
+
+**Critically, your entire output must be a single, valid JSON object that conforms to the required output schema.**
+- For a text response, use the 'response' field.
+- If you found an image, include 'imageUrl', 'altText', and 'dataAiHint'.
 
 User Prompt: {{{prompt}}}`,
 });

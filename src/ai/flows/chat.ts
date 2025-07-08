@@ -72,6 +72,18 @@ const chatFlow = ai.defineFlow(
     if (!output) {
       throw new Error('The chat flow failed to produce an output.');
     }
+    
+    // Safeguard: If the LLM hallucinates an image URL, replace it with a placeholder to prevent crashes.
+    if (output.imageUrl && !output.imageUrl.startsWith('https://placehold.co')) {
+      // Try to extract a query from the prompt for better alt text.
+      const queryMatch = input.prompt.match(/(?:image|picture) of (?:a|an|the)?\s*([^.?!]*)/i);
+      const query = queryMatch ? queryMatch[1].trim() : 'a visual representation';
+
+      output.imageUrl = `https://placehold.co/600x400.png`;
+      output.altText = `An image of ${query}`;
+      output.dataAiHint = query.split(' ').slice(0, 2).join(' ');
+    }
+
     return output;
   }
 );

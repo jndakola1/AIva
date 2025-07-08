@@ -46,7 +46,7 @@ export default function RootLayout({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" className="rounded-lg" asChild>
-                    <Link href="/categories">
+                    <Link href="/history">
                       <History className="h-5 w-5" />
                       <span className="sr-only">History</span>
                     </Link>
@@ -57,7 +57,7 @@ export default function RootLayout({
               <Tooltip>
                 <TooltipTrigger asChild>
                    <Button variant="ghost" size="icon" className="rounded-lg mt-auto" asChild>
-                    <Link href="/weather">
+                    <Link href="/settings">
                       <Settings className="h-5 w-5" />
                       <span className="sr-only">Settings</span>
                     </Link>

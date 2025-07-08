@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Sparkles,
-  CameraReverse,
+  RefreshCw,
   Video,
   Upload,
   Pause,
@@ -116,7 +116,7 @@ export default function LiveVideoPage() {
                     <span className="font-semibold text-sm">Live</span>
                 </div>
                 <Button variant="ghost" size="icon" className="rounded-full text-white hover:bg-white/20 hover:text-white bg-black/30">
-                    <CameraReverse className="h-5 w-5" />
+                    <RefreshCw className="h-5 w-5" />
                 </Button>
             </div>
             

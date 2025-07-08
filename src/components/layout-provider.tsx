@@ -85,7 +85,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         {/* Main Content Area */}
         <div className="flex flex-1 flex-col">
             {/* Mobile Header */}
-            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 md:hidden">
+            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 bg-background px-4 md:hidden">
                 <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                     <SheetTrigger asChild>
                     <Button size="icon" variant="outline">

@@ -1,15 +1,14 @@
+
 'use client';
 
 import {useState, useEffect, useRef, useCallback} from 'react';
 import {Button} from '@/components/ui/button';
-import {Card, CardContent} from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {Textarea} from '@/components/ui/textarea';
 import {ScrollArea} from '@/components/ui/scroll-area';
 import {Bot, User, Mic, Send, Loader} from 'lucide-react';
 import {cn} from '@/lib/utils';
-import Image from 'next/image';
 import {tts} from '@/ai/flows/tts';
 import ChatMessage from '@/components/chat-message';
 import { useOnlineStatus } from '@/hooks/use-online-status';
@@ -29,9 +28,7 @@ type Message = {
 };
 
 export default function AudioVisualChatPage() {
-  const [hasPermissions, setHasPermissions] = useState<
-    boolean | undefined
-  >(undefined);
+  const [hasPermissions, setHasPermissions] = useState<boolean | undefined>(undefined);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -42,17 +39,17 @@ export default function AudioVisualChatPage() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
-  const introPlayedRef = useRef(false);
-
-  const isProcessingRef = useRef(isProcessing);
-  isProcessingRef.current = isProcessing;
 
   const {toast} = useToast();
   const isOnline = useOnlineStatus();
 
+  const playIntro = useCallback(() => {
+     setMessages([{role: 'AI', content: "Hello! I'm Aiva. How can I assist you today?"}]);
+  }, []);
+
   const sendMessage = useCallback(
     async (messageToSend: string) => {
-      if (!messageToSend.trim() || isProcessingRef.current) return;
+      if (!messageToSend.trim() || isProcessing) return;
 
       const userMessage = messageToSend;
       setInput('');
@@ -71,8 +68,7 @@ export default function AudioVisualChatPage() {
         }
       } catch (error) {
         console.error(error);
-        const errorMessage =
-          'Sorry, I encountered an error. Please try again.';
+        const errorMessage = 'Sorry, I encountered an error. Please try again.';
         setMessages(prev => [...prev, {role: 'AI', content: errorMessage}]);
         toast({
           variant: 'destructive',
@@ -83,7 +79,7 @@ export default function AudioVisualChatPage() {
         setIsProcessing(false);
       }
     },
-    [toast, isOnline]
+    [toast, isOnline, isProcessing]
   );
 
   useEffect(() => {
@@ -102,7 +98,6 @@ export default function AudioVisualChatPage() {
         };
 
         recognitionRef.current.onerror = (event: any) => {
-          console.error('Speech recognition error', event.error);
           let description = 'Could not process audio.';
           if (event.error === 'not-allowed') {
             description = 'Microphone access was denied. Please enable it in your browser settings to use voice input.';
@@ -119,41 +114,10 @@ export default function AudioVisualChatPage() {
         recognitionRef.current.onend = () => {
           setIsRecording(false);
         };
-      } else {
-        toast({
-          title: 'Feature Not Supported',
-          description: 'Speech recognition is not available in your browser.',
-        });
       }
     }
   }, [toast, sendMessage]);
-
-  const playAivaIntro = useCallback(async () => {
-    if (introPlayedRef.current || isProcessingRef.current) return;
-    introPlayedRef.current = true;
-
-    const introMessage = "Hello! I'm Aiva. How can I assist you today?";
-    setMessages([{role: 'AI', content: introMessage}]);
-    
-    if (!isOnline) return;
-
-    setIsProcessing(true);
-
-    try {
-      const {media} = await tts({text: introMessage});
-      setAudioSrc(media);
-    } catch (error) {
-      console.error('Error generating intro audio:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Audio Error',
-        description: 'Failed to generate introductory audio.',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [toast, isOnline]);
-
+  
   useEffect(() => {
     async function getMediaPermissions() {
       if (typeof window !== 'undefined' && navigator.mediaDevices) {
@@ -166,7 +130,7 @@ export default function AudioVisualChatPage() {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          playAivaIntro();
+          playIntro();
         } catch (error) {
           console.error('Error accessing media devices:', error);
           setHasPermissions(false);
@@ -182,7 +146,7 @@ export default function AudioVisualChatPage() {
       }
     }
     getMediaPermissions();
-  }, [toast, playAivaIntro]);
+  }, [toast, playIntro]);
 
   useEffect(() => {
     if (audioSrc && audioRef.current) {
@@ -226,6 +190,8 @@ export default function AudioVisualChatPage() {
     }
     setIsRecording(!isRecording);
   };
+  
+  const isDisabled = isProcessing || hasPermissions === false || isRecording;
 
   return (
     <div className="flex flex-col h-full bg-background/80">
@@ -233,42 +199,28 @@ export default function AudioVisualChatPage() {
         <h1 className="text-xl font-semibold">Audio/Visual Chat</h1>
         <ModeIndicator />
       </header>
-      <main className="flex-1 overflow-hidden p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="p-2 h-full">
+      <main className="flex-1 flex flex-col overflow-hidden px-4 pb-4">
+        <div className="w-full max-w-3xl mx-auto rounded-lg overflow-hidden shadow-lg border border-border">
             <video
               ref={videoRef}
-              className="w-full h-full object-cover rounded-md"
+              className="w-full aspect-video bg-black"
               autoPlay
               muted
             />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-2 h-full">
-            <Image
-              src="https://placehold.co/1280x720.png"
-              alt="Aiva's Avatar"
-              width={1280}
-              height={720}
-              data-ai-hint="robot avatar"
-              className="w-full h-full object-cover rounded-md"
-            />
-          </CardContent>
-        </Card>
+        </div>
+        <div className="flex-1 flex flex-col overflow-hidden mt-4">
+          <ScrollArea className="flex-grow" ref={scrollAreaRef}>
+            <div className="py-4 space-y-6 max-w-3xl mx-auto">
+              {messages.map((msg, i) => (
+                <ChatMessage key={i} role={msg.role} content={msg.content} />
+              ))}
+              {isProcessing && messages[messages.length - 1]?.role === 'You' && (
+                <ChatMessage role="AI" content="" isLoading={true} />
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       </main>
-      <div className="flex-1 flex flex-col overflow-hidden px-4">
-        <ScrollArea className="flex-grow" ref={scrollAreaRef}>
-          <div className="py-4 space-y-6 max-w-3xl mx-auto">
-            {messages.map((msg, i) => (
-              <ChatMessage key={i} role={msg.role} content={msg.content} />
-            ))}
-            {isProcessing && messages[messages.length - 1]?.role === 'You' && (
-              <ChatMessage role="AI" content="" isLoading={true} />
-            )}
-          </div>
-        </ScrollArea>
-      </div>
 
       <footer className="p-4 bg-background">
         {hasPermissions === false && (
@@ -280,7 +232,7 @@ export default function AudioVisualChatPage() {
           </Alert>
         )}
         <div className="max-w-3xl mx-auto">
-          <div className="bg-card rounded-2xl p-2 sm:p-3 shadow-sm border border-input flex items-center">
+          <div className="bg-card rounded-full p-2 sm:p-3 shadow-sm border border-input flex items-center">
             <Textarea
               value={input}
               onChange={e => setInput(e.target.value)}
@@ -292,9 +244,7 @@ export default function AudioVisualChatPage() {
                   sendMessage(input);
                 }
               }}
-              disabled={
-                isProcessing || hasPermissions === false || isRecording
-              }
+              disabled={isDisabled}
               rows={1}
             />
             <Button
@@ -310,12 +260,7 @@ export default function AudioVisualChatPage() {
             </Button>
             <Button
               onClick={() => sendMessage(input)}
-              disabled={
-                isProcessing ||
-                !input.trim() ||
-                hasPermissions === false ||
-                isRecording
-              }
+              disabled={isDisabled || !input.trim()}
               size="icon"
               className="rounded-full w-10 h-10 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted"
             >

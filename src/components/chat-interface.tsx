@@ -90,14 +90,14 @@ export default function ChatInterface() {
         </ScrollArea>
       </main>
 
-      <footer className="p-4 bg-background border-t border-border">
+      <footer className="p-4 bg-background">
         <div className="max-w-3xl mx-auto">
           <div className="bg-card rounded-2xl p-2 sm:p-3 shadow-sm border border-input">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Message Aiva..."
-              className="bg-transparent border-0 focus-visible:ring-0 resize-none w-full p-2 text-base"
+              className="bg-transparent border-0 focus-visible:ring-0 resize-none w-full p-2 text-base min-h-0"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

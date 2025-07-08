@@ -101,7 +101,7 @@ export type ChatInput = z.infer<typeof ChatInputSchema>;
 
 const ChatOutputSchema = z.object({
   response: z.string().describe('The AI text response.'),
-  imageUrl: z.string().optional().describe('The URL of an image to display, if requested.'),
+  imageUrl: z.string().nullable().optional().describe('The URL of an image to display, if requested.'),
   altText: z.string().optional().describe('The alt text for the image.'),
   dataAiHint: z.string().optional().describe('A hint for a real image search.'),
 });
@@ -136,6 +136,13 @@ const chatFlow = ai.defineFlow(
     const {output} = await prompt(input);
     if (!output) {
       throw new Error('The chat flow failed to produce a valid output. The model may have returned an empty or invalid response.');
+    }
+
+    // Handle cases where the model returns null for imageUrl
+    if (output.imageUrl === null) {
+      output.imageUrl = undefined;
+      output.altText = undefined;
+      output.dataAiHint = undefined;
     }
     
     // Safeguard: If the LLM hallucinates an image URL from a non-approved domain, replace it with a placeholder to prevent crashes.

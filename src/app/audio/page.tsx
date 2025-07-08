@@ -7,13 +7,20 @@ import {useToast} from '@/hooks/use-toast';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {Textarea} from '@/components/ui/textarea';
 import {ScrollArea} from '@/components/ui/scroll-area';
-import {Avatar, AvatarFallback} from '@/components/ui/avatar';
 import {Bot, User, Mic, Send, Loader} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import Image from 'next/image';
 import {chat} from '@/ai/flows/chat';
 import {tts} from '@/ai/flows/tts';
 import ChatMessage from '@/components/chat-message';
+
+// Make SpeechRecognition compatible with different browsers
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 type Message = {
   role: 'You' | 'AI';
@@ -26,25 +33,123 @@ export default function AudioVisualChatPage() {
   >(undefined);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isSending, setIsSending] = useState(false);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const introPlayedRef = useRef(false);
 
   const {toast} = useToast();
+
+  const sendMessage = async (messageToSend?: string) => {
+    const currentMessage = messageToSend || input;
+    if (!currentMessage.trim() || isProcessing) return;
+
+    const userMessage = currentMessage;
+    setInput('');
+    setIsProcessing(true);
+    setAudioSrc(null);
+
+    setMessages(prev => [...prev, {role: 'You', content: userMessage}]);
+
+    try {
+      const {response} = await chat({prompt: userMessage});
+      setMessages(prev => [...prev, {role: 'AI', content: response}]);
+
+      const {media} = await tts({text: response});
+      setAudioSrc(media);
+    } catch (error) {
+      console.error(error);
+      const errorMessage =
+        'Sorry, I encountered an error. Please try again.';
+      setMessages(prev => [...prev, {role: 'AI', content: errorMessage}]);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to get a response from the AI.',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Initialize SpeechRecognition
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.lang = 'en-US';
+        recognitionRef.current.interimResults = false;
+
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          sendMessage(transcript);
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          toast({
+            variant: 'destructive',
+            title: 'Speech Recognition Error',
+            description: `Could not process audio: ${event.error}`,
+          });
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsRecording(false);
+        };
+      } else {
+        toast({
+          title: 'Feature Not Supported',
+          description: 'Speech recognition is not available in your browser.',
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast]);
+
+  const playAivaIntro = async () => {
+    if (introPlayedRef.current) return;
+    introPlayedRef.current = true;
+
+    const introMessage = "Hello! I'm Aiva. How can I assist you today?";
+    setMessages([{role: 'AI', content: introMessage}]);
+    setIsProcessing(true);
+
+    try {
+      const {media} = await tts({text: introMessage});
+      setAudioSrc(media);
+    } catch (error) {
+      console.error('Error generating intro audio:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Audio Error',
+        description: 'Failed to generate introductory audio.',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   useEffect(() => {
     async function getCameraPermission() {
       if (typeof window !== 'undefined' && navigator.mediaDevices) {
         try {
-          const stream = await navigator.mediaDevices.getUserMedia({video: true});
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+          });
           setHasCameraPermission(true);
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
+          playAivaIntro();
         } catch (error) {
           console.error('Error accessing camera:', error);
           setHasCameraPermission(false);
@@ -60,6 +165,7 @@ export default function AudioVisualChatPage() {
       }
     }
     getCameraPermission();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
   useEffect(() => {
@@ -78,43 +184,31 @@ export default function AudioVisualChatPage() {
   useEffect(() => {
     if (scrollAreaRef.current) {
       const viewport =
-        scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+        scrollAreaRef.current.querySelector(
+          'div[data-radix-scroll-area-viewport]'
+        );
       if (viewport) {
         viewport.scrollTop = viewport.scrollHeight;
       }
     }
   }, [messages]);
 
-  const sendMessage = async () => {
-    if (!input.trim() || isSending) return;
-    const userMessage = input;
-    setInput('');
-    setIsSending(true);
-    setAudioSrc(null);
-
-    setMessages(prev => [...prev, {role: 'You', content: userMessage}]);
-
-    try {
-      const {response} = await chat({prompt: userMessage});
-      setMessages(prev => [...prev, {role: 'AI', content: response}]);
-
-      setIsGeneratingAudio(true);
-      const {media} = await tts({text: response});
-      setAudioSrc(media);
-    } catch (error) {
-      console.error(error);
-      const errorMessage =
-        'Sorry, I encountered an error. Please try again.';
-      setMessages(prev => [...prev, {role: 'AI', content: errorMessage}]);
+  const handleMicClick = () => {
+    if (!recognitionRef.current) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to get a response from the AI.',
+        title: 'Feature Not Available',
+        description: 'Speech recognition is not supported in your browser.',
       });
-    } finally {
-      setIsSending(false);
-      setIsGeneratingAudio(false);
+      return;
     }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+    setIsRecording(!isRecording);
   };
 
   return (
@@ -152,7 +246,7 @@ export default function AudioVisualChatPage() {
             {messages.map((msg, i) => (
               <ChatMessage key={i} role={msg.role} content={msg.content} />
             ))}
-            {isSending && messages[messages.length - 1]?.role === 'You' && (
+            {isProcessing && messages[messages.length - 1]?.role === 'You' && (
               <ChatMessage role="AI" content="" isLoading={true} />
             )}
           </div>
@@ -173,7 +267,7 @@ export default function AudioVisualChatPage() {
             <Textarea
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Message Aiva..."
+              placeholder={isRecording ? 'Listening...' : 'Message Aiva...'}
               className="bg-transparent border-0 focus-visible:ring-0 resize-none w-full p-2 text-base min-h-0"
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -181,19 +275,34 @@ export default function AudioVisualChatPage() {
                   sendMessage();
                 }
               }}
-              disabled={isSending || hasCameraPermission === false}
+              disabled={
+                isProcessing || hasCameraPermission === false || isRecording
+              }
               rows={1}
             />
-            <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn('rounded-full text-muted-foreground', {
+                'bg-destructive/20 text-destructive animate-pulse': isRecording,
+              })}
+              onClick={handleMicClick}
+              disabled={isProcessing || hasCameraPermission === false}
+            >
               <Mic className="h-5 w-5" />
             </Button>
             <Button
-              onClick={sendMessage}
-              disabled={isSending || !input.trim() || hasCameraPermission === false}
+              onClick={() => sendMessage()}
+              disabled={
+                isProcessing ||
+                !input.trim() ||
+                hasCameraPermission === false ||
+                isRecording
+              }
               size="icon"
               className="rounded-full w-10 h-10 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted"
             >
-              {isSending ? (
+              {isProcessing ? (
                 <Loader className="h-5 w-5 animate-spin" />
               ) : (
                 <Send className="h-5 w-5" />

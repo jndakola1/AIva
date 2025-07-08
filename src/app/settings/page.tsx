@@ -4,17 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/hooks/use-toast';
+import { useChatHistory } from '@/context/chat-history-context';
 
 export default function SettingsPage() {
-  const { toast } = useToast();
+  const { clearHistory } = useChatHistory();
 
   const handleClearHistory = () => {
-    // This is a placeholder for now.
-    toast({
-      title: 'History Cleared',
-      description: 'Your conversation history has been cleared.',
-    });
+    clearHistory();
   };
 
   return (

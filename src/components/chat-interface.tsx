@@ -15,6 +15,7 @@ import { enhancePrompt } from "@/ai/flows/enhance-prompt";
 import { generateImage } from "@/ai/flows/generate-image";
 import AttachmentMenu from "@/components/attachment-menu";
 import { cn } from "@/lib/utils";
+import { useChatHistory } from "@/context/chat-history-context";
 
 declare global {
   interface Window {
@@ -23,16 +24,8 @@ declare global {
   }
 }
 
-type Message = {
-  role: "You" | "AI";
-  content: string;
-  imageUrl?: string;
-  altText?: string;
-  dataAiHint?: string;
-};
-
 export default function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { messages, addMessage } = useChatHistory();
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -51,27 +44,38 @@ export default function ChatInterface() {
     if (!prompt.trim()) return;
 
     const performResearch = options?.performResearch || false;
-    const userMessage = performResearch ? `Research: ${prompt}` : prompt;
+    const userMessageContent = performResearch ? `Research: ${prompt}` : prompt;
+    const userMessage = { role: "You" as const, content: userMessageContent };
 
-    setMessages((prev) => [...prev, { role: "You", content: userMessage }]);
+    const currentHistoryForAI = messages.map(msg => ({
+      speaker: msg.role === 'You' ? 'You' : 'AIva' as const,
+      text: msg.content,
+    }));
+
+    addMessage(userMessage);
     setInput("");
     setIsSending(true);
     
     try {
-      const aiResponse = await geminiSwitchChat({ prompt, isOnline, performResearch });
-      setMessages((prev) => [...prev, { 
+      const aiResponse = await geminiSwitchChat({ 
+        prompt, 
+        isOnline, 
+        performResearch,
+        history: currentHistoryForAI
+      });
+      addMessage({ 
         role: "AI",
         content: aiResponse.response,
         imageUrl: aiResponse.imageUrl,
         altText: aiResponse.altText,
         dataAiHint: aiResponse.dataAiHint,
-      }]);
+      });
     } catch (error) {
       console.error(error);
       const errorMessage = performResearch
         ? `Sorry, I ran into an error during research. Please try again later.`
         : `Sorry, I ran into an error. Please try again later.`;
-      setMessages((prev) => [...prev, { role: "AI", content: errorMessage }]);
+      addMessage({ role: "AI", content: errorMessage });
       toast({
         variant: "destructive",
         title: "Error",
@@ -80,7 +84,7 @@ export default function ChatInterface() {
     } finally {
       setIsSending(false);
     }
-  }, [isOnline, toast]);
+  }, [isOnline, toast, addMessage, messages]);
 
 
   useEffect(() => {
@@ -118,17 +122,13 @@ export default function ChatInterface() {
         };
 
         recognitionRef.current.onerror = (event: any) => {
-          let description = 'Could not process audio.';
           if (event.error === 'not-allowed') {
-            description = 'Microphone access was denied. Please enable it in your browser settings to use voice input.';
-          } else if (event.error !== 'no-speech') {
-            description = `An error occurred: ${event.error}`;
+             toast({
+              variant: 'destructive',
+              title: 'Speech Recognition Error',
+              description: 'Microphone access was denied. Please enable it in your browser settings to use voice input.',
+            });
           }
-          toast({
-            variant: 'destructive',
-            title: 'Speech Recognition Error',
-            description: description,
-          });
         };
 
         recognitionRef.current.onend = () => {
@@ -161,7 +161,7 @@ export default function ChatInterface() {
     setIsRecording(!isRecording);
   };
 
-  const handleEnhancePrompt = async () => {
+  const handleEnhancePrompt = useCallback(async () => {
     if (!input.trim() || isSending || isEnhancing) return;
 
     setIsEnhancing(true);
@@ -184,9 +184,9 @@ export default function ChatInterface() {
     } finally {
       setIsEnhancing(false);
     }
-  };
+  }, [input, isSending, isEnhancing, toast]);
 
-  const handleGenerateImage = async () => {
+  const handleGenerateImage = useCallback(async () => {
     if (!input.trim()) {
        toast({
         variant: "destructive",
@@ -197,22 +197,22 @@ export default function ChatInterface() {
     }
 
     const prompt = input;
-    setMessages((prev) => [...prev, { role: "You", content: `Create an image of: ${prompt}` }]);
+    addMessage({ role: "You", content: `Create an image of: ${prompt}` });
     setInput("");
     setIsGeneratingImage(true);
     
     try {
       const imageResponse = await generateImage({ prompt });
-      setMessages((prev) => [...prev, { 
+      addMessage({ 
         role: "AI",
         content: `Here's the image you asked for.`,
         imageUrl: imageResponse.imageUrl,
         altText: imageResponse.altText,
-      }]);
+      });
     } catch (error) {
       console.error(error);
       const errorMessage = `Sorry, I was unable to create an image for that prompt. Please try a different one.`;
-      setMessages((prev) => [...prev, { role: "AI", content: errorMessage }]);
+      addMessage({ role: "AI", content: errorMessage });
       toast({
         variant: "destructive",
         title: "Image Generation Failed",
@@ -221,9 +221,9 @@ export default function ChatInterface() {
     } finally {
       setIsGeneratingImage(false);
     }
-  };
+  }, [input, addMessage, toast]);
 
-  const handleWebSearch = () => {
+  const handleWebSearch = useCallback(() => {
     if (!input.trim()) {
       toast({
         variant: "destructive",
@@ -233,7 +233,7 @@ export default function ChatInterface() {
       return;
     }
     sendMessage(input, { performResearch: true });
-  };
+  }, [input, sendMessage, toast]);
 
 
   const isDisabled = isSending || isEnhancing || isRecording || isGeneratingImage;
@@ -253,7 +253,7 @@ export default function ChatInterface() {
             {messages.map((msg, i) => (
               <ChatMessage key={i} {...msg} />
             ))}
-            {(isSending || isGeneratingImage) && messages[messages.length-1]?.role === 'You' && (
+            {(isSending || isGeneratingImage) && messages.length > 0 && messages[messages.length-1]?.role === 'You' && (
                 <ChatMessage role="AI" content="" isLoading={true} />
             )}
           </div>

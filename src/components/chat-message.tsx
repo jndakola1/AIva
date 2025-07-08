@@ -17,7 +17,7 @@ export default function ChatMessage({ role, content, isLoading }: ChatMessagePro
       )}
     >
       <div className="flex items-start gap-4">
-        <Avatar className="h-8 w-8 border">
+        <Avatar className="h-8 w-8 border border-border">
             <AvatarFallback className={cn(isAi ? "bg-card" : "bg-primary text-primary-foreground")}>
                 {isAi ? "A" : "Y"}
             </AvatarFallback>

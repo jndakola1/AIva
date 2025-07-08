@@ -29,7 +29,7 @@ type Message = {
 };
 
 export default function AudioVisualChatPage() {
-  const [hasCameraPermission, setHasCameraPermission] = useState<
+  const [hasPermissions, setHasPermissions] = useState<
     boolean | undefined
   >(undefined);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -103,10 +103,16 @@ export default function AudioVisualChatPage() {
 
         recognitionRef.current.onerror = (event: any) => {
           console.error('Speech recognition error', event.error);
+          let description = 'Could not process audio.';
+          if (event.error === 'not-allowed') {
+            description = 'Microphone access was denied. Please enable it in your browser settings to use voice input.';
+          } else {
+            description = `An error occurred: ${event.error}`;
+          }
           toast({
             variant: 'destructive',
             title: 'Speech Recognition Error',
-            description: `Could not process audio: ${event.error}`,
+            description: description,
           });
         };
 
@@ -149,32 +155,33 @@ export default function AudioVisualChatPage() {
   }, [toast, isOnline]);
 
   useEffect(() => {
-    async function getCameraPermission() {
+    async function getMediaPermissions() {
       if (typeof window !== 'undefined' && navigator.mediaDevices) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
             video: true,
+            audio: true,
           });
-          setHasCameraPermission(true);
+          setHasPermissions(true);
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
           playAivaIntro();
         } catch (error) {
-          console.error('Error accessing camera:', error);
-          setHasCameraPermission(false);
+          console.error('Error accessing media devices:', error);
+          setHasPermissions(false);
           toast({
             variant: 'destructive',
-            title: 'Camera Access Denied',
+            title: 'Media Access Denied',
             description:
-              'Please enable camera permissions in your browser settings.',
+              'Please enable camera and microphone permissions in your browser settings.',
           });
         }
       } else {
-        setHasCameraPermission(false);
+        setHasPermissions(false);
       }
     }
-    getCameraPermission();
+    getMediaPermissions();
   }, [toast, playAivaIntro]);
 
   useEffect(() => {
@@ -264,11 +271,11 @@ export default function AudioVisualChatPage() {
       </div>
 
       <footer className="p-4 bg-background">
-        {hasCameraPermission === false && (
+        {hasPermissions === false && (
           <Alert variant="destructive" className="mb-4 max-w-3xl mx-auto">
-            <AlertTitle>Camera Access Required</AlertTitle>
+            <AlertTitle>Camera & Mic Access Required</AlertTitle>
             <AlertDescription>
-              Please allow camera access to use this feature.
+              Please allow camera and microphone access to use this feature.
             </AlertDescription>
           </Alert>
         )}
@@ -286,7 +293,7 @@ export default function AudioVisualChatPage() {
                 }
               }}
               disabled={
-                isProcessing || hasCameraPermission === false || isRecording
+                isProcessing || hasPermissions === false || isRecording
               }
               rows={1}
             />
@@ -297,7 +304,7 @@ export default function AudioVisualChatPage() {
                 'bg-destructive/20 text-destructive animate-pulse': isRecording,
               })}
               onClick={handleMicClick}
-              disabled={isProcessing || hasCameraPermission === false}
+              disabled={isProcessing || hasPermissions === false}
             >
               <Mic className="h-5 w-5" />
             </Button>
@@ -306,7 +313,7 @@ export default function AudioVisualChatPage() {
               disabled={
                 isProcessing ||
                 !input.trim() ||
-                hasCameraPermission === false ||
+                hasPermissions === false ||
                 isRecording
               }
               size="icon"

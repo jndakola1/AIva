@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Loader, Mic, Search, Send, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +13,14 @@ import { geminiSwitchChat } from "@/ai/flows/gemini-switch-chat";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { enhancePrompt } from "@/ai/flows/enhance-prompt";
 import AttachmentMenu from "@/components/attachment-menu";
+import { cn } from "@/lib/utils";
+
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 type Message = {
   role: "You" | "AI";
@@ -27,32 +35,17 @@ export default function ChatInterface() {
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOnline = useOnlineStatus();
 
-  useEffect(() => {
-    const promptFromQuery = searchParams.get('prompt');
-    if (promptFromQuery) {
-      setInput(decodeURIComponent(promptFromQuery));
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.delete('prompt');
-      router.replace(newUrl.toString(), { scroll: false });
-    }
-  }, [searchParams, router]);
-
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-        const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-        if (viewport) {
-          viewport.scrollTop = viewport.scrollHeight;
-        }
-    }
-  }, [messages]);
-
-  const sendMessage = async (prompt: string, options?: { performResearch?: boolean }) => {
+  const sendMessage = useCallback(async (prompt: string, options?: { performResearch?: boolean }) => {
     if (!prompt.trim()) return;
 
     const performResearch = options?.performResearch || false;
@@ -85,6 +78,86 @@ export default function ChatInterface() {
     } finally {
       setIsSending(false);
     }
+  }, [isOnline, toast]);
+
+
+  useEffect(() => {
+    const promptFromQuery = searchParams.get('prompt');
+    if (promptFromQuery) {
+      setInput(decodeURIComponent(promptFromQuery));
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('prompt');
+      router.replace(newUrl.toString(), { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+        const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
+        if (viewport) {
+          viewport.scrollTop = viewport.scrollHeight;
+        }
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.lang = 'en-US';
+        recognitionRef.current.interimResults = false;
+
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          sendMessage(transcript);
+        };
+
+        recognitionRef.current.onerror = (event: any) => {
+          console.error('Speech recognition error', event.error);
+          let description = 'Could not process audio.';
+          if (event.error === 'not-allowed') {
+            description = 'Microphone access was denied. Please enable it in your browser settings to use voice input.';
+          } else {
+            description = `An error occurred: ${event.error}`;
+          }
+          toast({
+            variant: 'destructive',
+            title: 'Speech Recognition Error',
+            description: description,
+          });
+        };
+
+        recognitionRef.current.onend = () => {
+          setIsRecording(false);
+        };
+      } else {
+        toast({
+          title: 'Feature Not Supported',
+          description: 'Speech recognition is not available in your browser.',
+        });
+      }
+    }
+  }, [toast, sendMessage]);
+
+  const handleMicClick = () => {
+    if (!recognitionRef.current) {
+      toast({
+        variant: 'destructive',
+        title: 'Feature Not Available',
+        description: 'Speech recognition is not supported in your browser.',
+      });
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current.stop();
+    } else {
+      recognitionRef.current.start();
+    }
+    setIsRecording(!isRecording);
   };
 
   const handleEnhancePrompt = async () => {
@@ -113,7 +186,7 @@ export default function ChatInterface() {
   };
 
 
-  const isDisabled = isSending || isEnhancing;
+  const isDisabled = isSending || isEnhancing || isRecording;
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
@@ -142,7 +215,7 @@ export default function ChatInterface() {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Message Aiva..."
+              placeholder={isRecording ? "Listening..." : "Message Aiva..."}
               className="bg-transparent border-0 focus-visible:ring-0 resize-none w-full p-2 text-base min-h-0"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -177,7 +250,15 @@ export default function ChatInterface() {
                 </Button>
               </div>
               <div className="flex items-center gap-1 sm:gap-2">
-                <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground" disabled={isDisabled}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={cn('rounded-full text-muted-foreground', {
+                    'bg-destructive/20 text-destructive animate-pulse': isRecording,
+                  })}
+                  onClick={handleMicClick} 
+                  disabled={isSending || isEnhancing}
+                >
                   <Mic className="h-5 w-5" />
                 </Button>
                 <Button

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -49,7 +50,7 @@ export default function LiveVideoPage() {
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
 
-  const speak = async (text: string): Promise<void> => {
+  const speak = useCallback(async (text: string): Promise<void> => {
     if (!text) return Promise.resolve();
     try {
       const { media } = await tts({ text });
@@ -71,7 +72,7 @@ export default function LiveVideoPage() {
       toast({ variant: "destructive", title: "Could not play audio" });
       return Promise.resolve();
     }
-  };
+  }, [toast]);
   
   // 1. Permissions and Initial Greeting
   useEffect(() => {
@@ -111,8 +112,7 @@ export default function LiveVideoPage() {
         audioRef.current.src = "";
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toast]);
+  }, [speak, toast]);
 
   // 2. Speech Recognition Setup
   useEffect(() => {
@@ -131,8 +131,14 @@ export default function LiveVideoPage() {
 
           try {
             const aiResponse = await geminiSwitchChat({ prompt: userSpeech, isOnline, performResearch: false });
-            setConversation((prev) => [...prev, { speaker: 'AIva', text: aiResponse.response }]);
-            await speak(aiResponse.response);
+            if (aiResponse.response) {
+              setConversation((prev) => [...prev, { speaker: 'AIva', text: aiResponse.response }]);
+              await speak(aiResponse.response);
+            } else {
+              const errorMsg = "I'm not sure how to respond to that. Please try again.";
+              setConversation((prev) => [...prev, { speaker: 'AIva', text: errorMsg }]);
+              await speak(errorMsg);
+            }
           } catch (error) {
             console.error(error);
             const errorMsg = "Sorry, I ran into an error. Please try again.";
@@ -159,8 +165,7 @@ export default function LiveVideoPage() {
         };
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline, toast]);
+  }, [isOnline, speak, toast]);
   
   // 3. Helper Functions
   const toggleCamera = () => {

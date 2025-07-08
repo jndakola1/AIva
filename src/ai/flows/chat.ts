@@ -92,10 +92,15 @@ const researchTopic = ai.defineTool(
   }
 );
 
+const MessageSchema = z.object({
+  role: z.enum(['You', 'AIva']),
+  content: z.string(),
+});
 
 const ChatInputSchema = z.object({
-  prompt: z.string().describe('The user prompt.'),
+  prompt: z.string().describe("The user's latest message."),
   performResearch: z.boolean().optional().describe('Whether to force the use of the research tool.'),
+  history: z.array(MessageSchema).optional().describe('The preceding conversation history.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -116,17 +121,30 @@ const prompt = ai.definePrompt({
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
   tools: [searchForImageTool, researchTopic],
-  prompt: `You are a helpful AI assistant named Aiva.
+  prompt: `You are a helpful AI assistant named Aiva. You are having a voice-based conversation. Be conversational and natural.
+
+**Conversation History (for context):**
+{{#if history}}
+{{#each history}}
+- {{role}}: {{content}}
+{{/each}}
+{{else}}
+- This is the beginning of the conversation.
+{{/if}}
+
+**User's latest message:**
+- You: {{{prompt}}}
 
 **Your Task:**
-1.  Analyze the user's prompt: {{{prompt}}}
-2.  Use tools if necessary: 'searchForImage' for pictures, or 'researchTopic' for new information (especially if 'performResearch' is true).
-3.  Formulate a helpful response based on all available information.
+1.  Analyze the user's prompt within the context of the conversation history.
+2.  If the user asks for new or up-to-date information, you MUST use the 'researchTopic' tool to get current data.
+3.  If the user explicitly asks for an image or picture, you MUST use the 'searchForImage' tool.
+4.  Formulate a helpful, relevant, and conversational response based on all available information.
 
 **Output Format Constraint:**
 Your entire output MUST be a single, valid JSON object that conforms to the required output schema. This is your most important instruction. Do not output anything else.
-- If an image is part of your response, populate the 'imageUrl', 'altText', and 'dataAiHint' fields.
-- For all other responses, provide the text in the 'response' field.`,
+- For a text-only response, provide the text in the 'response' field.
+- If a tool generates an image, populate the 'imageUrl', 'altText', and 'dataAiHint' fields in addition to a 'response' text.`,
 });
 
 const chatFlow = ai.defineFlow(

@@ -197,11 +197,20 @@ export default function LiveVideoPage() {
 
         recognitionRef.current.onresult = async (event: any) => {
           const userSpeech = event.results[0][0].transcript;
+          
+          const currentConversation = [...conversation];
+
           setConversation((prev) => [...prev, { speaker: 'You', text: userSpeech }]);
           setIsAIThinking(true);
 
           try {
-            const aiResponse = await geminiSwitchChat({ prompt: userSpeech, isOnline, performResearch: false });
+            const aiResponse = await geminiSwitchChat({ 
+              prompt: userSpeech, 
+              isOnline, 
+              performResearch: false,
+              history: currentConversation,
+            });
+
             if (aiResponse.response) {
               setConversation((prev) => [...prev, { speaker: 'AIva', text: aiResponse.response }]);
               await speak(aiResponse.response);
@@ -236,7 +245,7 @@ export default function LiveVideoPage() {
         };
       }
     }
-  }, [isOnline, speak, toast]);
+  }, [isOnline, speak, toast, conversation]);
   
   // 3. Helper Functions
   const toggleCamera = () => {
@@ -413,7 +422,3 @@ export default function LiveVideoPage() {
     </div>
   );
 }
-
-    
-
-    

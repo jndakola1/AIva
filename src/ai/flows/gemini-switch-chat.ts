@@ -11,10 +11,16 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { chat as onlineChat, ChatOutput } from './chat';
 
+const MessageSchema = z.object({
+  speaker: z.enum(['You', 'AIva']),
+  text: z.string(),
+});
+
 const GeminiSwitchChatInputSchema = z.object({
   prompt: z.string().describe('The user prompt.'),
   isOnline: z.boolean().describe('The network status of the client.'),
   performResearch: z.boolean().optional().describe('Whether to force the use of the research tool.'),
+  history: z.array(MessageSchema).optional().describe('The conversation history.'),
 });
 export type GeminiSwitchChatInput = z.infer<typeof GeminiSwitchChatInputSchema>;
 
@@ -38,6 +44,7 @@ async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {
         model: 'llama3', // Using a more common default model
         prompt: prompt,
         stream: false,
+        system: "You are a helpful, conversational AI assistant named Aiva. Respond naturally as if you are in a voice conversation. Keep your responses concise."
       }),
     });
 
@@ -81,12 +88,17 @@ const geminiSwitchChatFlow = ai.defineFlow(
     inputSchema: GeminiSwitchChatInputSchema,
     outputSchema: GeminiSwitchChatOutputSchema,
   },
-  async ({ prompt, isOnline, performResearch }) => {
+  async ({ prompt, isOnline, performResearch, history }) => {
     if (isOnline) {
-      return onlineChat({ prompt, performResearch });
+      const mappedHistory = history?.map(msg => ({
+        role: msg.speaker,
+        content: msg.text,
+      }));
+      return onlineChat({ prompt, performResearch, history: mappedHistory });
     } else {
-      // The offline model can't do research.
-      return ollamaChat(prompt);
+      const historyString = history?.map(msg => `${msg.speaker}: ${msg.text}`).join('\n') || '';
+      const fullPrompt = `${historyString}\nYou: ${prompt}\nAIva:`;
+      return ollamaChat(fullPrompt);
     }
   }
 );

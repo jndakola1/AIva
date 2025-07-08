@@ -78,15 +78,13 @@ const prompt = ai.definePrompt({
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
   tools: [searchForImageTool, researchTopic],
-  prompt: `You are a helpful AI assistant named Aiva. Respond to the following prompt concisely.
+  prompt: `You are a helpful AI assistant named Aiva. Your goal is to provide concise and accurate answers. You MUST always respond in the specified JSON format.
 
-If the user asks to see an image or a picture of something, use the searchForImage tool. When you use the tool, its output will be provided back to you. Use that information to formulate your final response in the required JSON format, including the imageUrl, altText, and dataAiHint if a tool was used. Also provide a short text response, like "Of course, here is a picture of a cat."
+- If the user asks for an image, use the 'searchForImage' tool. Once you receive the image details from the tool, include 'imageUrl', 'altText', and 'dataAiHint' in your final JSON response, along with a brief text 'response'.
+- If the 'performResearch' flag is true, or if the user's prompt asks for recent or up-to-date information, you MUST use the 'researchTopic' tool. Use the summary from the tool to formulate your final text 'response' in the required JSON format.
+- For all other requests, answer from your existing knowledge, providing the answer in the 'response' field of the JSON output.
 
-If the 'performResearch' flag is true, you MUST use the researchTopic tool to answer the user's prompt. If the user's prompt seems to ask for recent or up-to-date information, you should also use the researchTopic tool. After getting the research summary, present it to the user in a clear and helpful way.
-
-Otherwise, answer from your existing knowledge.
-
-Prompt: {{{prompt}}}`,
+User Prompt: {{{prompt}}}`,
 });
 
 const chatFlow = ai.defineFlow(
@@ -98,7 +96,7 @@ const chatFlow = ai.defineFlow(
   async input => {
     const {output} = await prompt(input);
     if (!output) {
-      throw new Error('The chat flow failed to produce an output.');
+      throw new Error('The chat flow failed to produce a valid output. The model may have returned an empty or invalid response.');
     }
     
     // Safeguard: If the LLM hallucinates an image URL, replace it with a placeholder to prevent crashes.

@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Camera, File, Globe, Image as ImageIcon, Plus, Telescope, Wand2 } from 'lucide-react';
 import type React from 'react';
+import { useState } from 'react';
 
 const ActionButton = ({ icon: Icon, children }: { icon: React.ElementType, children: React.ReactNode }) => (
     <button className="flex flex-col items-center justify-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
@@ -20,8 +21,12 @@ const ActionButton = ({ icon: Icon, children }: { icon: React.ElementType, child
     </button>
 );
 
-const MenuLink = ({ icon: Icon, children, detail }: { icon: React.ElementType, children: React.ReactNode, detail?: string }) => (
-    <button className="flex items-center w-full text-left h-14 text-base font-normal gap-4 px-3 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
+const MenuLink = ({ icon: Icon, children, detail, onClick, disabled }: { icon: React.ElementType, children: React.ReactNode, detail?: string, onClick?: () => void, disabled?: boolean }) => (
+    <button 
+      onClick={onClick} 
+      disabled={disabled} 
+      className="flex items-center w-full text-left h-14 text-base font-normal gap-4 px-3 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+    >
         <Icon className="h-5 w-5 text-muted-foreground" />
         <span className="flex-grow text-foreground">{children}</span>
         {detail && <span className="text-sm text-muted-foreground">{detail}</span>}
@@ -29,9 +34,25 @@ const MenuLink = ({ icon: Icon, children, detail }: { icon: React.ElementType, c
 );
 
 
-const AttachmentMenu = ({ disabled }: { disabled?: boolean }) => {
+const AttachmentMenu = ({ 
+  disabled, 
+  onGenerateImage,
+  onWebSearch,
+}: { 
+  disabled?: boolean, 
+  onGenerateImage: () => void,
+  onWebSearch: () => void
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleAction = (action: () => void) => {
+    if (disabled) return;
+    action();
+    setIsOpen(false);
+  };
+  
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full text-muted-foreground" disabled={disabled}>
           <Plus className="h-5 w-5" />
@@ -51,8 +72,8 @@ const AttachmentMenu = ({ disabled }: { disabled?: boolean }) => {
             <ActionButton icon={File}>Files</ActionButton>
         </div>
         <div className="space-y-1">
-            <MenuLink icon={Wand2}>Create an image</MenuLink>
-            <MenuLink icon={Globe}>Search the web</MenuLink>
+            <MenuLink icon={Wand2} onClick={() => handleAction(onGenerateImage)} disabled={disabled}>Create an image</MenuLink>
+            <MenuLink icon={Globe} onClick={() => handleAction(onWebSearch)} disabled={disabled}>Search the web</MenuLink>
             <MenuLink icon={Telescope} detail="15 min">Run deep research</MenuLink>
         </div>
       </SheetContent>

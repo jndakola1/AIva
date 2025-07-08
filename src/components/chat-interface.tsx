@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { geminiSwitchChat } from "@/ai/flows/gemini-switch-chat";
 import { useOnlineStatus } from "@/hooks/use-online-status";
 import { enhancePrompt } from "@/ai/flows/enhance-prompt";
+import { generateImage } from "@/ai/flows/generate-image";
 import AttachmentMenu from "@/components/attachment-menu";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,7 @@ export default function ChatInterface() {
   const [isSending, setIsSending] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -119,7 +121,7 @@ export default function ChatInterface() {
           let description = 'Could not process audio.';
           if (event.error === 'not-allowed') {
             description = 'Microphone access was denied. Please enable it in your browser settings to use voice input.';
-          } else {
+          } else if (event.error !== 'no-speech') {
             description = `An error occurred: ${event.error}`;
           }
           toast({
@@ -184,8 +186,58 @@ export default function ChatInterface() {
     }
   };
 
+  const handleGenerateImage = async () => {
+    if (!input.trim()) {
+       toast({
+        variant: "destructive",
+        title: "Input Required",
+        description: "Please enter a prompt to generate an image.",
+      });
+      return;
+    }
 
-  const isDisabled = isSending || isEnhancing || isRecording;
+    const prompt = input;
+    setMessages((prev) => [...prev, { role: "You", content: `Create an image of: ${prompt}` }]);
+    setInput("");
+    setIsGeneratingImage(true);
+    
+    try {
+      const imageResponse = await generateImage({ prompt });
+      setMessages((prev) => [...prev, { 
+        role: "AI",
+        content: `Here's the image you asked for.`,
+        imageUrl: imageResponse.imageUrl,
+        altText: imageResponse.altText,
+      }]);
+    } catch (error) {
+      console.error(error);
+      const errorMessage = `Sorry, I was unable to create an image for that prompt. Please try a different one.`;
+      setMessages((prev) => [...prev, { role: "AI", content: errorMessage }]);
+      toast({
+        variant: "destructive",
+        title: "Image Generation Failed",
+        description: `Could not generate the image.`,
+      });
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
+  const handleWebSearch = () => {
+    if (!input.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Input Required",
+        description: "Please enter a topic to search on the web.",
+      });
+      return;
+    }
+    sendMessage(input, { performResearch: true });
+  };
+
+
+  const isDisabled = isSending || isEnhancing || isRecording || isGeneratingImage;
+  const isMenuDisabled = isDisabled || !input.trim();
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
@@ -201,7 +253,7 @@ export default function ChatInterface() {
             {messages.map((msg, i) => (
               <ChatMessage key={i} {...msg} />
             ))}
-            {isSending && messages[messages.length-1]?.role === 'You' && (
+            {(isSending || isGeneratingImage) && messages[messages.length-1]?.role === 'You' && (
                 <ChatMessage role="AI" content="" isLoading={true} />
             )}
           </div>
@@ -227,13 +279,17 @@ export default function ChatInterface() {
             />
             <div className="flex justify-between items-center mt-2">
               <div className="flex items-center gap-1 sm:gap-2">
-                <AttachmentMenu disabled={isDisabled} />
+                <AttachmentMenu 
+                  disabled={isMenuDisabled}
+                  onGenerateImage={handleGenerateImage}
+                  onWebSearch={handleWebSearch}
+                />
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   className="rounded-full text-muted-foreground"
                   onClick={handleEnhancePrompt}
-                  disabled={isDisabled || !input.trim()}
+                  disabled={isMenuDisabled}
                   title="Enhance Prompt"
                 >
                   {isEnhancing ? <Loader className="h-5 w-5 animate-spin" /> : <SlidersHorizontal className="h-5 w-5" />}
@@ -242,7 +298,7 @@ export default function ChatInterface() {
                   variant="outline" 
                   className="rounded-full text-muted-foreground border-border/60"
                   onClick={() => sendMessage(input, { performResearch: true })}
-                  disabled={isDisabled || !input.trim()}
+                  disabled={isMenuDisabled}
                 >
                   <Search className="h-4 w-4 mr-2" />
                   Research
@@ -256,7 +312,7 @@ export default function ChatInterface() {
                     'bg-destructive/20 text-destructive animate-pulse': isRecording,
                   })}
                   onClick={handleMicClick} 
-                  disabled={isSending || isEnhancing}
+                  disabled={isSending || isEnhancing || isGeneratingImage}
                 >
                   <Mic className="h-5 w-5" />
                 </Button>

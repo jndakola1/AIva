@@ -9,7 +9,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatMessage from "@/components/chat-message";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
-import { chat } from "@/ai/flows/chat";
+import { geminiSwitchChat } from "@/ai/flows/gemini-switch-chat";
+import { useOnlineStatus } from "@/hooks/use-online-status";
 
 type Message = {
   role: "You" | "AI";
@@ -24,6 +25,7 @@ export default function ChatInterface() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isOnline = useOnlineStatus();
 
   useEffect(() => {
     const promptFromQuery = searchParams.get('prompt');
@@ -52,7 +54,7 @@ export default function ChatInterface() {
     setIsSending(true);
     
     try {
-      const { response } = await chat({ prompt });
+      const { response } = await geminiSwitchChat({ prompt, isOnline });
       setMessages((prev) => [...prev, { role: "AI", content: response }]);
     } catch (error) {
       console.error(error);

@@ -1,17 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutProvider } from '@/components/layout-provider';
 
-const inter = Inter({
+const ptSans = PT_Sans({
   subsets: ['latin'],
+  weight: ['400', '700'],
   variable: '--font-sans',
 });
 
 export const metadata: Metadata = {
-  title: 'Aiva AI',
-  description: 'Your AI Companion',
+  title: 'Gemini Switch',
+  description: 'Your Hybrid AI Companion',
 };
 
 export default function RootLayout({
@@ -20,7 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`dark ${inter.variable}`}>
+    <html lang="en" className={ptSans.variable}>
       <body className="antialiased font-sans">
         <LayoutProvider>
           {children}

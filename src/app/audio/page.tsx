@@ -10,11 +10,12 @@ import {ScrollArea} from '@/components/ui/scroll-area';
 import {Bot, User, Mic, Send, Loader} from 'lucide-react';
 import {cn} from '@/lib/utils';
 import Image from 'next/image';
-import {chat} from '@/ai/flows/chat';
 import {tts} from '@/ai/flows/tts';
 import ChatMessage from '@/components/chat-message';
+import { useOnlineStatus } from '@/hooks/use-online-status';
+import { geminiSwitchChat } from '@/ai/flows/gemini-switch-chat';
+import ModeIndicator from '@/components/mode-indicator';
 
-// Make SpeechRecognition compatible with different browsers
 declare global {
   interface Window {
     SpeechRecognition: any;
@@ -47,6 +48,7 @@ export default function AudioVisualChatPage() {
   isProcessingRef.current = isProcessing;
 
   const {toast} = useToast();
+  const isOnline = useOnlineStatus();
 
   const sendMessage = useCallback(
     async (messageToSend: string) => {
@@ -60,11 +62,13 @@ export default function AudioVisualChatPage() {
       setMessages(prev => [...prev, {role: 'You', content: userMessage}]);
 
       try {
-        const {response} = await chat({prompt: userMessage});
+        const {response} = await geminiSwitchChat({prompt: userMessage, isOnline});
         setMessages(prev => [...prev, {role: 'AI', content: response}]);
 
-        const {media} = await tts({text: response});
-        setAudioSrc(media);
+        if (isOnline) {
+          const {media} = await tts({text: response});
+          setAudioSrc(media);
+        }
       } catch (error) {
         console.error(error);
         const errorMessage =
@@ -79,10 +83,9 @@ export default function AudioVisualChatPage() {
         setIsProcessing(false);
       }
     },
-    [toast]
+    [toast, isOnline]
   );
 
-  // Initialize SpeechRecognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition =
@@ -125,6 +128,9 @@ export default function AudioVisualChatPage() {
 
     const introMessage = "Hello! I'm Aiva. How can I assist you today?";
     setMessages([{role: 'AI', content: introMessage}]);
+    
+    if (!isOnline) return;
+
     setIsProcessing(true);
 
     try {
@@ -140,7 +146,7 @@ export default function AudioVisualChatPage() {
     } finally {
       setIsProcessing(false);
     }
-  }, [toast]);
+  }, [toast, isOnline]);
 
   useEffect(() => {
     async function getCameraPermission() {
@@ -215,9 +221,10 @@ export default function AudioVisualChatPage() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <header className="p-4 flex items-center">
+    <div className="flex flex-col h-full bg-background/80">
+      <header className="p-4 flex items-center justify-between">
         <h1 className="text-xl font-semibold">Audio/Visual Chat</h1>
+        <ModeIndicator />
       </header>
       <main className="flex-1 overflow-hidden p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>

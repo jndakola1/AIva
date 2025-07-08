@@ -21,6 +21,9 @@ import { geminiSwitchChat } from '@/ai/flows/gemini-switch-chat';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { tts } from '@/ai/flows/tts';
 import { summarize } from '@/ai/flows/summarize';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 declare global {
   interface Window {
@@ -41,6 +44,7 @@ export default function LiveVideoPage() {
   const [isListening, setIsListening] = useState(false);
   const [isAIThinking, setIsAIThinking] = useState(false);
   const [chatEnded, setChatEnded] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -74,10 +78,8 @@ export default function LiveVideoPage() {
     }
   }, [toast]);
   
-  // 1. Permissions and Initial Greeting
-  useEffect(() => {
-    async function setupPage() {
-      if (typeof window !== 'undefined' && navigator.mediaDevices) {
+  const initializeMedia = useCallback(async () => {
+    if (typeof window !== 'undefined' && navigator.mediaDevices) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
           streamRef.current = stream;
@@ -85,9 +87,7 @@ export default function LiveVideoPage() {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-          setIsAIThinking(true);
-          await speak("Hello. I'm Aiva. Tap the microphone to talk.");
-          setIsAIThinking(false);
+          return stream;
         } catch (error) {
           console.error('Error accessing media devices:', error);
           setHasPermissions(false);
@@ -96,12 +96,27 @@ export default function LiveVideoPage() {
             title: 'Media Access Denied',
             description: 'Please enable camera and microphone permissions.',
           });
+          return null;
         }
-      } else {
-        setHasPermissions(false);
+    }
+    setHasPermissions(false);
+    return null;
+  }, [toast]);
+
+
+  // 1. Permissions and Initial Greeting
+  useEffect(() => {
+    async function setupPage() {
+      const stream = await initializeMedia();
+      if (stream) {
+        setIsAIThinking(true);
+        await speak("Hello. I'm Aiva. Tap the microphone to talk.");
+        setIsAIThinking(false);
       }
     }
-    setupPage();
+    if (!chatEnded) {
+        setupPage();
+    }
 
     return () => {
       if (streamRef.current) {
@@ -112,7 +127,7 @@ export default function LiveVideoPage() {
         audioRef.current.src = "";
       }
     };
-  }, [speak, toast]);
+  }, [speak, toast, initializeMedia, chatEnded]);
 
   // 2. Speech Recognition Setup
   useEffect(() => {
@@ -192,34 +207,40 @@ export default function LiveVideoPage() {
   };
 
   const handleEndChat = async () => {
-    setIsAIThinking(true);
     setChatEnded(true);
+    setIsAIThinking(true);
+    
+    // Stop listening and camera
+    if (recognitionRef.current) recognitionRef.current.stop();
+    setIsListening(false);
+    if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+    }
+
     const fullConversation = conversation.map(msg => `${msg.speaker}: ${msg.text}`).join('\n');
     
     try {
       await speak("One moment while I summarize our conversation.");
-      const { summary } = await summarize({ conversation: fullConversation });
-      const summaryText = `Here is a summary of our conversation: ${summary}`;
-      setConversation((prev) => [...prev, { speaker: 'AIva', text: summaryText }]);
-      await speak(summaryText);
+      const result = await summarize({ conversation: fullConversation });
+      setSummary(result.summary);
     } catch (error) {
       console.error("Summarization Error:", error);
       const errorMsg = "Sorry, I couldn't summarize the conversation.";
-      setConversation((prev) => [...prev, { speaker: 'AIva', text: errorMsg }]);
+      setSummary(errorMsg);
       await speak(errorMsg);
     } finally {
       setIsAIThinking(false);
     }
   };
   
-  const handleStartOver = async () => {
+  const handleStartOver = useCallback(async () => {
     setConversation([]);
-    setChatEnded(false);
-    setIsAIThinking(true);
+    setSummary(null);
     setIsListening(false);
-    await speak("Hello. Let's start a new conversation.");
     setIsAIThinking(false);
-  };
+    // This will trigger the useEffect to re-initialize
+    setChatEnded(false); 
+  }, []);
 
   // 4. Render component
   if (hasPermissions === undefined) {
@@ -236,6 +257,41 @@ export default function LiveVideoPage() {
                 </AlertDescription>
             </Alert>
         </div>
+    );
+  }
+
+  if (chatEnded) {
+    return (
+      <div className="h-screen w-full bg-black text-white flex flex-col items-center justify-center p-6">
+        <h1 className="text-4xl font-bold mb-4">Conversation Ended</h1>
+        <p className="text-xl text-muted-foreground mb-8">
+          Here's a summary of your chat with Aiva.
+        </p>
+
+        <Card className="w-full max-w-2xl bg-gray-900/80 border-gray-700">
+          <CardHeader>
+            <CardTitle>Conversation Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isAIThinking ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p className="ml-4 text-muted-foreground">Generating summary...</p>
+              </div>
+            ) : (
+              <ScrollArea className="h-64 pr-4">
+                <p className="whitespace-pre-wrap text-foreground/90">{summary}</p>
+              </ScrollArea>
+            )}
+          </CardContent>
+          <CardFooter className="flex justify-center pt-6">
+            <Button onClick={handleStartOver} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white rounded-full h-14 text-lg px-10">
+              <RotateCcw className="mr-3 h-6 w-6" />
+              Start New Chat
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     );
   }
 
@@ -273,12 +329,6 @@ export default function LiveVideoPage() {
 
       {/* Bottom Overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center items-center bg-gradient-to-t from-black/60 to-transparent">
-        {chatEnded ? (
-           <Button onClick={handleStartOver} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white rounded-full h-16 text-lg px-8">
-              <RotateCcw className="mr-3 h-6 w-6" />
-              Start New Chat
-           </Button>
-        ) : (
           <div className="flex items-center gap-4">
             <Button onClick={toggleCamera} size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
               {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
@@ -310,7 +360,6 @@ export default function LiveVideoPage() {
               <X className="w-6 h-6" />
             </Button>
           </div>
-        )}
       </div>
       
       <audio ref={audioRef} className="hidden" />

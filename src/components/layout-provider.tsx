@@ -4,8 +4,19 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Bot, History, Menu, MessageSquare, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -83,6 +94,9 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                     </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="sm:max-w-xs">
+                        <SheetHeader>
+                          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
+                        </SheetHeader>
                         <nav className="flex h-full flex-col gap-6 text-lg font-medium pt-4">
                             <Link
                                 href="/"

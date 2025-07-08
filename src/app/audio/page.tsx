@@ -4,9 +4,18 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Mic, Bot, User, Loader2, RotateCcw } from 'lucide-react';
+import {
+  Sparkles,
+  RefreshCw,
+  Video,
+  Upload,
+  X,
+  VideoOff,
+  Mic,
+  Loader2,
+  RotateCcw,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { geminiSwitchChat } from '@/ai/flows/gemini-switch-chat';
 import { useOnlineStatus } from '@/hooks/use-online-status';
 import { tts } from '@/ai/flows/tts';
@@ -24,8 +33,9 @@ type ConversationMessage = {
   text: string;
 };
 
-export default function VoiceChatPage() {
+export default function LiveVideoPage() {
   const [hasPermissions, setHasPermissions] = useState<boolean | undefined>(undefined);
+  const [isCameraOn, setIsCameraOn] = useState(true);
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [isAIThinking, setIsAIThinking] = useState(false);
@@ -35,15 +45,37 @@ export default function VoiceChatPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
 
+  const speak = async (text: string): Promise<void> => {
+    if (!text) return Promise.resolve();
+    try {
+      const { media } = await tts({ text });
+      return new Promise<void>((resolve) => {
+          if (audioRef.current) {
+            audioRef.current.src = media;
+            audioRef.current.play();
+            audioRef.current.onended = () => resolve();
+            audioRef.current.onerror = () => {
+              console.error("Audio playback error.");
+              resolve(); // Resolve even on error to not block the flow
+            }
+          } else {
+            resolve();
+          }
+      });
+    } catch (error) {
+      console.error("TTS Error:", error);
+      toast({ variant: "destructive", title: "Could not play audio" });
+      return Promise.resolve();
+    }
+  };
+  
   // 1. Permissions and Initial Greeting
   useEffect(() => {
     async function setupPage() {
-      // Get media permissions
       if (typeof window !== 'undefined' && navigator.mediaDevices) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -52,17 +84,16 @@ export default function VoiceChatPage() {
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
           }
-
-          // Greet user
-          speak("Hello. I'm Aiva. What would you like to talk about today?");
-
+          setIsAIThinking(true);
+          await speak("Hello. I'm Aiva. Tap the microphone to talk.");
+          setIsAIThinking(false);
         } catch (error) {
           console.error('Error accessing media devices:', error);
           setHasPermissions(false);
           toast({
             variant: 'destructive',
             title: 'Media Access Denied',
-            description: 'Please enable camera and microphone permissions in your browser settings.',
+            description: 'Please enable camera and microphone permissions.',
           });
         }
       } else {
@@ -75,11 +106,12 @@ export default function VoiceChatPage() {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
-      if (audioRef.current) {
+       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = "";
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
 
   // 2. Speech Recognition Setup
@@ -96,16 +128,16 @@ export default function VoiceChatPage() {
           const userSpeech = event.results[0][0].transcript;
           setConversation((prev) => [...prev, { speaker: 'You', text: userSpeech }]);
           setIsAIThinking(true);
-          
+
           try {
             const aiResponse = await geminiSwitchChat({ prompt: userSpeech, isOnline, performResearch: false });
             setConversation((prev) => [...prev, { speaker: 'AIva', text: aiResponse.response }]);
-            speak(aiResponse.response);
+            await speak(aiResponse.response);
           } catch (error) {
             console.error(error);
             const errorMsg = "Sorry, I ran into an error. Please try again.";
             setConversation((prev) => [...prev, { speaker: 'AIva', text: errorMsg }]);
-            speak(errorMsg);
+            await speak(errorMsg);
           } finally {
             setIsAIThinking(false);
           }
@@ -121,26 +153,23 @@ export default function VoiceChatPage() {
           }
           setIsListening(false);
         };
-
+        
         recognitionRef.current.onend = () => {
           setIsListening(false);
         };
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline, toast]);
   
   // 3. Helper Functions
-  const speak = async (text: string) => {
-    if (!text) return;
-    try {
-      const { media } = await tts({ text });
-      if (audioRef.current) {
-        audioRef.current.src = media;
-        audioRef.current.play();
+  const toggleCamera = () => {
+    if (streamRef.current) {
+      const videoTrack = streamRef.current.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = !isCameraOn;
+        setIsCameraOn(!isCameraOn);
       }
-    } catch (error) {
-      console.error("TTS Error:", error);
-      toast({ variant: "destructive", title: "Could not play audio" });
     }
   };
 
@@ -161,47 +190,41 @@ export default function VoiceChatPage() {
     setIsAIThinking(true);
     setChatEnded(true);
     const fullConversation = conversation.map(msg => `${msg.speaker}: ${msg.text}`).join('\n');
+    
     try {
+      await speak("One moment while I summarize our conversation.");
       const { summary } = await summarize({ conversation: fullConversation });
       const summaryText = `Here is a summary of our conversation: ${summary}`;
       setConversation((prev) => [...prev, { speaker: 'AIva', text: summaryText }]);
-      speak(summaryText);
+      await speak(summaryText);
     } catch (error) {
       console.error("Summarization Error:", error);
       const errorMsg = "Sorry, I couldn't summarize the conversation.";
       setConversation((prev) => [...prev, { speaker: 'AIva', text: errorMsg }]);
-      speak(errorMsg);
+      await speak(errorMsg);
     } finally {
       setIsAIThinking(false);
     }
   };
   
-  const handleStartOver = () => {
+  const handleStartOver = async () => {
     setConversation([]);
     setChatEnded(false);
-    speak("Hello. What would you like to talk about today?");
-  }
-
-  // Auto-scroll chat
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const viewport = scrollAreaRef.current.querySelector('div[data-radix-scroll-area-viewport]');
-      if (viewport) {
-        viewport.scrollTop = viewport.scrollHeight;
-      }
-    }
-  }, [conversation]);
-
+    setIsAIThinking(true);
+    setIsListening(false);
+    await speak("Hello. Let's start a new conversation.");
+    setIsAIThinking(false);
+  };
 
   // 4. Render component
   if (hasPermissions === undefined) {
-    return <div className="flex h-full w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    return <div className="flex h-screen w-full items-center justify-center bg-black"><Loader2 className="h-8 w-8 animate-spin text-white" /></div>;
   }
   
   if (hasPermissions === false) {
     return (
-        <div className="flex h-full w-full items-center justify-center p-4">
-            <Alert variant="destructive" className="max-w-sm">
+        <div className="flex h-screen w-full items-center justify-center p-4 bg-black">
+            <Alert variant="destructive" className="max-w-sm bg-gray-900 border-red-500/50 text-white">
                 <AlertTitle>Camera & Mic Access Required</AlertTitle>
                 <AlertDescription>
                 Please allow camera and microphone access to use this feature. You may need to refresh the page after granting permissions.
@@ -212,65 +235,79 @@ export default function VoiceChatPage() {
   }
 
   return (
-    <div className="flex flex-col md:flex-row h-full w-full gap-4 p-4 bg-muted/40">
-      {/* Left side: Video + Controls */}
-      <div className="flex flex-col gap-4 md:w-1/2 lg:w-2/3">
-        <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
-          <video ref={videoRef} className="h-full w-full object-cover" autoPlay muted playsInline />
+    <div className="h-screen w-full bg-black relative flex items-center justify-center">
+      <video
+        ref={videoRef}
+        className={cn(
+          "h-full w-full object-cover transition-opacity duration-300",
+          isCameraOn ? "opacity-100" : "opacity-0"
+        )}
+        autoPlay
+        muted
+        playsInline
+      />
+      {!isCameraOn && (
+        <div className="absolute inset-0 flex items-center justify-center flex-col text-white">
+          <VideoOff className="h-24 w-24 mb-4" />
+          <p className="text-xl">Camera is off</p>
         </div>
-        <div className="flex gap-4">
-          {!chatEnded ? (
-            <>
-              <Button onClick={handleTalkClick} size="lg" className="flex-1" disabled={isAIThinking || isListening}>
-                <Mic className={`mr-2 h-5 w-5 ${isListening ? 'animate-pulse' : ''}`} />
-                {isListening ? 'Listening...' : 'Talk to AIva'}
-              </Button>
-              <Button onClick={handleEndChat} size="lg" variant="destructive" disabled={isAIThinking || isListening || conversation.length === 0}>
-                End Chat & Summarize
-              </Button>
-            </>
-          ) : (
-             <Button onClick={handleStartOver} size="lg" className="flex-1">
-                <RotateCcw className="mr-2 h-5 w-5" />
-                Start New Chat
-             </Button>
-          )}
+      )}
+
+      {/* Top Overlay */}
+      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
+        <div className="flex items-center gap-2">
+          <div className="bg-red-500 rounded-full px-3 py-1 text-sm font-semibold text-white flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4" />
+            Live
+          </div>
         </div>
+        <Button size="icon" variant="ghost" className="text-white hover:bg-white/20 rounded-full">
+          <RefreshCw className="w-5 h-5" />
+        </Button>
+      </div>
+
+      {/* Bottom Overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center items-center bg-gradient-to-t from-black/60 to-transparent">
+        {chatEnded ? (
+           <Button onClick={handleStartOver} size="lg" className="bg-blue-500 hover:bg-blue-600 text-white rounded-full h-16 text-lg px-8">
+              <RotateCcw className="mr-3 h-6 w-6" />
+              Start New Chat
+           </Button>
+        ) : (
+          <div className="flex items-center gap-4">
+            <Button onClick={toggleCamera} size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
+              {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+            </Button>
+            <Button size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
+              <Upload className="w-6 h-6" />
+            </Button>
+            
+            <Button 
+                onClick={handleTalkClick}
+                size="icon" 
+                variant="secondary" 
+                className={cn("rounded-full h-20 w-20 transition-all",
+                    isListening ? "bg-white/30 scale-110" : "bg-white/20 hover:bg-white/30",
+                    isAIThinking && "animate-pulse"
+                )}
+                disabled={isAIThinking}
+            >
+                <Mic className="w-8 h-8 text-white" />
+            </Button>
+
+            <Button 
+                onClick={handleEndChat}
+                size="icon" 
+                variant="destructive" 
+                className="bg-red-600 hover:bg-red-700 text-white rounded-full h-14 w-14"
+                disabled={isAIThinking || isListening || conversation.length === 0}
+            >
+              <X className="w-6 h-6" />
+            </Button>
+          </div>
+        )}
       </div>
       
-      {/* Right side: Conversation */}
-      <Card className="flex flex-col md:w-1/2 lg:w-1/3">
-        <CardHeader>
-          <CardTitle>Conversation</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col min-h-0">
-          <ScrollArea className="flex-1 -mx-6" ref={scrollAreaRef}>
-             <div className="px-6 space-y-4">
-                {conversation.map((msg, index) => (
-                    <div key={index} className="flex items-start gap-3">
-                        <span className="flex-shrink-0">
-                          {msg.speaker === 'AIva' ? <Bot className="h-6 w-6 text-primary" /> : <User className="h-6 w-6 text-muted-foreground" />}
-                        </span>
-                        <p className="pt-0.5 text-sm">{msg.text}</p>
-                    </div>
-                ))}
-                {isAIThinking && (
-                   <div className="flex items-start gap-3">
-                       <span className="flex-shrink-0">
-                         <Bot className="h-6 w-6 text-primary" />
-                       </span>
-                       <div className="flex items-center space-x-1 p-1 pt-2">
-                            <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
-                            <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
-                            <div className="w-2 h-2 rounded-full bg-current animate-bounce" />
-                        </div>
-                   </div>
-                )}
-             </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-
       <audio ref={audioRef} className="hidden" />
     </div>
   );

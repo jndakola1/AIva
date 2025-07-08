@@ -116,7 +116,6 @@ export default function ChatInterface() {
         };
 
         recognitionRef.current.onerror = (event: any) => {
-          console.error('Speech recognition error', event.error);
           let description = 'Could not process audio.';
           if (event.error === 'not-allowed') {
             description = 'Microphone access was denied. Please enable it in your browser settings to use voice input.';

@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview An AI agent that reviews the output of another AI.
  *
@@ -40,7 +39,7 @@ export async function selfReview(
   return selfReviewFlow(input);
 }
 
-const reviewPrompt = ai.definePrompt({
+const selfReviewPrompt = ai.definePrompt({
   name: 'selfReviewPrompt',
   input: { schema: SelfReviewInputSchema },
   output: { schema: SelfReviewOutputSchema },
@@ -76,7 +75,12 @@ const selfReviewFlow = ai.defineFlow(
     outputSchema: SelfReviewOutputSchema,
   },
   async (input) => {
-    const { output } = await reviewPrompt(input);
-    return output!;
+    const result = await selfReviewPrompt(input);
+  
+    if (!result.output) {
+      throw new Error('Self-review prompt failed to produce output.');
+    }
+  
+    return result.output;
   }
 );

@@ -10,7 +10,9 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { chat as onlineChat, ChatOutput } from './chat';
-import type { SelfReviewOutput } from './self-review';
+import { z } from 'genkit';
+
+export const SelfReviewOutput = z.string(); // Or use z.object({}) if you want structured fields
 
 const MessageSchema = z.object({
   speaker: z.enum(['You', 'AIva']),

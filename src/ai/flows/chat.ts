@@ -9,7 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { selfReview, SelfReviewOutput } from './self-review';
+import { selfReview, SelfReviewOutput, SelfReviewOutputSchema } from './self-review';
 
 const searchForImageTool = ai.defineTool(
   {
@@ -110,7 +110,7 @@ const ChatOutputSchema = z.object({
   imageUrl: z.string().nullable().optional().describe('The URL of an image to display, if requested.'),
   altText: z.string().optional().describe('The alt text for the image.'),
   dataAiHint: z.string().optional().describe('A hint for a real image search.'),
-  review: SelfReviewOutput.optional().describe('The self-review of the AI response.'),
+  review: SelfReviewOutputSchema.optional().describe('The self-review of the AI response.'),
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 

@@ -11,14 +11,12 @@ import { ai } from '@/ai/genkit';
 import { chat as onlineChat, ChatOutput } from './chat';
 import { z } from 'genkit';
 
-export const SelfReviewOutput = z.string(); // Or use z.object({}) if you want structured fields
-
 const MessageSchema = z.object({
   speaker: z.enum(['You', 'AIva']),
   text: z.string(),
 });
 
-const GeminiSwitchChatInputSchema = z.object({
+export const GeminiSwitchChatInputSchema = z.object({
   prompt: z.string().describe('The user prompt.'),
   isOnline: z.boolean().describe('The network status of the client.'),
   performResearch: z.boolean().optional().describe('Whether to force the use of the research tool.'),
@@ -28,18 +26,6 @@ export type GeminiSwitchChatInput = z.infer<typeof GeminiSwitchChatInputSchema>;
 
 export type GeminiSwitchChatOutput = ChatOutput;
 
-const GeminiSwitchChatOutputSchema = z.object({
-  response: z.string().describe('The AI response.'),
-  imageUrl: z.string().optional().describe('The URL of an image to display, if requested.'),
-  altText: z.string().optional().describe('The alt text for the image.'),
-  dataAiHint: z.string().optional().describe('A hint for a real image search.'),
-  review: z.object({
-    summaryEvaluation: z.enum(['Good', 'Needs Improvement']),
-    issuesFound: z.string().optional(),
-    suggestedFixes: z.string().optional(),
-    finalVerdict: z.enum(['Use as-is', 'Revise']),
-  }).optional(),
-});
 
 async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {
   try {
@@ -83,30 +69,19 @@ async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {
   }
 }
 
-
 export async function geminiSwitchChat(
   input: GeminiSwitchChatInput
 ): Promise<GeminiSwitchChatOutput> {
-  return geminiSwitchChatFlow(input);
-}
-
-const geminiSwitchChatFlow = ai.defineFlow(
-  {
-    name: 'geminiSwitchChatFlow',
-    inputSchema: GeminiSwitchChatInputSchema,
-    outputSchema: GeminiSwitchChatOutputSchema,
-  },
-  async ({ prompt, isOnline, performResearch, history }) => {
-    if (isOnline) {
-      const mappedHistory = history?.map(msg => ({
-        role: msg.speaker,
-        content: msg.text,
-      }));
-      return onlineChat({ prompt, performResearch, history: mappedHistory });
-    } else {
-      const historyString = history?.map(msg => `${msg.speaker}: ${msg.text}`).join('\n') || '';
-      const fullPrompt = `${historyString}\nYou: ${prompt}\nAIva:`;
-      return ollamaChat(fullPrompt);
-    }
+  const { prompt, isOnline, performResearch, history } = input;
+  if (isOnline) {
+    const mappedHistory = history?.map(msg => ({
+      role: msg.speaker,
+      content: msg.text,
+    }));
+    return onlineChat({ prompt, performResearch, history: mappedHistory });
+  } else {
+    const historyString = history?.map(msg => `${msg.speaker}: ${msg.text}`).join('\n') || '';
+    const fullPrompt = `${historyString}\nYou: ${prompt}\nAIva:`;
+    return ollamaChat(fullPrompt);
   }
-);
+}

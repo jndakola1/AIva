@@ -1,3 +1,5 @@
+
+'use server';
 /**
  * @fileOverview An AI agent that reviews the output of another AI.
  *

@@ -9,6 +9,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
+import type { SelfReviewOutput } from '@/ai/flows/self-review';
 
 type Message = {
   role: 'You' | 'AI';
@@ -16,6 +17,7 @@ type Message = {
   imageUrl?: string;
   altText?: string;
   dataAiHint?: string;
+  review?: SelfReviewOutput;
 };
 
 interface ChatHistoryContextType {

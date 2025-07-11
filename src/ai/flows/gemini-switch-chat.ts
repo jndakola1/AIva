@@ -8,8 +8,9 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { chat as onlineChat, ChatOutput } from './chat';
+import type { SelfReviewOutput } from './self-review';
 
 const MessageSchema = z.object({
   speaker: z.enum(['You', 'AIva']),
@@ -31,6 +32,12 @@ const GeminiSwitchChatOutputSchema = z.object({
   imageUrl: z.string().optional().describe('The URL of an image to display, if requested.'),
   altText: z.string().optional().describe('The alt text for the image.'),
   dataAiHint: z.string().optional().describe('A hint for a real image search.'),
+  review: z.object({
+    summaryEvaluation: z.enum(['Good', 'Needs Improvement']),
+    issuesFound: z.string().optional(),
+    suggestedFixes: z.string().optional(),
+    finalVerdict: z.enum(['Use as-is', 'Revise']),
+  }).optional(),
 });
 
 async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {

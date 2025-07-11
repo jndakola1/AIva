@@ -69,6 +69,7 @@ export default function ChatInterface() {
         imageUrl: aiResponse.imageUrl,
         altText: aiResponse.altText,
         dataAiHint: aiResponse.dataAiHint,
+        review: aiResponse.review,
       });
     } catch (error) {
       console.error(error);

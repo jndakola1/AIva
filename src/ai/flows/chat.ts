@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { selfReview, SelfReviewOutput } from './self-review';
 
 const searchForImageTool = ai.defineTool(
   {
@@ -109,6 +110,7 @@ const ChatOutputSchema = z.object({
   imageUrl: z.string().nullable().optional().describe('The URL of an image to display, if requested.'),
   altText: z.string().optional().describe('The alt text for the image.'),
   dataAiHint: z.string().optional().describe('A hint for a real image search.'),
+  review: SelfReviewOutput.optional().describe('The self-review of the AI response.'),
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
@@ -119,7 +121,14 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
 const prompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
-  output: {schema: ChatOutputSchema},
+  // The output schema for the main chat prompt doesn't include the review.
+  // The review is added later in the flow.
+  output: {schema: z.object({
+    response: z.string().describe('The AI text response.'),
+    imageUrl: z.string().nullable().optional().describe('The URL of an image to display, if requested.'),
+    altText: z.string().optional().describe('The alt text for the image.'),
+    dataAiHint: z.string().optional().describe('A hint for a real image search.'),
+  })},
   tools: [searchForImageTool, researchTopic],
   prompt: `You are a helpful AI assistant named Aiva. You are having a voice-based conversation. Be conversational and natural.
 
@@ -154,29 +163,47 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    if (!output) {
+    // 1. Get the initial response from the main chat prompt
+    const {output: initialOutput} = await prompt(input);
+    if (!initialOutput) {
       throw new Error('The chat flow failed to produce a valid output. The model may have returned an empty or invalid response.');
     }
 
+    // 2. Perform self-review, but only for text responses
+    let review: SelfReviewOutput | undefined = undefined;
+    if (initialOutput.response && !initialOutput.imageUrl) {
+      try {
+        review = await selfReview({
+          userPrompt: input.prompt,
+          aiResponse: initialOutput.response,
+        });
+      } catch (e) {
+        console.warn("Self-review step failed. This is non-critical.", e);
+        // This is non-critical, so we can continue without a review.
+      }
+    }
+    
+    // 3. Combine initial output with the review
+    const finalOutput: ChatOutput = { ...initialOutput, review };
+    
     // Handle cases where the model returns null for imageUrl
-    if (output.imageUrl === null) {
-      output.imageUrl = undefined;
-      output.altText = undefined;
-      output.dataAiHint = undefined;
+    if (finalOutput.imageUrl === null) {
+      finalOutput.imageUrl = undefined;
+      finalOutput.altText = undefined;
+      finalOutput.dataAiHint = undefined;
     }
     
     // Safeguard: If the LLM hallucinates an image URL from a non-approved domain, replace it with a placeholder to prevent crashes.
-    if (output.imageUrl && !output.imageUrl.startsWith('https://placehold.co') && !output.imageUrl.startsWith('https://images.unsplash.com')) {
+    if (finalOutput.imageUrl && !finalOutput.imageUrl.startsWith('https://placehold.co') && !finalOutput.imageUrl.startsWith('https://images.unsplash.com')) {
       // Try to extract a query from the prompt for better alt text.
       const queryMatch = input.prompt.match(/(?:image|picture) of (?:a|an|the)?\s*([^.?!]*)/i);
       const query = queryMatch ? queryMatch[1].trim() : 'a visual representation';
 
-      output.imageUrl = `https://placehold.co/600x400.png`;
-      output.altText = `An image of ${query}`;
-      output.dataAiHint = query.split(' ').slice(0, 2).join(' ');
+      finalOutput.imageUrl = `https://placehold.co/600x400.png`;
+      finalOutput.altText = `An image of ${query}`;
+      finalOutput.dataAiHint = query.split(' ').slice(0, 2).join(' ');
     }
 
-    return output;
+    return finalOutput;
   }
 );

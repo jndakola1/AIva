@@ -1,7 +1,15 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit } from "lucide-react";
 import Image from "next/image";
+import type { SelfReviewOutput } from "@/ai/flows/self-review";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "./ui/badge";
+
 
 type ChatMessageProps = {
   role: "You" | "AI";
@@ -10,9 +18,41 @@ type ChatMessageProps = {
   imageUrl?: string;
   altText?: string;
   dataAiHint?: string;
+  review?: SelfReviewOutput;
 };
 
-export default function ChatMessage({ role, content, isLoading, imageUrl, altText, dataAiHint }: ChatMessageProps) {
+const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
+  <Popover>
+    <PopoverTrigger asChild>
+      <Badge variant="outline" className="cursor-pointer ml-2 border-green-500/40 bg-green-500/10 text-green-700 hover:bg-green-500/20">
+        <BadgeCheck className="h-3 w-3 mr-1" />
+        Reviewed
+      </Badge>
+    </PopoverTrigger>
+    <PopoverContent className="w-80 text-sm">
+      <div className="grid gap-4">
+        <div className="space-y-2">
+          <h4 className="font-medium leading-none flex items-center">
+            <BrainCircuit className="h-4 w-4 mr-2" />
+            AI Self-Review
+          </h4>
+          <p className="text-xs text-muted-foreground">
+            Aiva reviews its own responses for quality and accuracy.
+          </p>
+        </div>
+        <div className="space-y-2">
+           <p><span className="font-semibold">Evaluation:</span> {review.summaryEvaluation}</p>
+           {review.issuesFound && <p><span className="font-semibold">Issues:</span> {review.issuesFound}</p>}
+           {review.suggestedFixes && <p><span className="font-semibold">Fixes:</span> {review.suggestedFixes}</p>}
+           <p><span className="font-semibold">Verdict:</span> {review.finalVerdict}</p>
+        </div>
+      </div>
+    </PopoverContent>
+  </Popover>
+);
+
+
+export default function ChatMessage({ role, content, isLoading, imageUrl, altText, dataAiHint, review }: ChatMessageProps) {
   const isAi = role === "AI";
   return (
     <div className="flex items-start gap-4">
@@ -22,7 +62,10 @@ export default function ChatMessage({ role, content, isLoading, imageUrl, altTex
           </AvatarFallback>
       </Avatar>
       <div className="flex-1 pt-0.5 space-y-2">
-        <p className="font-semibold">{isAi ? "Aiva" : "You"}</p>
+        <p className="font-semibold flex items-center">
+          {isAi ? "Aiva" : "You"}
+          {isAi && review && <ReviewPopover review={review} />}
+        </p>
         <div className="text-foreground/90">
           {isLoading ? (
             <div className="flex items-center space-x-1 p-1">

@@ -8,7 +8,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { chat as onlineChat, ChatOutput } from './chat';
+import { chat as onlineChat, ChatOutput, ChatOutputSchema } from './chat';
 import { z } from 'genkit';
 
 const MessageSchema = z.object({
@@ -16,7 +16,7 @@ const MessageSchema = z.object({
   text: z.string(),
 });
 
-export const GeminiSwitchChatInputSchema = z.object({
+const GeminiSwitchChatInputSchema = z.object({
   prompt: z.string().describe('The user prompt.'),
   isOnline: z.boolean().describe('The network status of the client.'),
   performResearch: z.boolean().optional().describe('Whether to force the use of the research tool.'),

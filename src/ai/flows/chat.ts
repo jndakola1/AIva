@@ -9,7 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { selfReview, SelfReviewOutput, SelfReviewOutputSchema } from './self-review';
+import { selfReview, SelfReviewOutputSchema } from './self-review';
 
 const searchForImageTool = ai.defineTool(
   {
@@ -105,7 +105,7 @@ const ChatInputSchema = z.object({
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
-const ChatOutputSchema = z.object({
+export const ChatOutputSchema = z.object({
   response: z.string().describe('The AI text response.'),
   imageUrl: z.string().nullable().optional().describe('The URL of an image to display, if requested.'),
   altText: z.string().optional().describe('The alt text for the image.'),
@@ -170,7 +170,7 @@ const chatFlow = ai.defineFlow(
     }
 
     // 2. Perform self-review, but only for text responses
-    let review: SelfReviewOutput | undefined = undefined;
+    let review: z.infer<typeof SelfReviewOutputSchema> | undefined = undefined;
     if (initialOutput.response && !initialOutput.imageUrl) {
       try {
         review = await selfReview({

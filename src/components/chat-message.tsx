@@ -62,10 +62,10 @@ export default function ChatMessage({ role, content, isLoading, imageUrl, altTex
           </AvatarFallback>
       </Avatar>
       <div className="flex-1 pt-0.5 space-y-2">
-        <p className="font-semibold flex items-center">
+        <div className="font-semibold flex items-center">
           {isAi ? "Aiva" : "You"}
           {isAi && review && <ReviewPopover review={review} />}
-        </p>
+        </div>
         <div className="text-foreground/90">
           {isLoading ? (
             <div className="flex items-center space-x-1 p-1">

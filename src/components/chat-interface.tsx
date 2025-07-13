@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Loader, Mic, Search, Send, SlidersHorizontal } from "lucide-react";
+import { Loader, Mic, Search, Send, SlidersHorizontal, Volume2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,6 +16,7 @@ import { generateImage } from "@/ai/flows/generate-image";
 import AttachmentMenu from "@/components/attachment-menu";
 import { cn } from "@/lib/utils";
 import { useChatHistory } from "@/context/chat-history-context";
+import { tts, TTSOutput } from "@/ai/flows/tts";
 
 declare global {
   interface Window {
@@ -31,21 +32,30 @@ export default function ChatInterface() {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(null);
 
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const messageIdCounter = useRef(0);
 
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOnline = useOnlineStatus();
 
+  const getNewMessageId = () => {
+    messageIdCounter.current += 1;
+    return `msg-${Date.now()}-${messageIdCounter.current}`;
+  }
+
   const sendMessage = useCallback(async (prompt: string, options?: { performResearch?: boolean }) => {
     if (!prompt.trim()) return;
 
     const performResearch = options?.performResearch || false;
     const userMessageContent = performResearch ? `Research: ${prompt}` : prompt;
-    const userMessage = { role: "You" as const, content: userMessageContent };
+    const userMessage = { id: getNewMessageId(), role: "You" as const, content: userMessageContent };
 
     const currentHistoryForAI = messages.map(msg => ({
       speaker: msg.role === 'You' ? 'You' : 'AIva' as const,
@@ -63,7 +73,8 @@ export default function ChatInterface() {
         performResearch,
         history: currentHistoryForAI
       });
-      addMessage({ 
+      addMessage({
+        id: getNewMessageId(),
         role: "AI",
         content: aiResponse.response,
         imageUrl: aiResponse.imageUrl,
@@ -76,7 +87,7 @@ export default function ChatInterface() {
       const errorMessage = performResearch
         ? `Sorry, I ran into an error during research. Please try again later.`
         : `Sorry, I ran into an error. Please try again later.`;
-      addMessage({ role: "AI", content: errorMessage });
+      addMessage({ id: getNewMessageId(), role: "AI", content: errorMessage });
       toast({
         variant: "destructive",
         title: "Error",
@@ -119,27 +130,24 @@ export default function ChatInterface() {
 
         recognitionRef.current.onresult = (event: any) => {
           const transcript = event.results[0][0].transcript;
-          sendMessage(transcript);
+          setInput(transcript); // Set input to transcript
+          sendMessage(transcript); // And send it immediately
         };
 
         recognitionRef.current.onerror = (event: any) => {
-          if (event.error === 'not-allowed') {
-             toast({
+          if (event.error !== 'no-speech') {
+            toast({
               variant: 'destructive',
               title: 'Speech Recognition Error',
-              description: 'Microphone access was denied. Please enable it in your browser settings to use voice input.',
+              description: event.error === 'not-allowed' ? 'Microphone access was denied. Please enable it in your browser settings.' : `An error occurred: ${event.error}`,
             });
           }
+           setIsRecording(false);
         };
 
         recognitionRef.current.onend = () => {
           setIsRecording(false);
         };
-      } else {
-        toast({
-          title: 'Feature Not Supported',
-          description: 'Speech recognition is not available in your browser.',
-        });
       }
     }
   }, [toast, sendMessage]);
@@ -157,9 +165,9 @@ export default function ChatInterface() {
     if (isRecording) {
       recognitionRef.current.stop();
     } else {
+      setIsRecording(true);
       recognitionRef.current.start();
     }
-    setIsRecording(!isRecording);
   };
 
   const handleEnhancePrompt = useCallback(async () => {
@@ -198,13 +206,14 @@ export default function ChatInterface() {
     }
 
     const prompt = input;
-    addMessage({ role: "You", content: `Create an image of: ${prompt}` });
+    addMessage({ id: getNewMessageId(), role: "You", content: `Create an image of: ${prompt}` });
     setInput("");
     setIsGeneratingImage(true);
     
     try {
       const imageResponse = await generateImage({ prompt });
       addMessage({ 
+        id: getNewMessageId(),
         role: "AI",
         content: `Here's the image you asked for.`,
         imageUrl: imageResponse.imageUrl,
@@ -213,7 +222,7 @@ export default function ChatInterface() {
     } catch (error) {
       console.error(error);
       const errorMessage = `Sorry, I was unable to create an image for that prompt. Please try a different one.`;
-      addMessage({ role: "AI", content: errorMessage });
+      addMessage({ id: getNewMessageId(), role: "AI", content: errorMessage });
       toast({
         variant: "destructive",
         title: "Image Generation Failed",
@@ -235,9 +244,41 @@ export default function ChatInterface() {
     }
     sendMessage(input, { performResearch: true });
   }, [input, sendMessage, toast]);
+  
+  const handlePlayAudio = useCallback(async (messageId: string, text: string) => {
+    if (isSpeaking && currentlyPlayingId === messageId) {
+      // If the same message is clicked while playing, stop it
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      setIsSpeaking(false);
+      setCurrentlyPlayingId(null);
+      return;
+    }
+
+    setCurrentlyPlayingId(messageId);
+    setIsSpeaking(true);
+    try {
+      const { media } = await tts({ text });
+      if (audioRef.current) {
+        audioRef.current.src = media;
+        audioRef.current.play();
+        audioRef.current.onended = () => {
+          setIsSpeaking(false);
+          setCurrentlyPlayingId(null);
+        };
+      }
+    } catch (error) {
+      console.error('TTS Error:', error);
+      toast({ variant: 'destructive', title: 'Could not play audio' });
+      setIsSpeaking(false);
+      setCurrentlyPlayingId(null);
+    }
+  }, [isSpeaking, currentlyPlayingId, toast]);
 
 
-  const isDisabled = isSending || isEnhancing || isRecording || isGeneratingImage;
+  const isDisabled = isSending || isEnhancing || isRecording || isGeneratingImage || isSpeaking;
   const isMenuDisabled = isDisabled || !input.trim();
 
   return (
@@ -251,11 +292,16 @@ export default function ChatInterface() {
                   <h1 className="text-3xl font-semibold">How can I help you today?</h1>
                 </div>
             )}
-            {messages.map((msg, i) => (
-              <ChatMessage key={i} {...msg} />
+            {messages.map((msg) => (
+              <ChatMessage 
+                key={msg.id} 
+                {...msg}
+                onPlayAudio={handlePlayAudio}
+                isSpeaking={isSpeaking && currentlyPlayingId === msg.id}
+              />
             ))}
             {(isSending || isGeneratingImage) && messages.length > 0 && messages[messages.length-1]?.role === 'You' && (
-                <ChatMessage role="AI" content="" isLoading={true} />
+                <ChatMessage id="loading" role="AI" content="" isLoading={true} />
             )}
           </div>
         </ScrollArea>
@@ -263,12 +309,12 @@ export default function ChatInterface() {
 
       <footer className="p-4 bg-background border-t">
         <div className="max-w-3xl mx-auto">
-          <div className="bg-card rounded-2xl p-2 sm:p-3 shadow-sm border border-input">
+          <div className="relative">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={isRecording ? "Listening..." : "Message Aiva..."}
-              className="bg-transparent border-0 focus-visible:ring-0 resize-none w-full p-2 text-base min-h-0"
+              className="bg-card rounded-2xl shadow-sm border-input pr-24 pl-12 py-3 text-base min-h-0"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -278,13 +324,26 @@ export default function ChatInterface() {
               disabled={isDisabled}
               rows={1}
             />
-            <div className="flex justify-between items-center mt-2">
-              <div className="flex items-center gap-1 sm:gap-2">
-                <AttachmentMenu 
-                  disabled={isMenuDisabled}
-                  onGenerateImage={handleGenerateImage}
-                  onWebSearch={handleWebSearch}
-                />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
+              <AttachmentMenu 
+                disabled={isMenuDisabled}
+                onGenerateImage={handleGenerateImage}
+                onWebSearch={handleWebSearch}
+              />
+               <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={cn('rounded-full text-muted-foreground', {
+                    'text-blue-500 animate-pulse': isRecording,
+                  })}
+                  onClick={handleMicClick} 
+                  disabled={isSending || isEnhancing || isGeneratingImage || isSpeaking}
+                  title="Voice Input"
+                >
+                  <Mic className="h-5 w-5" />
+                </Button>
+            </div>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
                 <Button 
                   variant="ghost" 
                   size="icon" 
@@ -295,37 +354,14 @@ export default function ChatInterface() {
                 >
                   {isEnhancing ? <Loader className="h-5 w-5 animate-spin" /> : <SlidersHorizontal className="h-5 w-5" />}
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="rounded-full text-muted-foreground border-border/60"
-                  onClick={() => sendMessage(input, { performResearch: true })}
-                  disabled={isMenuDisabled}
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Research
-                </Button>
-              </div>
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={cn('rounded-full text-muted-foreground', {
-                    'bg-destructive/20 text-destructive animate-pulse': isRecording,
-                  })}
-                  onClick={handleMicClick} 
-                  disabled={isSending || isEnhancing || isGeneratingImage}
-                >
-                  <Mic className="h-5 w-5" />
-                </Button>
-                <Button
+              <Button
                   onClick={() => sendMessage(input)}
                   disabled={isDisabled || !input.trim()}
                   size="icon"
-                  className="rounded-full w-10 h-10 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted"
+                  className="rounded-full w-8 h-8 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted"
                 >
                   {isSending ? <Loader className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
-                </Button>
-              </div>
+              </Button>
             </div>
           </div>
           <p className="text-xs text-center text-muted-foreground mt-3">
@@ -333,6 +369,7 @@ export default function ChatInterface() {
           </p>
         </div>
       </footer>
+      <audio ref={audioRef} className="hidden" />
     </div>
   );
 }

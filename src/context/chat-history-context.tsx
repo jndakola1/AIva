@@ -12,6 +12,7 @@ import React, {
 import type { SelfReviewOutput } from '@/ai/flows/self-review';
 
 type Message = {
+  id: string;
   role: 'You' | 'AI';
   content: string;
   imageUrl?: string;

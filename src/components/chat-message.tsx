@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2 } from "lucide-react";
 import Image from "next/image";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
@@ -9,9 +9,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 
 
 type ChatMessageProps = {
+  id: string;
   role: "You" | "AI";
   content: string;
   isLoading?: boolean;
@@ -19,6 +21,8 @@ type ChatMessageProps = {
   altText?: string;
   dataAiHint?: string;
   review?: SelfReviewOutput;
+  onPlayAudio?: (messageId: string, text: string) => void;
+  isSpeaking?: boolean;
 };
 
 const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
@@ -52,10 +56,10 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
 );
 
 
-export default function ChatMessage({ role, content, isLoading, imageUrl, altText, dataAiHint, review }: ChatMessageProps) {
+export default function ChatMessage({ id, role, content, isLoading, imageUrl, altText, dataAiHint, review, onPlayAudio, isSpeaking }: ChatMessageProps) {
   const isAi = role === "AI";
   return (
-    <div className="flex items-start gap-4">
+    <div className="flex items-start gap-4 group">
       <Avatar className="h-8 w-8 border border-border">
           <AvatarFallback className={cn(isAi ? "bg-card text-foreground" : "bg-primary text-primary-foreground")}>
               {isAi ? <Bot size={18} /> : <User size={18}/>}
@@ -66,7 +70,7 @@ export default function ChatMessage({ role, content, isLoading, imageUrl, altTex
           {isAi ? "Aiva" : "You"}
           {isAi && review && <ReviewPopover review={review} />}
         </div>
-        <div className="text-foreground/90">
+        <div className="text-foreground/90 relative pr-10">
           {isLoading ? (
             <div className="flex items-center space-x-1 p-1">
                 <div className="w-2 h-2 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
@@ -86,6 +90,23 @@ export default function ChatMessage({ role, content, isLoading, imageUrl, altTex
                     className="rounded-lg border border-border"
                     data-ai-hint={dataAiHint}
                   />
+                </div>
+              )}
+               {isAi && content && onPlayAudio && (
+                <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground"
+                    onClick={() => onPlayAudio(id, content)}
+                    disabled={isSpeaking && !isSpeaking}
+                  >
+                    {isSpeaking ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Volume2 className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
               )}
             </>

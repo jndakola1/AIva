@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Loader, Mic, Search, Send, SlidersHorizontal, Volume2, X } from "lucide-react";
+import { Loader, Mic, Send, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -16,7 +16,7 @@ import { generateImage } from "@/ai/flows/generate-image";
 import AttachmentMenu from "@/components/attachment-menu";
 import { cn } from "@/lib/utils";
 import { useChatHistory } from "@/context/chat-history-context";
-import { tts, TTSOutput } from "@/ai/flows/tts";
+import { tts } from "@/ai/flows/tts";
 
 declare global {
   interface Window {
@@ -26,7 +26,7 @@ declare global {
 }
 
 export default function ChatInterface() {
-  const { messages, addMessage } = useChatHistory();
+  const { messages, addMessage, loadingHistory } = useChatHistory();
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -38,24 +38,18 @@ export default function ChatInterface() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const messageIdCounter = useRef(0);
 
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOnline = useOnlineStatus();
 
-  const getNewMessageId = () => {
-    messageIdCounter.current += 1;
-    return `msg-${Date.now()}-${messageIdCounter.current}`;
-  }
-
   const sendMessage = useCallback(async (prompt: string, options?: { performResearch?: boolean }) => {
     if (!prompt.trim()) return;
 
     const performResearch = options?.performResearch || false;
     const userMessageContent = performResearch ? `Research: ${prompt}` : prompt;
-    const userMessage = { id: getNewMessageId(), role: "You" as const, content: userMessageContent };
+    const userMessage = { role: "You" as const, content: userMessageContent };
 
     const currentHistoryForAI = messages.map(msg => ({
       speaker: msg.role === 'You' ? 'You' : 'AIva' as const,
@@ -74,7 +68,6 @@ export default function ChatInterface() {
         history: currentHistoryForAI
       });
       addMessage({
-        id: getNewMessageId(),
         role: "AI",
         content: aiResponse.response,
         imageUrl: aiResponse.imageUrl,
@@ -87,7 +80,7 @@ export default function ChatInterface() {
       const errorMessage = performResearch
         ? `Sorry, I ran into an error during research. Please try again later.`
         : `Sorry, I ran into an error. Please try again later.`;
-      addMessage({ id: getNewMessageId(), role: "AI", content: errorMessage });
+      addMessage({ role: "AI", content: errorMessage });
       toast({
         variant: "destructive",
         title: "Error",
@@ -206,14 +199,13 @@ export default function ChatInterface() {
     }
 
     const prompt = input;
-    addMessage({ id: getNewMessageId(), role: "You", content: `Create an image of: ${prompt}` });
+    addMessage({ role: "You", content: `Create an image of: ${prompt}` });
     setInput("");
     setIsGeneratingImage(true);
     
     try {
       const imageResponse = await generateImage({ prompt });
       addMessage({ 
-        id: getNewMessageId(),
         role: "AI",
         content: `Here's the image you asked for.`,
         imageUrl: imageResponse.imageUrl,
@@ -222,7 +214,7 @@ export default function ChatInterface() {
     } catch (error) {
       console.error(error);
       const errorMessage = `Sorry, I was unable to create an image for that prompt. Please try a different one.`;
-      addMessage({ id: getNewMessageId(), role: "AI", content: errorMessage });
+      addMessage({ role: "AI", content: errorMessage });
       toast({
         variant: "destructive",
         title: "Image Generation Failed",
@@ -286,21 +278,26 @@ export default function ChatInterface() {
       <main className="flex-1 overflow-auto">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
           <div className="py-8 px-4 space-y-8 max-w-3xl mx-auto">
-            {messages.length === 0 && (
+             {loadingHistory ? (
+                <div className="flex justify-center items-center h-full pt-20">
+                  <Loader className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex flex-col h-full items-center justify-center text-center pt-20">
                   <div className="h-16 w-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-3xl font-bold mb-6">A</div>
                   <h1 className="text-3xl font-semibold">How can I help you today?</h1>
                 </div>
+            ) : (
+              messages.map((msg) => (
+                <ChatMessage 
+                  key={msg.id} 
+                  {...msg}
+                  onPlayAudio={handlePlayAudio}
+                  isSpeaking={isSpeaking && currentlyPlayingId === msg.id}
+                />
+              ))
             )}
-            {messages.map((msg) => (
-              <ChatMessage 
-                key={msg.id} 
-                {...msg}
-                onPlayAudio={handlePlayAudio}
-                isSpeaking={isSpeaking && currentlyPlayingId === msg.id}
-              />
-            ))}
-            {(isSending || isGeneratingImage) && messages.length > 0 && messages[messages.length-1]?.role === 'You' && (
+            {(isSending || isGeneratingImage) && (
                 <ChatMessage id="loading" role="AI" content="" isLoading={true} />
             )}
           </div>

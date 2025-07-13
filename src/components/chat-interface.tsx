@@ -311,7 +311,7 @@ export default function ChatInterface() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={isRecording ? "Listening..." : "Message Aiva..."}
-              className="bg-card rounded-2xl shadow-sm border-input pr-28 pl-14 py-3 text-base min-h-[48px]"
+              className="bg-card rounded-2xl shadow-sm border-input pr-28 pl-24 py-3 text-base min-h-[48px]"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();

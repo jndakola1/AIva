@@ -9,7 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { selfReview, SelfReviewOutputSchema } from './self-review';
+import { selfReview, SelfReviewOutput, SelfReviewOutputSchema } from './self-review';
 
 const searchForImageTool = ai.defineTool(
   {
@@ -117,8 +117,6 @@ export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
-  // The output schema for the main chat prompt doesn't include the review.
-  // The review is added later in the flow.
   output: {schema: z.object({
     response: z.string().describe('The AI text response.'),
     imageUrl: z.string().nullable().optional().describe('The URL of an image to display, if requested.'),
@@ -152,7 +150,8 @@ Your entire output MUST be a single, valid JSON object that conforms to the requ
 - If a tool generates an image, populate the 'imageUrl', 'altText', and 'dataAiHint' fields in addition to a 'response' text.`,
 });
 
-export async function chat(input: ChatInput): Promise<ChatOutput> {
+
+async function chat(input: ChatInput): Promise<ChatOutput> {
   // 1. Get the initial response from the main chat prompt
   const {output: initialOutput} = await chatPrompt(input);
   if (!initialOutput) {
@@ -160,7 +159,7 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
   }
 
   // 2. Perform self-review, but only for text responses
-  let review: z.infer<typeof SelfReviewOutputSchema> | undefined = undefined;
+  let review: SelfReviewOutput | undefined = undefined;
   if (initialOutput.response && !initialOutput.imageUrl) {
     try {
       review = await selfReview({
@@ -195,4 +194,17 @@ export async function chat(input: ChatInput): Promise<ChatOutput> {
   }
 
   return finalOutput;
+}
+
+const chatFlow = ai.defineFlow(
+  {
+    name: 'chatFlow',
+    inputSchema: ChatInputSchema,
+    outputSchema: ChatOutputSchema,
+  },
+  chat
+);
+
+export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
+  return chatFlow(input);
 }

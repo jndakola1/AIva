@@ -7,8 +7,7 @@
  * - GeminiSwitchChatOutput - The return type for the function.
  */
 
-import { ai } from '@/ai/genkit';
-import { chat as onlineChat, ChatOutput, ChatInput } from './chat';
+import { onlineChat, ChatOutput, ChatInput } from './chat';
 import { z } from 'genkit';
 
 const MessageSchema = z.object({

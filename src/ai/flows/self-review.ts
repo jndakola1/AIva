@@ -1,3 +1,4 @@
+'use server';
 /**
  * @fileOverview A self-review AI agent to evaluate and improve AI responses.
  *
@@ -22,12 +23,6 @@ export const SelfReviewOutputSchema = z.object({
   finalVerdict: z.enum(['Use as-is', 'Revise']).describe("The final recommendation on whether to use the response."),
 });
 export type SelfReviewOutput = z.infer<typeof SelfReviewOutputSchema>;
-
-export async function selfReview(
-  input: SelfReviewInput
-): Promise<SelfReviewOutput> {
-  return selfReviewFlow(input);
-}
 
 const selfReviewPrompt = ai.definePrompt({
   name: 'selfReviewPrompt',
@@ -65,3 +60,10 @@ const selfReviewFlow = ai.defineFlow(
     return output;
   }
 );
+
+
+export async function selfReview(
+  input: SelfReviewInput
+): Promise<SelfReviewOutput> {
+  return selfReviewFlow(input);
+}

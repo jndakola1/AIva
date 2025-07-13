@@ -48,13 +48,13 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-card">
-      <Card className="w-full max-w-sm border-0 shadow-none sm:border sm:shadow-sm">
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <Card className="w-full max-w-sm border-0 sm:border rounded-none sm:rounded-lg">
         <form onSubmit={handleSignUp}>
-          <CardHeader>
-            <CardTitle className="text-2xl">Sign Up</CardTitle>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Create an Account</CardTitle>
             <CardDescription>
-              Enter your information to create an account.
+              Get started with your personal AI assistant.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -74,6 +74,7 @@ export default function SignupPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 disabled={isLoading}
+                className="h-10"
               />
             </div>
             <div className="grid gap-2">
@@ -86,6 +87,7 @@ export default function SignupPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading}
+                className="h-10"
               />
             </div>
             <div className="grid gap-2">
@@ -97,17 +99,18 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isLoading}
+                className="h-10"
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col items-start gap-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+          <CardFooter className="flex flex-col items-center gap-4">
+            <Button type="submit" className="w-full font-semibold" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create account
+              Create Account
             </Button>
-            <div className="text-sm">
+            <div className="text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/login" className="underline">
+              <Link href="/login" className="underline font-semibold text-foreground">
                 Sign in
               </Link>
             </div>

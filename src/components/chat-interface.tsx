@@ -304,14 +304,14 @@ export default function ChatInterface() {
         </ScrollArea>
       </main>
 
-      <footer className="p-4 bg-background border-t">
+      <footer className="p-4 bg-background border-t flex-shrink-0">
         <div className="max-w-3xl mx-auto">
           <div className="relative">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={isRecording ? "Listening..." : "Message Aiva..."}
-              className="bg-card rounded-2xl shadow-sm border-input pr-24 pl-12 py-3 text-base min-h-0"
+              className="bg-card rounded-2xl shadow-sm border-input pr-28 pl-14 py-3 text-base min-h-[48px]"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -321,7 +321,7 @@ export default function ChatInterface() {
               disabled={isDisabled}
               rows={1}
             />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <AttachmentMenu 
                 disabled={isMenuDisabled}
                 onGenerateImage={handleGenerateImage}
@@ -340,7 +340,7 @@ export default function ChatInterface() {
                   <Mic className="h-5 w-5" />
                 </Button>
             </div>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <Button 
                   variant="ghost" 
                   size="icon" 

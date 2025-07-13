@@ -7,21 +7,85 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useChatHistory } from '@/context/chat-history-context';
 import Link from 'next/link';
-import { User } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SettingsPage() {
   const { clearHistory } = useChatHistory();
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-  // Mock user state for demonstration
-  const isLoggedIn = false;
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
 
   const handleClearHistory = () => {
     clearHistory();
+  };
+
+  const renderAccountCard = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-between p-4 -m-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-[150px]" />
+              <Skeleton className="h-4 w-[250px]" />
+            </div>
+          </div>
+          <Skeleton className="h-10 w-[90px] rounded-md" />
+        </div>
+      );
+    }
+    
+    if (user) {
+      return (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="p-2 rounded-full bg-muted">
+              <User className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <div>
+              <p className="font-medium">{user.displayName || 'User'}</p>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+            </div>
+          </div>
+          <Button variant="ghost" onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-between p-4 -m-4 rounded-lg bg-muted/30">
+        <div className="flex items-center gap-4">
+          <div className="p-2 rounded-full bg-muted">
+            <User className="w-5 h-5 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="font-medium">Not Signed In</p>
+            <p className="text-sm text-muted-foreground">Sign in to sync history and preferences.</p>
+          </div>
+        </div>
+        <Button asChild>
+          <Link href="/login">Sign In</Link>
+        </Button>
+      </div>
+    );
   };
 
   return (
@@ -39,27 +103,7 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoggedIn ? (
-                <div>
-                  {/* Logged in state UI to be built here */}
-                   <p>Welcome back!</p>
-                </div>
-              ) : (
-                 <div className="flex items-center justify-between p-4 -m-4 rounded-lg bg-muted/30">
-                   <div className="flex items-center gap-4">
-                      <div className="p-2 rounded-full bg-muted">
-                        <User className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Not Signed In</p>
-                        <p className="text-sm text-muted-foreground">Sign in to sync history and preferences.</p>
-                      </div>
-                   </div>
-                   <Button asChild>
-                     <Link href="/login">Sign In</Link>
-                   </Button>
-                 </div>
-              )}
+              {renderAccountCard()}
             </CardContent>
           </Card>
           <Card>

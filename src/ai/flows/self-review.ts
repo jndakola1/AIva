@@ -1,4 +1,3 @@
-'use server';
 /**
  * @fileOverview A self-review AI agent to evaluate and improve AI responses.
  *

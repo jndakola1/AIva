@@ -1,8 +1,7 @@
-'use server';
 /**
  * @fileOverview A simple chat AI agent that can also display images and perform research.
  *
- * - chat - A function that handles a chat conversation.
+ * - onlineChat - A function that handles a chat conversation using online models.
  * - ChatInput - The input type for the chat function.
  * - ChatOutput - The return type for the chat function.
  */
@@ -151,7 +150,7 @@ Your entire output MUST be a single, valid JSON object that conforms to the requ
 });
 
 
-async function chat(input: ChatInput): Promise<ChatOutput> {
+export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
   // 1. Get the initial response from the main chat prompt
   const {output: initialOutput} = await chatPrompt(input);
   if (!initialOutput) {
@@ -194,17 +193,4 @@ async function chat(input: ChatInput): Promise<ChatOutput> {
   }
 
   return finalOutput;
-}
-
-const chatFlow = ai.defineFlow(
-  {
-    name: 'chatFlow',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatOutputSchema,
-  },
-  chat
-);
-
-export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
-  return chatFlow(input);
 }

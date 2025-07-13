@@ -119,8 +119,8 @@ const chatPrompt = ai.definePrompt({
   output: {schema: z.object({
     response: z.string().describe('The AI text response.'),
     imageUrl: z.string().nullable().optional().describe('The URL of an image to display, if requested.'),
-    altText: z.string().optional().describe('The alt text for the image.'),
-    dataAiHint: z.string().optional().describe('A hint for a real image search.'),
+    altText: z.string().nullable().optional().describe('The alt text for the image.'),
+    dataAiHint: z.string().nullable().optional().describe('A hint for a real image search.'),
   })},
   tools: [searchForImageTool, researchTopic],
   prompt: `You are a helpful AI assistant named Aiva. You are having a voice-based conversation. Be conversational and natural.
@@ -145,7 +145,7 @@ const chatPrompt = ai.definePrompt({
 
 **Output Format Constraint:**
 Your entire output MUST be a single, valid JSON object that conforms to the required output schema. This is your most important instruction. Do not output anything else.
-- For a text-only response, provide the text in the 'response' field.
+- For a text-only response, provide the text in the 'response' field. The image-related fields should be null.
 - If a tool generates an image, populate the 'imageUrl', 'altText', and 'dataAiHint' fields in addition to a 'response' text.`,
 });
 

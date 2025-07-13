@@ -242,7 +242,7 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-auto">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
           <div className="py-8 px-4 space-y-8 max-w-3xl mx-auto">
             {messages.length === 0 && (
@@ -261,7 +261,7 @@ export default function ChatInterface() {
         </ScrollArea>
       </main>
 
-      <footer className="p-4 bg-background">
+      <footer className="p-4 bg-background border-t">
         <div className="max-w-3xl mx-auto">
           <div className="bg-card rounded-2xl p-2 sm:p-3 shadow-sm border border-input">
             <Textarea

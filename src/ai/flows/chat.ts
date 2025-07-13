@@ -114,11 +114,7 @@ export const ChatOutputSchema = z.object({
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
-export async function chat(input: ChatInput): Promise<ChatOutput> {
-  return chatFlow(input);
-}
-
-const prompt = ai.definePrompt({
+const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   // The output schema for the main chat prompt doesn't include the review.
@@ -156,54 +152,47 @@ Your entire output MUST be a single, valid JSON object that conforms to the requ
 - If a tool generates an image, populate the 'imageUrl', 'altText', and 'dataAiHint' fields in addition to a 'response' text.`,
 });
 
-const chatFlow = ai.defineFlow(
-  {
-    name: 'chatFlow',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatOutputSchema,
-  },
-  async input => {
-    // 1. Get the initial response from the main chat prompt
-    const {output: initialOutput} = await prompt(input);
-    if (!initialOutput) {
-      throw new Error('The chat flow failed to produce a valid output. The model may have returned an empty or invalid response.');
-    }
-
-    // 2. Perform self-review, but only for text responses
-    let review: z.infer<typeof SelfReviewOutputSchema> | undefined = undefined;
-    if (initialOutput.response && !initialOutput.imageUrl) {
-      try {
-        review = await selfReview({
-          userPrompt: input.prompt,
-          aiResponse: initialOutput.response,
-        });
-      } catch (e) {
-        console.warn("Self-review step failed. This is non-critical.", e);
-        // This is non-critical, so we can continue without a review.
-      }
-    }
-    
-    // 3. Combine initial output with the review
-    const finalOutput: ChatOutput = { ...initialOutput, review };
-    
-    // Handle cases where the model returns null for imageUrl
-    if (finalOutput.imageUrl === null) {
-      finalOutput.imageUrl = undefined;
-      finalOutput.altText = undefined;
-      finalOutput.dataAiHint = undefined;
-    }
-    
-    // Safeguard: If the LLM hallucinates an image URL from a non-approved domain, replace it with a placeholder to prevent crashes.
-    if (finalOutput.imageUrl && !finalOutput.imageUrl.startsWith('https://placehold.co') && !finalOutput.imageUrl.startsWith('https://images.unsplash.com')) {
-      // Try to extract a query from the prompt for better alt text.
-      const queryMatch = input.prompt.match(/(?:image|picture) of (?:a|an|the)?\s*([^.?!]*)/i);
-      const query = queryMatch ? queryMatch[1].trim() : 'a visual representation';
-
-      finalOutput.imageUrl = `https://placehold.co/600x400.png`;
-      finalOutput.altText = `An image of ${query}`;
-      finalOutput.dataAiHint = query.split(' ').slice(0, 2).join(' ');
-    }
-
-    return finalOutput;
+export async function chat(input: ChatInput): Promise<ChatOutput> {
+  // 1. Get the initial response from the main chat prompt
+  const {output: initialOutput} = await chatPrompt(input);
+  if (!initialOutput) {
+    throw new Error('The chat flow failed to produce a valid output. The model may have returned an empty or invalid response.');
   }
-);
+
+  // 2. Perform self-review, but only for text responses
+  let review: z.infer<typeof SelfReviewOutputSchema> | undefined = undefined;
+  if (initialOutput.response && !initialOutput.imageUrl) {
+    try {
+      review = await selfReview({
+        userPrompt: input.prompt,
+        aiResponse: initialOutput.response,
+      });
+    } catch (e) {
+      console.warn("Self-review step failed. This is non-critical.", e);
+      // This is non-critical, so we can continue without a review.
+    }
+  }
+  
+  // 3. Combine initial output with the review
+  const finalOutput: ChatOutput = { ...initialOutput, review };
+  
+  // Handle cases where the model returns null for imageUrl
+  if (finalOutput.imageUrl === null) {
+    finalOutput.imageUrl = undefined;
+    finalOutput.altText = undefined;
+    finalOutput.dataAiHint = undefined;
+  }
+  
+  // Safeguard: If the LLM hallucinates an image URL from a non-approved domain, replace it with a placeholder to prevent crashes.
+  if (finalOutput.imageUrl && !finalOutput.imageUrl.startsWith('https://placehold.co') && !finalOutput.imageUrl.startsWith('https://images.unsplash.com')) {
+    // Try to extract a query from the prompt for better alt text.
+    const queryMatch = input.prompt.match(/(?:image|picture) of (?:a|an|the)?\s*([^.?!]*)/i);
+    const query = queryMatch ? queryMatch[1].trim() : 'a visual representation';
+
+    finalOutput.imageUrl = `https://placehold.co/600x400.png`;
+    finalOutput.altText = `An image of ${query}`;
+    finalOutput.dataAiHint = query.split(' ').slice(0, 2).join(' ');
+  }
+
+  return finalOutput;
+}

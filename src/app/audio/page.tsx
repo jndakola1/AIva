@@ -445,12 +445,10 @@ export default function LiveVideoPage() {
 
 
       {/* Top Right Overlay: Controls */}
-      <div className="absolute top-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
-        <div className="flex items-center gap-2">
-          <div className="bg-red-500 rounded-full px-3 py-1 text-sm font-semibold text-white flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4" />
-            Live
-          </div>
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <div className="bg-red-500 rounded-full px-3 py-1 text-sm font-semibold text-white flex items-center gap-1.5">
+          <Sparkles className="w-4 h-4" />
+          Live
         </div>
         <Button onClick={handleSwitchCamera} size="icon" variant="ghost" className="text-white hover:bg-white/20 rounded-full" title="Switch Camera" disabled={videoDevices.length < 2}>
           <RotateCcw className="w-5 h-5" />

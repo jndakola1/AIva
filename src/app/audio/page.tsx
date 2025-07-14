@@ -87,40 +87,96 @@ export default function LiveVideoPage() {
     setSummary(null);
     setIsListening(false);
     setIsAIThinking(false);
-    // This will trigger the useEffect to re-initialize
     setChatEnded(false); 
+    setHasPermissions(undefined); // This will trigger re-initialization
   }, []);
 
-  const initializeMedia = useCallback(async () => {
-    if (typeof window !== 'undefined' && navigator.mediaDevices) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-          streamRef.current = stream;
-          setHasPermissions(true);
-          if (videoRef.current) {
-            videoRef.current.srcObject = stream;
-          }
+  const getMediaStream = useCallback(async (deviceId?: string) => {
+    // Stop any existing stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
 
-          // Enumerate devices now that we have permission
+    const constraints: MediaStreamConstraints = {
+      video: deviceId ? { deviceId: { exact: deviceId } } : true,
+      audio: true
+    };
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+      return stream;
+    } catch (error) {
+      console.error('Error getting media stream:', error);
+      setHasPermissions(false);
+      toast({
+        variant: 'destructive',
+        title: 'Media Access Denied',
+        description: 'Please enable camera and microphone permissions in your browser settings.',
+      });
+      return null;
+    }
+  }, [toast]);
+
+
+  // 1. Request permissions on component mount
+  useEffect(() => {
+    const requestPermissions = async () => {
+      if (typeof window === 'undefined' || !navigator.mediaDevices) {
+        setHasPermissions(false);
+        return;
+      }
+      try {
+        // Request just to get permission, stream is handled later
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        // Stop these tracks immediately, we'll get a fresh stream later
+        stream.getTracks().forEach(track => track.stop());
+        setHasPermissions(true);
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+        setHasPermissions(false);
+      }
+    };
+
+    if (hasPermissions === undefined) {
+      requestPermissions();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = "";
+      }
+    };
+  }, [hasPermissions]);
+
+  // 2. Setup media stream and initial greeting once permissions are granted
+  useEffect(() => {
+    const setupMediaAndGreet = async () => {
+      if (hasPermissions && !chatEnded) {
+        const stream = await getMediaStream();
+        if (stream) {
           const devices = await navigator.mediaDevices.enumerateDevices();
           const videoInputs = devices.filter(device => device.kind === 'videoinput');
           setVideoDevices(videoInputs);
-
-          return stream;
-        } catch (error) {
-          console.error('Error accessing media devices:', error);
-          setHasPermissions(false);
-          toast({
-            variant: 'destructive',
-            title: 'Media Access Denied',
-            description: 'Please enable camera and microphone permissions.',
-          });
-          return null;
+          
+          if (conversation.length === 0) {
+            setIsAIThinking(true);
+            await speak("Hello. I'm Aiva. Tap the microphone to talk.");
+            setIsAIThinking(false);
+          }
         }
-    }
-    setHasPermissions(false);
-    return null;
-  }, [toast]);
+      }
+    };
+    setupMediaAndGreet();
+  }, [hasPermissions, chatEnded, getMediaStream, speak, conversation.length]);
 
   const handleSwitchCamera = useCallback(async () => {
     if (videoDevices.length < 2) {
@@ -130,66 +186,15 @@ export default function LiveVideoPage() {
       });
       return;
     }
-
-    // Stop current tracks to release the camera
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-
     const nextDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-    const nextDeviceId = videoDevices[nextDeviceIndex].deviceId;
-
-    try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: nextDeviceId } },
-        audio: true, // We still need audio for the mic
-      });
-      streamRef.current = newStream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = newStream;
-      }
-      setCurrentDeviceIndex(nextDeviceIndex);
-    } catch (error) {
-      console.error('Error switching camera:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Could Not Switch Camera',
-        description: 'There was an error accessing the other camera.',
-      });
-      // As a fallback, try to re-initialize with default settings
-      await initializeMedia();
-    }
-  }, [videoDevices, currentDeviceIndex, toast, initializeMedia]);
+    await getMediaStream(videoDevices[nextDeviceIndex].deviceId);
+    setCurrentDeviceIndex(nextDeviceIndex);
+  }, [videoDevices, currentDeviceIndex, toast, getMediaStream]);
 
 
-  // 1. Permissions and Initial Greeting
+  // 3. Speech Recognition Setup
   useEffect(() => {
-    async function setupPage() {
-      const stream = await initializeMedia();
-      if (stream) {
-        setIsAIThinking(true);
-        await speak("Hello. I'm Aiva. Tap the microphone to talk.");
-        setIsAIThinking(false);
-      }
-    }
-    if (!chatEnded) {
-        setupPage();
-    }
-
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-       if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = "";
-      }
-    };
-  }, [speak, toast, initializeMedia, chatEnded]);
-
-  // 2. Speech Recognition Setup
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && hasPermissions) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
         recognitionRef.current = new SpeechRecognition();
@@ -247,9 +252,9 @@ export default function LiveVideoPage() {
         };
       }
     }
-  }, [isOnline, speak, toast, conversation]);
+  }, [isOnline, speak, toast, conversation, hasPermissions]);
   
-  // 3. Helper Functions
+  // 4. Helper Functions
   const toggleCamera = () => {
     if (streamRef.current) {
       const videoTrack = streamRef.current.getVideoTracks()[0];
@@ -335,7 +340,7 @@ export default function LiveVideoPage() {
     }
   };
 
-  // 4. Render component
+  // 5. Render component
   if (hasPermissions === undefined) {
     return <div className="flex h-screen w-full items-center justify-center bg-black"><Loader2 className="h-8 w-8 animate-spin text-white" /></div>;
   }
@@ -477,7 +482,7 @@ export default function LiveVideoPage() {
                     isListening ? "bg-white/30 scale-110" : "bg-white/20 hover:bg-white/30",
                     isAIThinking && "animate-pulse"
                 )}
-                disabled={isAIThinking}
+                disabled={isAIThinking || !hasPermissions}
             >
                 <Mic className="w-8 h-8 text-white" />
             </Button>

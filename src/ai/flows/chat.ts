@@ -92,6 +92,13 @@ const researchTopic = ai.defineTool(
   }
 );
 
+const PersonalitySchema = z.object({
+  tone: z.enum(['friendly', 'professional', 'witty', 'concise']).default('friendly'),
+  enableHumor: z.boolean().default(true),
+  name: z.string().default('AIva'),
+}).default({});
+
+
 const MessageSchema = z.object({
   role: z.enum(['You', 'AIva']),
   content: z.string(),
@@ -101,6 +108,7 @@ const ChatInputSchema = z.object({
   prompt: z.string().describe("The user's latest message."),
   performResearch: z.boolean().optional().describe('Whether to force the use of the research tool.'),
   history: z.array(MessageSchema).optional().describe('The preceding conversation history.'),
+  personality: PersonalitySchema.optional().describe('The personality settings for the AI.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -123,7 +131,10 @@ const chatPrompt = ai.definePrompt({
     dataAiHint: z.string().nullable().optional().describe('A hint for a real image search.'),
   })},
   tools: [searchForImageTool, researchTopic],
-  prompt: `You are a helpful AI assistant named Aiva. You are having a voice-based conversation. Be conversational and natural.
+  prompt: `You are a helpful AI assistant named {{personality.name}}. You are having a voice-based conversation. 
+Your personality should be {{personality.tone}}. 
+{{#if personality.enableHumor}}You should use humor and wit when appropriate.{{/if}}
+Be conversational and natural.
 
 **Conversation History (for context):**
 {{#if history}}
@@ -138,7 +149,7 @@ const chatPrompt = ai.definePrompt({
 - You: {{{prompt}}}
 
 **Your Task:**
-1.  Analyze the user's prompt within the context of the conversation history.
+1.  Analyze the user's prompt within the context of the conversation history and your defined personality.
 2.  If the user asks for new or up-to-date information, you MUST use the 'researchTopic' tool to get current data.
 3.  If the user explicitly asks for an image or picture, you MUST use the 'searchForImage' tool.
 4.  Formulate a helpful, relevant, and conversational response based on all available information.
@@ -152,7 +163,9 @@ Your entire output MUST be a single, valid JSON object that conforms to the requ
 
 export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
   // 1. Get the initial response from the main chat prompt
-  const {output: initialOutput} = await chatPrompt(input);
+  const filledInput = { ...input, personality: input.personality || {} };
+  const {output: initialOutput} = await chatPrompt(filledInput);
+
   if (!initialOutput) {
     throw new Error('The chat flow failed to produce a valid output. The model may have returned an empty or invalid response.');
   }

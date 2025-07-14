@@ -67,13 +67,14 @@ async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {
 export async function geminiSwitchChat(
   input: GeminiSwitchChatInput
 ): Promise<GeminiSwitchChatOutput> {
-  const { prompt, isOnline, performResearch, history } = input;
+  const { prompt, isOnline, performResearch, history, personality } = input;
   if (isOnline) {
     const mappedHistory = history?.map(msg => ({
       role: msg.speaker,
       content: msg.text,
     }));
-    return onlineChat({ prompt, performResearch, history: mappedHistory });
+    // For now, we pass default personality settings. Later, we'll fetch these from Firestore.
+    return onlineChat({ prompt, performResearch, history: mappedHistory, personality });
   } else {
     const historyString = history?.map(msg => `${msg.speaker}: ${msg.text}`).join('\n') || '';
     const fullPrompt = `${historyString}\nYou: ${prompt}\nAIva:`;

@@ -9,14 +9,16 @@
 
 import { onlineChat, ChatOutput, ChatInput } from './chat';
 import { z } from 'genkit';
+import { getUserSettings, type PersonalitySettings } from '@/lib/user-settings';
 
 const MessageSchema = z.object({
   speaker: z.enum(['You', 'AIva']),
   text: z.string(),
 });
 
-export type GeminiSwitchChatInput = ChatInput & {
+export type GeminiSwitchChatInput = Omit<ChatInput, 'personality'> & {
   isOnline: boolean;
+  userId?: string;
 };
 
 export type GeminiSwitchChatOutput = ChatOutput;
@@ -67,13 +69,24 @@ async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {
 export async function geminiSwitchChat(
   input: GeminiSwitchChatInput
 ): Promise<GeminiSwitchChatOutput> {
-  const { prompt, isOnline, performResearch, history, personality } = input;
+  const { prompt, isOnline, performResearch, history, userId } = input;
   if (isOnline) {
+    let personality: PersonalitySettings | undefined;
+    
+    if (userId) {
+      try {
+        const userSettings = await getUserSettings(userId);
+        personality = userSettings.personality;
+      } catch (e) {
+        console.error("Failed to fetch user settings, using defaults.", e);
+        // Proceed with default personality
+      }
+    }
+
     const mappedHistory = history?.map(msg => ({
       role: msg.speaker,
       content: msg.text,
     }));
-    // For now, we pass default personality settings. Later, we'll fetch these from Firestore.
     return onlineChat({ prompt, performResearch, history: mappedHistory, personality });
   } else {
     const historyString = history?.map(msg => `${msg.speaker}: ${msg.text}`).join('\n') || '';

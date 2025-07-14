@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,7 +16,7 @@ import { useChatHistory } from '@/context/chat-history-context';
 import Link from 'next/link';
 import { User, LogOut, Trash2, Palette, Shield, Bot, Mic, Smile, BrainCircuit, VenetianMask, Settings as SettingsIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,6 +24,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { DEFAULT_SETTINGS, type UserSettings, updateUserSettings } from '@/lib/user-settings';
+
 
 function SettingsSection({ icon: Icon, title, description, children, }: { icon: React.ElementType; title: string; description: string; children: React.ReactNode; }) {
   return (
@@ -53,16 +58,85 @@ const SettingsItem = ({ label, description, children, }: { label: string; descri
         </p>
       )}
     </div>
-    <div className="w-full sm:w-auto flex-shrink-0">{children}</div>
+    <div className="w-full sm:w-48 flex-shrink-0">{children}</div>
   </div>
 );
 
 
 export default function SettingsPage() {
   const { clearHistory } = useChatHistory();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
+  const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const fetchSettings = async () => {
+        const settingsRef = doc(db, 'users', user.uid, 'settings');
+        const docSnap = await getDoc(settingsRef);
+        if (docSnap.exists()) {
+          // Deep merge with defaults to handle new settings
+          const dbSettings = docSnap.data();
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            ...dbSettings,
+            personality: {
+              ...DEFAULT_SETTINGS.personality,
+              ...(dbSettings.personality || {})
+            }
+          });
+        } else {
+          setSettings(DEFAULT_SETTINGS);
+        }
+      };
+      fetchSettings();
+    }
+  }, [user]);
+
+  const handleSettingChange = async (key: keyof UserSettings, value: any) => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    const updatedSettings = { ...settings, [key]: value };
+    setSettings(updatedSettings);
+
+    try {
+      await updateUserSettings(user.uid, { [key]: value });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Saving Settings',
+        description: 'Your changes could not be saved.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePersonalityChange = async (key: keyof UserSettings['personality'], value: any) => {
+    if (!user) return;
+
+    setIsSaving(true);
+    const updatedPersonality = { ...settings.personality, [key]: value };
+    const updatedSettings = { ...settings, personality: updatedPersonality };
+    setSettings(updatedSettings);
+
+    try {
+      await updateUserSettings(user.uid, { personality: updatedPersonality });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Saving Settings',
+        description: 'Your changes could not be saved.',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/login');
@@ -70,11 +144,14 @@ export default function SettingsPage() {
 
   const handleClearHistory = () => {
     clearHistory();
-    // Optionally add a toast notification here
+    toast({
+        title: 'History Cleared',
+        description: 'Your conversation history has been cleared.',
+    });
   };
 
   const renderAccountCard = () => {
-    if (loading) {
+    if (authLoading) {
       return (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -149,12 +226,12 @@ export default function SettingsPage() {
                </SettingsSection>
                <SettingsSection icon={Palette} title="Appearance" description="Customize the look and feel of the application to your preference.">
                   <SettingsItem label="Dark Mode" description="Enjoy a color scheme that's easier on the eyes in low light.">
-                    <Switch id="dark-mode" defaultChecked={true} disabled aria-readonly={true} />
+                    <Switch id="dark-mode" checked={true} disabled aria-readonly={true} />
                   </SettingsItem>
                </SettingsSection>
                <SettingsSection icon={Shield} title="Data & Privacy" description="Manage your conversation data and privacy settings.">
                   <SettingsItem label="Clear History" description="Permanently delete all your conversation history. This action cannot be undone.">
-                    <Button variant="destructive" onClick={handleClearHistory}>
+                    <Button variant="destructive" onClick={handleClearHistory} disabled={!user}>
                       <Trash2 className="mr-2 h-4 w-4" />
                       Clear History
                     </Button>
@@ -166,12 +243,12 @@ export default function SettingsPage() {
               <SettingsSection icon={Mic} title="Voice & Speech" description="Customize input/output voice, TTS, mic sensitivity and more.">
                 <SettingsItem label="Input Sensitivity" description="Adjust how sensitive the microphone is to your voice.">
                   <div className="w-full sm:w-48 flex items-center gap-4">
-                    <Slider defaultValue={[80]} max={100} step={1} />
+                    <Slider defaultValue={[80]} max={100} step={1} disabled={!user}/>
                   </div>
                 </SettingsItem>
                 <SettingsItem label="Output Voice" description="Select the voice Aiva uses to respond.">
                   <div className="w-full sm:w-48">
-                    <Select defaultValue="female_en_us_1">
+                    <Select defaultValue="female_en_us_1" disabled={!user}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a voice" />
                       </SelectTrigger>
@@ -185,7 +262,7 @@ export default function SettingsPage() {
                 </SettingsItem>
                 <SettingsItem label="Speech Rate" description="Control how fast Aiva speaks.">
                   <div className="w-full sm:w-48 flex items-center gap-4">
-                    <Slider defaultValue={[1]} max={2} step={0.1} />
+                    <Slider defaultValue={[1]} max={2} step={0.1} disabled={!user}/>
                   </div>
                 </SettingsItem>
               </SettingsSection>
@@ -195,7 +272,11 @@ export default function SettingsPage() {
                <SettingsSection icon={Smile} title="Personality" description="Adjust AIva’s tone, mood, and behavior to match your preference.">
                   <SettingsItem label="Tone" description="Set the overall tone of Aiva's responses.">
                      <div className="w-full sm:w-48">
-                        <Select defaultValue="friendly">
+                        <Select 
+                          value={settings.personality.tone} 
+                          onValueChange={(value) => handlePersonalityChange('tone', value)}
+                          disabled={!user || isSaving}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select a tone" />
                           </SelectTrigger>
@@ -209,10 +290,14 @@ export default function SettingsPage() {
                       </div>
                   </SettingsItem>
                   <SettingsItem label="Enable Humor" description="Allows Aiva to use humor and wit in conversations.">
-                    <Switch defaultChecked={true} />
+                    <Switch 
+                      checked={settings.personality.enableHumor} 
+                      onCheckedChange={(checked) => handlePersonalityChange('enableHumor', checked)}
+                      disabled={!user || isSaving}
+                    />
                   </SettingsItem>
                   <SettingsItem label="Emotion Recognition" description="Allows Aiva to recognize and adapt to your emotions during chat.">
-                    <Switch defaultChecked={true} />
+                    <Switch defaultChecked={true} disabled={!user}/>
                   </SettingsItem>
                 </SettingsSection>
             </TabsContent>
@@ -221,7 +306,7 @@ export default function SettingsPage() {
               <SettingsSection icon={BrainCircuit} title="Intelligence" description="Control model behavior, review settings, and knowledge scope.">
                 <SettingsItem label="Primary Model" description="Choose the main AI model for responses.">
                   <div className="w-full sm:w-48">
-                    <Select defaultValue="gemini-pro">
+                    <Select defaultValue="gemini-pro" disabled={!user}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a model" />
                       </SelectTrigger>
@@ -233,10 +318,10 @@ export default function SettingsPage() {
                   </div>
                 </SettingsItem>
                 <SettingsItem label="Enable Self-Review" description="Aiva will review its own responses for quality and accuracy.">
-                  <Switch defaultChecked={true} />
+                  <Switch defaultChecked={true} disabled={!user}/>
                 </SettingsItem>
                  <SettingsItem label="Offline Fallback" description="Use a local model (Ollama) when you're not connected to the internet.">
-                  <Switch defaultChecked={true} />
+                  <Switch defaultChecked={true} disabled={!user}/>
                 </SettingsItem>
               </SettingsSection>
             </TabsContent>
@@ -245,12 +330,17 @@ export default function SettingsPage() {
               <SettingsSection icon={VenetianMask} title="Identity & Avatar" description="Manage Aiva's avatar, name, and hardware-related controls.">
                 <SettingsItem label="Nickname" description="Give Aiva a custom name.">
                   <div className="w-full sm:w-48">
-                    <Input defaultValue="Aiva" />
+                    <Input 
+                      value={settings.personality.name} 
+                      onChange={(e) => setSettings(prev => ({...prev, personality: {...prev.personality, name: e.target.value}}))}
+                      onBlur={() => handlePersonalityChange('name', settings.personality.name)}
+                      disabled={!user || isSaving}
+                    />
                   </div>
                 </SettingsItem>
                 <SettingsItem label="Avatar Type" description="Choose the visual representation for Aiva.">
                   <div className="w-full sm:w-48">
-                    <Select defaultValue="floating-orb">
+                    <Select defaultValue="floating-orb" disabled={!user}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select avatar type" />
                       </SelectTrigger>
@@ -263,7 +353,7 @@ export default function SettingsPage() {
                   </div>
                 </SettingsItem>
                 <SettingsItem label="Enable Holographic Control" description="Allow Aiva to interact with connected holographic hardware.">
-                  <Switch />
+                  <Switch disabled={!user}/>
                 </SettingsItem>
               </SettingsSection>
             </TabsContent>

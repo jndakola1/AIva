@@ -17,6 +17,7 @@ import AttachmentMenu from "@/components/attachment-menu";
 import { cn } from "@/lib/utils";
 import { useChatHistory } from "@/context/chat-history-context";
 import { tts } from "@/ai/flows/tts";
+import { useAuth } from "@/hooks/use-auth";
 
 declare global {
   interface Window {
@@ -43,6 +44,7 @@ export default function ChatInterface() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isOnline = useOnlineStatus();
+  const { user } = useAuth();
 
   const sendMessage = useCallback(async (prompt: string, options?: { performResearch?: boolean }) => {
     if (!prompt.trim()) return;
@@ -65,7 +67,8 @@ export default function ChatInterface() {
         prompt, 
         isOnline, 
         performResearch,
-        history: currentHistoryForAI
+        history: currentHistoryForAI,
+        userId: user?.uid,
       });
       addMessage({
         role: "AI",
@@ -89,7 +92,7 @@ export default function ChatInterface() {
     } finally {
       setIsSending(false);
     }
-  }, [isOnline, toast, addMessage, messages]);
+  }, [isOnline, toast, addMessage, messages, user]);
 
 
   useEffect(() => {

@@ -8,12 +8,12 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   Sparkles,
   Video,
-  Upload,
   X,
   VideoOff,
   Mic,
   Loader2,
   RotateCcw,
+  Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { geminiSwitchChat } from '@/ai/flows/gemini-switch-chat';
@@ -22,6 +22,7 @@ import { tts } from '@/ai/flows/tts';
 import { summarize } from '@/ai/flows/summarize';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { describeImage } from '@/ai/flows/describe-image';
 
 
 declare global {
@@ -52,6 +53,7 @@ export default function LiveVideoPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
@@ -271,6 +273,41 @@ export default function LiveVideoPage() {
     }
   };
 
+  const handleDescribeScene = async () => {
+    if (!videoRef.current || !canvasRef.current) {
+      toast({ variant: 'destructive', title: 'Video not ready' });
+      return;
+    }
+
+    setIsAIThinking(true);
+    setConversation((prev) => [...prev, { speaker: 'You', text: '[ AIva, describe what you see ]' }]);
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext('2d');
+    if (context) {
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageDataUri = canvas.toDataURL('image/jpeg');
+      
+      try {
+        const { description } = await describeImage({ imageDataUri });
+        setConversation((prev) => [...prev, { speaker: 'AIva', text: description }]);
+        await speak(description);
+      } catch (error) {
+        console.error("Describe Scene Error:", error);
+        const errorMsg = "Sorry, I had trouble analyzing the scene.";
+        setConversation((prev) => [...prev, { speaker: 'AIva', text: errorMsg }]);
+        await speak(errorMsg);
+      } finally {
+        setIsAIThinking(false);
+      }
+    } else {
+      setIsAIThinking(false);
+    }
+  };
+
   const handleEndChat = async () => {
     setChatEnded(true);
     setIsAIThinking(true);
@@ -329,7 +366,7 @@ export default function LiveVideoPage() {
             <CardTitle>Conversation Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            {isAIThinking ? (
+            {isAIThinking && !summary ? (
               <div className="flex items-center justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <p className="ml-4 text-muted-foreground">Generating summary...</p>
@@ -370,8 +407,40 @@ export default function LiveVideoPage() {
         </div>
       )}
 
-      {/* Top Overlay */}
-      <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
+      {/* Top Left Overlay: Conversation */}
+      <div className="absolute top-0 left-0 p-4 h-2/5 w-full md:w-1/3">
+          <Card className="h-full bg-black/50 backdrop-blur-sm border-white/20 text-white">
+              <CardHeader>
+                  <CardTitle className="text-lg">Conversation</CardTitle>
+              </CardHeader>
+              <CardContent className="h-full pb-16">
+                  <ScrollArea className="h-full pr-4">
+                      <div className="space-y-4">
+                          {conversation.map((msg, index) => (
+                              <div key={index}>
+                                  <p className="font-bold text-sm">{msg.speaker}</p>
+                                  <p className="text-sm text-white/90">{msg.text}</p>
+                              </div>
+                          ))}
+                           {isAIThinking && conversation[conversation.length - 1]?.speaker !== 'AIva' && (
+                              <div>
+                                <p className="font-bold text-sm">AIva</p>
+                                <div className="flex items-center space-x-1 p-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
+                                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" />
+                                </div>
+                              </div>
+                           )}
+                      </div>
+                  </ScrollArea>
+              </CardContent>
+          </Card>
+      </div>
+
+
+      {/* Top Right Overlay: Controls */}
+      <div className="absolute top-0 right-0 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
         <div className="flex items-center gap-2">
           <div className="bg-red-500 rounded-full px-3 py-1 text-sm font-semibold text-white flex items-center gap-1.5">
             <Sparkles className="w-4 h-4" />
@@ -389,8 +458,15 @@ export default function LiveVideoPage() {
             <Button onClick={toggleCamera} size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
               {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
             </Button>
-            <Button disabled title="Upload not available" size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
-              <Upload className="w-6 h-6" />
+            <Button 
+                onClick={handleDescribeScene} 
+                size="icon" 
+                variant="secondary" 
+                className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14"
+                disabled={isAIThinking || isListening}
+                title="Describe Scene"
+            >
+              <Eye className="w-6 h-6" />
             </Button>
             
             <Button 
@@ -418,6 +494,7 @@ export default function LiveVideoPage() {
           </div>
       </div>
       
+      <canvas ref={canvasRef} className="hidden" />
       <audio ref={audioRef} className="hidden" />
     </div>
   );

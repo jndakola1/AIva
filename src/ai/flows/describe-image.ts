@@ -45,6 +45,9 @@ const describeImageFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("The describeImage flow failed to produce a valid output. The model may have returned an empty or invalid response.");
+    }
+    return output;
   }
 );

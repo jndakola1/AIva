@@ -201,6 +201,33 @@ const searchHospitalTool = ai.defineTool(
   }
 );
 
+const getWeatherTool = ai.defineTool(
+  {
+    name: 'getWeather',
+    description: 'Returns the current weather for a specific location.',
+    inputSchema: z.object({
+      location: z.string().describe('The city or area to get weather for.'),
+    }),
+    outputSchema: z.object({
+      location: z.string(),
+      temperature: z.number(),
+      condition: z.string(),
+      humidity: z.number(),
+      windSpeed: z.number(),
+      icon: z.string().optional(),
+    }),
+  },
+  async ({ location }) => {
+    return {
+      location: location,
+      temperature: 24,
+      condition: "Partly Cloudy",
+      humidity: 78,
+      windSpeed: 12,
+    };
+  }
+);
+
 const MessageSchema = z.object({
   role: z.enum(['You', 'AIva']),
   content: z.string(),
@@ -213,7 +240,7 @@ export const ChatOutputSchema = z.object({
   dataAiHint: z.string().optional(),
   review: SelfReviewOutputSchema.optional(),
   toolData: z.object({
-    type: z.enum(['alarm', 'calendar', 'email', 'hospital']),
+    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather']),
     data: z.any(),
   }).optional(),
 });
@@ -233,7 +260,7 @@ const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
-  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool, searchHospitalTool],
+  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool, searchHospitalTool, getWeatherTool],
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -246,7 +273,7 @@ const chatPrompt = ai.definePrompt({
 Tone: {{personality.tone}}
 Humor enabled: {{personality.enableHumor}}
 
-When a user asks to set an alarm, manage their calendar, check emails, or find hospitals, use the appropriate tool. 
+When a user asks to set an alarm, manage their calendar, check emails, find hospitals, or check weather, use the appropriate tool. 
 ALWAYS populate the 'toolData' field in your output with the data returned by the tool if you used one.
 
 {{#if history}}
@@ -314,6 +341,22 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
                 imageUrl: placeholderData.hospitalFallback.imageUrl,
               }
             ]
+          }
+        }
+      };
+    }
+
+    if (lowerPrompt.includes('weather') || lowerPrompt.includes('forecast') || lowerPrompt.includes('temperature')) {
+      return {
+        response: "Here's the current weather for your location. It's looking like a nice day!",
+        toolData: {
+          type: 'weather',
+          data: {
+            location: "Bandung, Indonesia",
+            temperature: 24,
+            condition: "Partly Cloudy",
+            humidity: 78,
+            windSpeed: 12,
           }
         }
       };

@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind } from "lucide-react";
 import Image from "next/image";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
@@ -16,7 +16,7 @@ import placeholderData from "@/app/lib/placeholder-images.json";
 
 type ChatMessageProps = {
   id: string;
-  role: "You" | "AI";
+  role: "You" | "AI" | "AIva";
   content: string;
   isLoading?: boolean;
   imageUrl?: string;
@@ -24,7 +24,7 @@ type ChatMessageProps = {
   dataAiHint?: string;
   review?: SelfReviewOutput;
   toolData?: {
-    type: 'alarm' | 'calendar' | 'email' | 'hospital';
+    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather';
     data: any;
   };
   onPlayAudio?: (messageId: string, text: string) => void;
@@ -208,9 +208,51 @@ const HospitalCard = ({ data }: { data: any }) => (
   </div>
 );
 
+const WeatherCard = ({ data }: { data: any }) => (
+  <Card className="mt-3 overflow-hidden border-none bg-[#E8F5FD] rounded-3xl shadow-xl max-w-[300px]">
+    <div className="relative aspect-[4/3] w-full bg-[#B3E5FC] flex items-center justify-center">
+       <Image 
+          src={placeholderData.weather.imageUrl}
+          alt="Weather Illustration"
+          fill
+          className="object-contain p-4"
+          data-ai-hint="cloudy weather"
+        />
+        <div className="absolute top-4 left-4 flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-3 py-1 border border-white/30">
+          <Cloud className="h-4 w-4 text-blue-900" />
+          <span className="text-xs font-bold text-blue-900">{data.location}</span>
+        </div>
+    </div>
+    <div className="bg-[#0288D1] p-6 text-white">
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <p className="text-5xl font-bold tracking-tighter">{data.temperature}°</p>
+          <p className="text-sm font-medium opacity-80">{data.condition}</p>
+        </div>
+        <Badge className="bg-white/20 text-white border-none mb-1">C</Badge>
+      </div>
+      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/10">
+        <div className="flex items-center gap-2">
+          <Droplets className="h-4 w-4 opacity-60" />
+          <div className="space-y-0.5">
+            <p className="text-[10px] uppercase font-bold tracking-wider opacity-60">Humidity</p>
+            <p className="text-xs font-bold">{data.humidity}%</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Wind className="h-4 w-4 opacity-60" />
+          <div className="space-y-0.5">
+            <p className="text-[10px] uppercase font-bold tracking-wider opacity-60">Wind</p>
+            <p className="text-xs font-bold">{data.windSpeed}km/h</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </Card>
+);
 
 export default function ChatMessage({ id, role, content, isLoading, imageUrl, altText, dataAiHint, review, toolData, onPlayAudio, isSpeaking }: ChatMessageProps) {
-  const isAi = role === "AI";
+  const isAi = role === "AI" || role === "AIva";
   const isVideo = imageUrl?.startsWith('data:video/mp4');
 
   return (
@@ -222,7 +264,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
       </Avatar>
       <div className="flex-1 pt-0.5 space-y-2">
         <div className="font-semibold flex items-center text-sm md:text-base">
-          {isAi ? "Aiva" : "You"}
+          {isAi ? "AIva" : "You"}
           {isAi && review && <ReviewPopover review={review} />}
         </div>
         <div className="text-foreground/90 relative pr-10">
@@ -242,6 +284,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                   {toolData.type === 'calendar' && <CalendarCard data={toolData.data} />}
                   {toolData.type === 'email' && <EmailCard data={toolData.data} />}
                   {toolData.type === 'hospital' && <HospitalCard data={toolData.data} />}
+                  {toolData.type === 'weather' && <WeatherCard data={toolData.data} />}
                 </div>
               )}
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -23,7 +22,8 @@ import { summarize } from '@/ai/flows/summarize';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { describeImage } from '@/ai/flows/describe-image';
-
+import ChatMessage from '@/components/chat-message';
+import { useAuth } from '@/hooks/use-auth';
 
 declare global {
   interface Window {
@@ -33,8 +33,11 @@ declare global {
 }
 
 type ConversationMessage = {
+  id: string;
   speaker: 'You' | 'AIva';
   text: string;
+  toolData?: any;
+  imageUrl?: string;
 };
 
 export default function LiveVideoPage() {
@@ -48,15 +51,28 @@ export default function LiveVideoPage() {
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
   const [currentDeviceIndex, setCurrentDeviceIndex] = useState(0);
 
-
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
+  const { user } = useAuth();
+
+  const scrollToBottom = useCallback(() => {
+    // We target the scroll area inner container
+    const scrollContainer = scrollAreaRef.current?.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [conversation, isAIThinking, scrollToBottom]);
 
   const speak = useCallback(async (text: string): Promise<void> => {
     if (!text) return Promise.resolve();
@@ -69,7 +85,7 @@ export default function LiveVideoPage() {
             audioRef.current.onended = () => resolve();
             audioRef.current.onerror = () => {
               console.error("Audio playback error.");
-              resolve(); // Resolve even on error to not block the flow
+              resolve(); 
             }
           } else {
             resolve();
@@ -88,11 +104,10 @@ export default function LiveVideoPage() {
     setIsListening(false);
     setIsAIThinking(false);
     setChatEnded(false); 
-    setHasPermissions(undefined); // This will trigger re-initialization
+    setHasPermissions(undefined); 
   }, []);
 
   const getMediaStream = useCallback(async (deviceId?: string) => {
-    // Stop any existing stream
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
@@ -121,8 +136,6 @@ export default function LiveVideoPage() {
     }
   }, [toast]);
 
-
-  // 1. Request permissions on component mount
   useEffect(() => {
     const requestPermissions = async () => {
       if (typeof window === 'undefined' || !navigator.mediaDevices) {
@@ -130,9 +143,7 @@ export default function LiveVideoPage() {
         return;
       }
       try {
-        // Request just to get permission, stream is handled later
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        // Stop these tracks immediately, we'll get a fresh stream later
         stream.getTracks().forEach(track => track.stop());
         setHasPermissions(true);
       } catch (error) {
@@ -145,7 +156,6 @@ export default function LiveVideoPage() {
       requestPermissions();
     }
 
-    // Cleanup on unmount
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -157,7 +167,6 @@ export default function LiveVideoPage() {
     };
   }, [hasPermissions]);
 
-  // 2. Setup media stream and initial greeting once permissions are granted
   useEffect(() => {
     const setupMediaAndGreet = async () => {
       if (hasPermissions && !chatEnded) {
@@ -191,8 +200,6 @@ export default function LiveVideoPage() {
     setCurrentDeviceIndex(nextDeviceIndex);
   }, [videoDevices, currentDeviceIndex, toast, getMediaStream]);
 
-
-  // 3. Speech Recognition Setup
   useEffect(() => {
     if (typeof window !== 'undefined' && hasPermissions) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -205,31 +212,41 @@ export default function LiveVideoPage() {
         recognitionRef.current.onresult = async (event: any) => {
           const userSpeech = event.results[0][0].transcript;
           
-          const currentConversation = [...conversation];
+          const historyForAI = conversation.map(msg => ({
+            speaker: msg.speaker,
+            text: msg.text,
+          }));
 
-          setConversation((prev) => [...prev, { speaker: 'You', text: userSpeech }]);
+          setConversation((prev) => [...prev, { id: `u-${Date.now()}`, speaker: 'You', text: userSpeech }]);
           setIsAIThinking(true);
 
           try {
-            const aiResponse = await geminiSwitchChat({ 
+            const aiOutput = await geminiSwitchChat({ 
               prompt: userSpeech, 
               isOnline, 
               performResearch: false,
-              history: currentConversation,
+              history: historyForAI,
+              userId: user?.uid,
             });
 
-            if (aiResponse.response) {
-              setConversation((prev) => [...prev, { speaker: 'AIva', text: aiResponse.response }]);
-              await speak(aiResponse.response);
+            if (aiOutput.response) {
+              setConversation((prev) => [...prev, { 
+                id: `ai-${Date.now()}`, 
+                speaker: 'AIva', 
+                text: aiOutput.response,
+                toolData: aiOutput.toolData,
+                imageUrl: aiOutput.imageUrl,
+              }]);
+              await speak(aiOutput.response);
             } else {
               const errorMsg = "I'm not sure how to respond to that. Please try again.";
-              setConversation((prev) => [...prev, { speaker: 'AIva', text: errorMsg }]);
+              setConversation((prev) => [...prev, { id: `ai-err-${Date.now()}`, speaker: 'AIva', text: errorMsg }]);
               await speak(errorMsg);
             }
           } catch (error) {
             console.error(error);
             const errorMsg = "Sorry, I ran into an error. Please try again.";
-            setConversation((prev) => [...prev, { speaker: 'AIva', text: errorMsg }]);
+            setConversation((prev) => [...prev, { id: `ai-err-${Date.now()}`, speaker: 'AIva', text: errorMsg }]);
             await speak(errorMsg);
           } finally {
             setIsAIThinking(false);
@@ -252,9 +269,8 @@ export default function LiveVideoPage() {
         };
       }
     }
-  }, [isOnline, speak, toast, conversation, hasPermissions]);
+  }, [isOnline, speak, toast, conversation, hasPermissions, user?.uid]);
   
-  // 4. Helper Functions
   const toggleCamera = () => {
     if (streamRef.current) {
       const videoTrack = streamRef.current.getVideoTracks()[0];
@@ -285,7 +301,7 @@ export default function LiveVideoPage() {
     }
 
     setIsAIThinking(true);
-    setConversation((prev) => [...prev, { speaker: 'You', text: '[ AIva, describe what you see ]' }]);
+    setConversation((prev) => [...prev, { id: `u-desc-${Date.now()}`, speaker: 'You', text: '[ AIva, describe what you see ]' }]);
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -298,12 +314,12 @@ export default function LiveVideoPage() {
       
       try {
         const { description } = await describeImage({ imageDataUri });
-        setConversation((prev) => [...prev, { speaker: 'AIva', text: description }]);
+        setConversation((prev) => [...prev, { id: `ai-desc-${Date.now()}`, speaker: 'AIva', text: description }]);
         await speak(description);
       } catch (error) {
         console.error("Describe Scene Error:", error);
         const errorMsg = "Sorry, I had trouble analyzing the scene.";
-        setConversation((prev) => [...prev, { speaker: 'AIva', text: errorMsg }]);
+        setConversation((prev) => [...prev, { id: `ai-desc-err-${Date.now()}`, speaker: 'AIva', text: errorMsg }]);
         await speak(errorMsg);
       } finally {
         setIsAIThinking(false);
@@ -317,7 +333,6 @@ export default function LiveVideoPage() {
     setChatEnded(true);
     setIsAIThinking(true);
     
-    // Stop listening and camera
     if (recognitionRef.current) recognitionRef.current.stop();
     setIsListening(false);
     if (streamRef.current) {
@@ -340,7 +355,6 @@ export default function LiveVideoPage() {
     }
   };
 
-  // 5. Render component
   if (hasPermissions === undefined) {
     return <div className="flex h-screen w-full items-center justify-center bg-black"><Loader2 className="h-8 w-8 animate-spin text-white" /></div>;
   }
@@ -362,10 +376,6 @@ export default function LiveVideoPage() {
     return (
       <div className="h-screen w-full bg-black text-white flex flex-col items-center justify-center p-6">
         <h1 className="text-4xl font-bold mb-4">Conversation Ended</h1>
-        <p className="text-xl text-muted-foreground mb-8">
-          Here's a summary of your chat with Aiva.
-        </p>
-
         <Card className="w-full max-w-2xl bg-gray-900/80 border-gray-700">
           <CardHeader>
             <CardTitle>Conversation Summary</CardTitle>
@@ -394,7 +404,7 @@ export default function LiveVideoPage() {
   }
 
   return (
-    <div className="h-screen w-full bg-black relative flex items-center justify-center">
+    <div className="h-screen w-full bg-black relative flex items-center justify-center overflow-hidden">
       <video
         ref={videoRef}
         className={cn(
@@ -412,30 +422,27 @@ export default function LiveVideoPage() {
         </div>
       )}
 
-      {/* Top Left Overlay: Conversation */}
-      <div className="absolute top-0 left-0 p-4 h-2/5 w-full md:w-1/3">
-          <Card className="h-full bg-black/50 backdrop-blur-sm border-white/20 text-white">
-              <CardHeader>
-                  <CardTitle className="text-lg">Conversation</CardTitle>
+      {/* Conversation Overlay */}
+      <div className="absolute top-0 left-0 p-4 h-1/2 w-full md:w-2/5 lg:w-1/3 z-10">
+          <Card className="h-full bg-black/40 backdrop-blur-md border-white/10 text-white overflow-hidden shadow-2xl">
+              <CardHeader className="py-3">
+                  <CardTitle className="text-sm uppercase tracking-widest font-bold opacity-60">Live Feed</CardTitle>
               </CardHeader>
-              <CardContent className="h-full pb-16">
-                  <ScrollArea className="h-full pr-4">
-                      <div className="space-y-4">
-                          {conversation.map((msg, index) => (
-                              <div key={index}>
-                                  <p className="font-bold text-sm">{msg.speaker}</p>
-                                  <p className="text-sm text-white/90">{msg.text}</p>
-                              </div>
+              <CardContent className="h-[calc(100%-60px)] p-0">
+                  <ScrollArea className="h-full px-4" ref={scrollAreaRef}>
+                      <div className="space-y-6 pb-10">
+                          {conversation.map((msg) => (
+                              <ChatMessage 
+                                key={msg.id} 
+                                id={msg.id}
+                                role={msg.speaker === 'AIva' ? 'AIva' : 'You'}
+                                content={msg.text}
+                                toolData={msg.toolData}
+                                imageUrl={msg.imageUrl}
+                              />
                           ))}
                            {isAIThinking && conversation[conversation.length - 1]?.speaker !== 'AIva' && (
-                              <div>
-                                <p className="font-bold text-sm">AIva</p>
-                                <div className="flex items-center space-x-1 p-1">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.3s]" />
-                                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce [animation-delay:-0.15s]" />
-                                    <div className="w-1.5 h-1.5 rounded-full bg-current animate-bounce" />
-                                </div>
-                              </div>
+                              <ChatMessage id="thinking" role="AIva" content="" isLoading={true} />
                            )}
                       </div>
                   </ScrollArea>
@@ -443,56 +450,52 @@ export default function LiveVideoPage() {
           </Card>
       </div>
 
-
-      {/* Top Right Overlay: Controls */}
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <div className="bg-red-500 rounded-full px-3 py-1 text-sm font-semibold text-white flex items-center gap-1.5">
-          <Sparkles className="w-4 h-4" />
-          Live
+      <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+        <div className="bg-red-500 rounded-full px-3 py-1 text-xs font-bold text-white flex items-center gap-1.5 animate-pulse">
+          <Sparkles className="w-3 h-3" />
+          REC
         </div>
-        <Button onClick={handleSwitchCamera} size="icon" variant="ghost" className="text-white hover:bg-white/20 rounded-full" title="Switch Camera" disabled={videoDevices.length < 2}>
-          <RotateCcw className="w-5 h-5" />
+        <Button onClick={handleSwitchCamera} size="icon" variant="ghost" className="text-white bg-white/10 hover:bg-white/20 rounded-full" disabled={videoDevices.length < 2}>
+          <RotateCcw className="w-4 h-4" />
         </Button>
       </div>
 
-      {/* Bottom Overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center items-center bg-gradient-to-t from-black/60 to-transparent">
-          <div className="flex items-center gap-4">
-            <Button onClick={toggleCamera} size="icon" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14">
-              {isCameraOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+      <div className="absolute bottom-0 left-0 right-0 p-8 flex justify-center items-center bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10">
+          <div className="flex items-center gap-5">
+            <Button onClick={toggleCamera} size="icon" variant="secondary" className="bg-white/10 hover:bg-white/20 text-white rounded-full h-14 w-14 border border-white/10 shadow-lg">
+              {isCameraOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
             </Button>
+            
             <Button 
                 onClick={handleDescribeScene} 
                 size="icon" 
                 variant="secondary" 
-                className="bg-white/20 hover:bg-white/30 text-white rounded-full h-14 w-14"
+                className="bg-white/10 hover:bg-white/20 text-white rounded-full h-14 w-14 border border-white/10 shadow-lg"
                 disabled={isAIThinking || isListening}
-                title="Describe Scene"
             >
-              <Eye className="w-6 h-6" />
+              <Eye className="w-5 h-5" />
             </Button>
             
             <Button 
                 onClick={handleTalkClick}
                 size="icon" 
-                variant="secondary" 
-                className={cn("rounded-full h-20 w-20 transition-all",
-                    isListening ? "bg-white/30 scale-110" : "bg-white/20 hover:bg-white/30",
+                className={cn("rounded-full h-20 w-20 transition-all border-4 shadow-2xl",
+                    isListening ? "bg-red-500 border-red-400 scale-110" : "bg-white/10 border-white/20 hover:bg-white/20",
                     isAIThinking && "animate-pulse"
                 )}
                 disabled={isAIThinking || !hasPermissions}
             >
-                <Mic className="w-8 h-8 text-white" />
+                <Mic className={cn("w-8 h-8", isListening ? "text-white" : "text-white/60")} />
             </Button>
 
             <Button 
                 onClick={handleEndChat}
                 size="icon" 
                 variant="destructive" 
-                className="bg-red-600 hover:bg-red-700 text-white rounded-full h-14 w-14"
+                className="bg-red-600 hover:bg-red-700 text-white rounded-full h-14 w-14 shadow-lg"
                 disabled={isAIThinking || isListening || conversation.length === 0}
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </Button>
           </div>
       </div>

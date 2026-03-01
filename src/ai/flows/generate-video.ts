@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview An AI agent that generates cinematic videos using the Veo model.
+ * @fileOverview An AI agent that generates cinematic videos with sound using the Veo 3.0 model.
  *
  * - generateVideo - A function that handles video generation.
  * - GenerateVideoInput - The input type for the function.
@@ -34,12 +34,13 @@ const generateVideoFlow = ai.defineFlow(
   },
   async ({ prompt }) => {
     try {
+      // Using Veo 3.0 for video with sound support
       let { operation } = await ai.generate({
-        model: googleAI.model('veo-2.0-generate-001'),
+        model: googleAI.model('veo-3.0-generate-preview'),
         prompt,
         config: {
-          durationSeconds: 5,
           aspectRatio: '16:9',
+          personGeneration: 'allow_all',
         },
       });
 
@@ -49,7 +50,7 @@ const generateVideoFlow = ai.defineFlow(
 
       // Wait for the operation to complete
       let attempts = 0;
-      while (!operation.done && attempts < 24) { // Max 2 minutes
+      while (!operation.done && attempts < 36) { // Max 3 minutes for Veo 3
         operation = await ai.checkOperation(operation);
         if (operation.done) break;
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -65,8 +66,7 @@ const generateVideoFlow = ai.defineFlow(
         throw new Error('Generated video content not found.');
       }
 
-      // We need to fetch the video and convert to base64 for client transfer
-      // Since it's a short 5s video, the size should be manageable (~1-3MB)
+      // Fetch the video and convert to base64
       const videoResponse = await fetch(`${videoPart.media.url}&key=${process.env.GEMINI_API_KEY}`);
       if (!videoResponse.ok) throw new Error('Failed to download generated video.');
       
@@ -75,10 +75,10 @@ const generateVideoFlow = ai.defineFlow(
 
       return {
         videoUrl: `data:video/mp4;base64,${base64Video}`,
-        altText: `AI generated video: ${prompt}`,
+        altText: `AI generated cinematic video (Veo 3): ${prompt}`,
       };
     } catch (error: any) {
-      console.error("Veo Error:", error);
+      console.error("Veo 3 Error:", error);
       throw new Error(error.message || "Failed to generate video.");
     }
   }

@@ -13,13 +13,32 @@ import {
   Sparkles,
   Zap,
   Globe,
-  Clock
+  Clock,
+  Film,
+  Music,
+  Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const features = [
+  {
+    icon: Film,
+    category: 'Creativity',
+    title: 'Cinematic Video',
+    description: 'Generate 4K videos with sound via Veo 3.',
+    color: 'bg-red-500/10 text-red-500',
+    href: '/'
+  },
+  {
+    icon: Music,
+    category: 'Audio',
+    title: 'AI Music Gen',
+    description: 'Create unique soundtracks and melodies.',
+    color: 'bg-indigo-500/10 text-indigo-500',
+    href: '/'
+  },
   {
     icon: Mic,
     category: 'Voice',
@@ -31,17 +50,9 @@ const features = [
   {
     icon: ImageIcon,
     category: 'Image',
-    title: 'Image Generation',
+    title: 'Image Studio',
     description: 'Create stunning visuals from text.',
     color: 'bg-blue-500/10 text-blue-500',
-    href: '/'
-  },
-  {
-    icon: Calendar,
-    category: 'Schedule',
-    title: 'Smart Planning',
-    description: 'Manage alarms and your calendar.',
-    color: 'bg-purple-500/10 text-purple-500',
     href: '/'
   },
   {
@@ -59,14 +70,6 @@ const features = [
     description: 'Describe any scene or image.',
     color: 'bg-pink-500/10 text-pink-500',
     href: '/audio'
-  },
-  {
-    icon: Mail,
-    category: 'Inbox',
-    title: 'Email Analysis',
-    description: 'Summarize your recent messages.',
-    color: 'bg-yellow-500/10 text-yellow-500',
-    href: '/'
   }
 ];
 
@@ -96,7 +99,7 @@ export default function CategoriesPage() {
 
       {/* Title */}
       <div className="px-8 py-4">
-        <h1 className="text-4xl font-semibold tracking-tight">Our features</h1>
+        <h1 className="text-4xl font-semibold tracking-tight">Capabilities</h1>
       </div>
 
       {/* Grid */}
@@ -127,20 +130,20 @@ export default function CategoriesPage() {
         <div className="mt-12 max-w-4xl mx-auto px-2">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-yellow-500" />
-                Tips & Tricks
+                Pro Features
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-5 rounded-3xl bg-white/5 border border-white/5 flex flex-col gap-3">
+                    <Video className="h-5 w-5 text-red-400" />
+                    <p className="text-sm font-medium text-white/80">Veo 3 now generates cinematic 5-8 second clips with synchronized sound.</p>
+                </div>
+                <div className="p-5 rounded-3xl bg-white/5 border border-white/5 flex flex-col gap-3">
+                    <Music className="h-5 w-5 text-indigo-400" />
+                    <p className="text-sm font-medium text-white/80">Use "Create music" to generate atmospheric sounds for your videos.</p>
+                </div>
+                <div className="p-5 rounded-3xl bg-white/5 border border-white/5 flex flex-col gap-3">
                     <Zap className="h-5 w-5 text-blue-400" />
-                    <p className="text-sm font-medium text-white/80">Use the "Enhance" button to improve your prompts instantly.</p>
-                </div>
-                <div className="p-5 rounded-3xl bg-white/5 border border-white/5 flex flex-col gap-3">
-                    <Globe className="h-5 w-5 text-green-400" />
-                    <p className="text-sm font-medium text-white/80">Switch to Online mode for real-time web research & tools.</p>
-                </div>
-                <div className="p-5 rounded-3xl bg-white/5 border border-white/5 flex flex-col gap-3">
-                    <Clock className="h-5 w-5 text-purple-400" />
-                    <p className="text-sm font-medium text-white/80">Ask AIva to "Set an alarm" to see your specialized action cards.</p>
+                    <p className="text-sm font-medium text-white/80">Attachment menu now supports camera, photo, and file uploads directly.</p>
                 </div>
             </div>
         </div>

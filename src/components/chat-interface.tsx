@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Loader, Mic, Send, SlidersHorizontal, X, Image as ImageIcon, Sparkles, Brain, Globe, Palette, Film, Telescope } from "lucide-react";
+import { Loader, Mic, Send, SlidersHorizontal, X, Image as ImageIcon, Sparkles, Brain, Globe, Palette, Film, Telescope, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -13,6 +13,7 @@ import { useOnlineStatus } from "@/hooks/use-online-status";
 import { enhancePrompt } from "@/ai/flows/enhance-prompt";
 import { generateImage } from "@/ai/flows/generate-image";
 import { generateVideo } from "@/ai/flows/generate-video";
+import { generateMusic } from "@/ai/flows/generate-music";
 import { deepResearch } from "@/ai/flows/deep-research";
 import AttachmentMenu from "@/components/attachment-menu";
 import { cn } from "@/lib/utils";
@@ -175,19 +176,44 @@ export default function ChatInterface() {
     addMessage({ role: "You", content: `Create a cinematic video of: ${prompt}` });
     setInput("");
     setIsProcessingTask(true);
-    toast({ title: "Generating Video", description: "This may take up to a minute. Please stay on this page." });
+    toast({ title: "Generating Video", description: "This may take up to a minute. Veo 3 is crafting your video with sound." });
     
     try {
       const { videoUrl, altText } = await generateVideo({ prompt });
       addMessage({ 
         role: "AI",
-        content: `Your video is ready!`,
+        content: `Your cinematic video with sound is ready!`,
         imageUrl: videoUrl, 
         altText: altText,
       });
     } catch (error: any) {
       console.error(error);
       addMessage({ role: "AI", content: `Failed to generate video: ${error.message}` });
+    } finally {
+      setIsProcessingTask(false);
+    }
+  }, [input, addMessage, toast]);
+
+  const handleGenerateMusic = useCallback(async () => {
+    if (!input.trim()) {
+      toast({ title: "Prompt Required", description: "Please describe the music you want to generate." });
+      return;
+    }
+    const prompt = input;
+    addMessage({ role: "You", content: `Compose AI music for: ${prompt}` });
+    setInput("");
+    setIsProcessingTask(true);
+    
+    try {
+      const { audioUrl, description } = await generateMusic({ prompt });
+      addMessage({ 
+        role: "AI",
+        content: `I've composed a musical atmosphere for you: ${description}`,
+        imageUrl: audioUrl, // Note: We use the same field for audio data uris
+      });
+    } catch (error: any) {
+      console.error(error);
+      addMessage({ role: "AI", content: `Failed to generate music: ${error.message}` });
     } finally {
       setIsProcessingTask(false);
     }
@@ -337,6 +363,7 @@ export default function ChatInterface() {
                 disabled={isDisabled}
                 onGenerateImage={handleGenerateImage}
                 onGenerateVideo={handleGenerateVideo}
+                onGenerateMusic={handleGenerateMusic}
                 onWebSearch={handleWebSearch}
                 onDeepResearch={handleDeepResearch}
                 onImageSelect={handleImageSelect}

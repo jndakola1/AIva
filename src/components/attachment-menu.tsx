@@ -8,7 +8,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Camera, FileText, Globe, Image as ImageIcon, Plus, Telescope, Wand2, Film } from 'lucide-react';
+import { Camera, FileText, Globe, Image as ImageIcon, Plus, Telescope, Wand2, Film, Music } from 'lucide-react';
 import type React from 'react';
 import { useState, useRef } from 'react';
 
@@ -41,6 +41,7 @@ const AttachmentMenu = ({
   disabled, 
   onGenerateImage,
   onGenerateVideo,
+  onGenerateMusic,
   onWebSearch,
   onDeepResearch,
   onImageSelect,
@@ -49,6 +50,7 @@ const AttachmentMenu = ({
   disabled?: boolean, 
   onGenerateImage: () => void,
   onGenerateVideo: () => void,
+  onGenerateMusic: () => void,
   onWebSearch: () => void,
   onDeepResearch: () => void,
   onImageSelect: (file: File) => void,
@@ -119,7 +121,8 @@ const AttachmentMenu = ({
         </div>
         <div className="space-y-1">
             <MenuLink icon={Wand2} onClick={() => handleAction(onGenerateImage)} disabled={disabled}>Create an image</MenuLink>
-            <MenuLink icon={Film} onClick={() => handleAction(onGenerateVideo)} disabled={disabled}>Create a video</MenuLink>
+            <MenuLink icon={Film} onClick={() => handleAction(onGenerateVideo)} detail="Veo 3 with Sound" disabled={disabled}>Create a video</MenuLink>
+            <MenuLink icon={Music} onClick={() => handleAction(onGenerateMusic)} disabled={disabled}>Create music</MenuLink>
             <MenuLink icon={Globe} onClick={() => handleAction(onWebSearch)} disabled={disabled}>Search the web</MenuLink>
             <MenuLink icon={Telescope} onClick={() => handleAction(onDeepResearch)} detail="Quick synthesis" disabled={disabled}>Run deep research</MenuLink>
         </div>

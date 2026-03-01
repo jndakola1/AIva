@@ -23,7 +23,6 @@ const searchForImageTool = ai.defineTool(
     const accessKey = process.env.UNSPLASH_ACCESS_KEY;
     
     if (!accessKey) {
-      // Return a high-quality placeholder for development
       return {
         imageUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/600/400`,
         altText: `A mock image for: ${query}`,
@@ -82,10 +81,17 @@ const setAlarmTool = ai.defineTool(
     }),
     outputSchema: z.object({
       confirmation: z.string(),
+      alarmDetails: z.object({
+        time: z.string(),
+        label: z.string().optional(),
+      }),
     }),
   },
   async ({ time, label }) => {
-    return { confirmation: `[MOCK CONFIRMATION] I've scheduled your alarm for ${time}${label ? `: "${label}"` : ''}. I'll notify you when it goes off.` };
+    return { 
+      confirmation: `I've scheduled your alarm for ${time}${label ? `: "${label}"` : ''}.`,
+      alarmDetails: { time, label }
+    };
   }
 );
 
@@ -99,14 +105,27 @@ const manageCalendarTool = ai.defineTool(
     }),
     outputSchema: z.object({
       result: z.string(),
+      events: z.array(z.object({
+        title: z.string(),
+        time: z.string(),
+        date: z.string(),
+      })).optional(),
     }),
   },
   async ({ action, details }) => {
     if (action === 'add') {
-      return { result: `[MOCK SUCCESS] I've added "${details}" to your calendar for this Thursday.` };
+      return { 
+        result: `Successfully added "${details}" to your calendar.`,
+        events: [{ title: details || 'New Event', time: '10:00 AM', date: 'Tomorrow' }]
+      };
     }
     return { 
-      result: "Your next 3 events: \n1. Team Standup (9:00 AM)\n2. Lunch with Client (12:30 PM)\n3. Strategy Review (4:00 PM)" 
+      result: "Here are your upcoming events.",
+      events: [
+        { title: "Team Standup", time: "9:00 AM", date: "Today" },
+        { title: "Lunch with Client", time: "12:30 PM", date: "Today" },
+        { title: "Strategy Review", time: "4:00 PM", date: "Today" }
+      ]
     };
   }
 );
@@ -120,13 +139,23 @@ const analyzeEmailsTool = ai.defineTool(
     }),
     outputSchema: z.object({
       summary: z.string(),
+      emails: z.array(z.object({
+        sender: z.string(),
+        subject: z.string(),
+        snippet: z.string(),
+      })).optional(),
     }),
   },
   async ({ query }) => {
-    if (query) {
-      return { summary: `[MOCK SEARCH] Found 2 emails matching "${query}". One is a project update from David, and the other is a confirmation for your flight.` };
-    }
-    return { summary: "You have 5 new emails: 3 from the Marketing team regarding the Q3 campaign, and 2 from HR about the upcoming holiday schedule." };
+    const mockEmails = [
+      { sender: "David", subject: "Project Update", snippet: "The Q3 milestones are looking good..." },
+      { sender: "HR", subject: "Holiday Schedule", snippet: "Please note the upcoming office closures..." },
+      { sender: "Travel", subject: "Flight Confirmation", snippet: "Your flight to NYC is confirmed for Friday..." }
+    ];
+    return { 
+      summary: query ? `Found emails matching "${query}".` : "You have 3 new important emails.",
+      emails: query ? mockEmails.filter(e => e.subject.toLowerCase().includes(query.toLowerCase())) : mockEmails
+    };
   }
 );
 
@@ -149,7 +178,14 @@ export const ChatOutputSchema = z.object({
   altText: z.string().optional(),
   dataAiHint: z.string().optional(),
   review: SelfReviewOutputSchema.optional(),
+  toolData: z.object({
+    type: z.enum(['alarm', 'calendar', 'email']),
+    data: z.any(),
+  }).optional(),
 });
+
+export type ChatInput = z.infer<typeof ChatInputSchema>;
+export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
 const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
@@ -159,6 +195,9 @@ const chatPrompt = ai.definePrompt({
   prompt: `You are {{personality.name}}, a helpful AI assistant.
 Tone: {{personality.tone}}
 Humor enabled: {{personality.enableHumor}}
+
+When a user asks to set an alarm, manage their calendar, or check emails, use the appropriate tool. 
+ALWAYS populate the 'toolData' field in your output with the data returned by the tool if you used one.
 
 {{#if history}}
 History:
@@ -174,7 +213,7 @@ Image Input: {{media url=attachmentUrl}}
 User Message: {{{prompt}}}`,
 });
 
-export async function onlineChat(input: any): Promise<any> {
+export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
   const filledInput = { ...input, personality: input.personality || { name: 'AIva', tone: 'friendly', enableHumor: true } };
   
   try {

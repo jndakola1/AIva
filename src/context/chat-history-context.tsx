@@ -30,6 +30,10 @@ type Message = {
   altText?: string;
   dataAiHint?: string;
   review?: SelfReviewOutput;
+  toolData?: {
+    type: 'alarm' | 'calendar' | 'email';
+    data: any;
+  };
   createdAt?: Timestamp;
 };
 
@@ -62,7 +66,17 @@ const MOCK_DEVELOPMENT_DATA: Message[] = [
   {
     id: 'mock-3',
     role: 'AI',
-    content: "Certainly! You have a 'Product Launch Sync' on Tuesday at 10:00 AM and a 'Coffee with Sarah' on Friday at 3:00 PM. Would you like me to set a reminder for those?",
+    content: "Certainly! You have some events coming up today.",
+    toolData: {
+      type: 'calendar',
+      data: {
+        events: [
+          { title: "Team Standup", time: "9:00 AM", date: "Today" },
+          { title: "Lunch with Client", time: "12:30 PM", date: "Today" },
+          { title: "Strategy Review", time: "4:00 PM", date: "Today" }
+        ]
+      }
+    },
     createdAt: Timestamp.now(),
   }
 ];

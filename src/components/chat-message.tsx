@@ -55,7 +55,7 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
               <span className="font-bold text-primary uppercase">{review.summaryEvaluation}</span>
            </div>
            {review.issuesFound && <div className="space-y-1"><p className="text-white/40 uppercase text-[9px] font-bold">Issues Found</p><p className="bg-red-500/5 p-2 rounded-xl border border-red-500/10">{review.issuesFound}</p></div>}
-           {review.suggestedFixes && <div className="space-y-1"><p className="text-white/40 uppercase text-[9px] font-bold">Fix Suggestions</p><p className="bg-green-500/5 p-2 rounded-xl border border-green-500/10">{review.suggestedFixes}</p></div>}
+           {review.suggestedFixes && <div className="space-y-1"><p className="text-white/40 uppercase text-[9px] font-bold">Fix Suggestions</p><p className="bg-green-500/5 p-2 rounded-xl border border-red-500/10">{review.suggestedFixes}</p></div>}
            <div className="flex justify-between items-center border-t border-white/5 pt-3">
               <span className="text-white/40">Final Verdict</span>
               <span className="font-bold uppercase text-primary">{review.finalVerdict}</span>
@@ -302,7 +302,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
           isAi ? "items-start" : "items-end flex flex-col"
       )}>
         <div className="flex items-center gap-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30">
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/50">
             {isAi ? "AIva Intelligence" : "User Terminal"}
           </span>
           {isAi && review && <ReviewPopover review={review} />}
@@ -312,9 +312,9 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
         </div>
 
         <div className={cn(
-            "relative max-w-full md:max-w-2xl px-6 py-4 rounded-[2rem] transition-all duration-300",
+            "relative max-w-full md:max-w-2xl px-6 py-4 rounded-[2rem] transition-all duration-300 shadow-2xl",
             isAi 
-                ? "bg-white/[0.03] border border-white/5 rounded-tl-none shadow-xl" 
+                ? "bg-[#161618] border border-white/10 rounded-tl-none text-white/95" 
                 : "bg-primary border border-primary shadow-[0_10px_30px_rgba(217,119,87,0.2)] rounded-tr-none text-white font-semibold"
         )}>
           {isLoading ? (
@@ -325,7 +325,14 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
             </div>
           ) : (
             <div className="space-y-4">
-              {content && <p className="whitespace-pre-wrap text-sm md:text-[15px] leading-relaxed font-medium">{content}</p>}
+              {content && (
+                <p className={cn(
+                  "whitespace-pre-wrap text-sm md:text-[15px] leading-relaxed font-medium",
+                  isAi ? "text-white/95" : "text-white"
+                )}>
+                  {content}
+                </p>
+              )}
               
               {toolData && (
                 <div className="pt-2">

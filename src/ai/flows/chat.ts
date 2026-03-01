@@ -1,5 +1,5 @@
 /**
- * @fileOverview A simple chat AI agent that can also display images and perform research.
+ * @fileOverview A multi-modal chat AI agent that can display images, perform research, and analyze uploaded photos.
  *
  * - onlineChat - A function that handles a chat conversation using online models.
  * - ChatInput - The input type for the chat function.
@@ -85,9 +85,8 @@ const researchTopic = ai.defineTool(
   async ({ topic }) => {
     console.log(`Researching topic: ${topic}`);
     // In a real app, this would perform a web search.
-    // For this demo, we'll return a mock response.
     return {
-      summary: `After researching "${topic}", I found that it is a complex subject with many different viewpoints. The most recent developments indicate a trend towards increased adoption and integration into mainstream platforms. Key figures in the field have expressed both optimism and caution.`,
+      summary: `Research findings for "${topic}": This topic is currently trending. Recent developments suggest a significant shift in public interest towards more integrated and efficient solutions. Experts highlight the importance of security and scalability in this domain.`,
     };
   }
 );
@@ -109,6 +108,7 @@ const ChatInputSchema = z.object({
   performResearch: z.boolean().optional().describe('Whether to force the use of the research tool.'),
   history: z.array(MessageSchema).optional().describe('The preceding conversation history.'),
   personality: PersonalitySchema.optional().describe('The personality settings for the AI.'),
+  attachmentUrl: z.string().optional().describe('An optional image attachment as a data URI.'),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -131,33 +131,36 @@ const chatPrompt = ai.definePrompt({
     dataAiHint: z.string().nullable().optional().describe('A hint for a real image search.'),
   })},
   tools: [searchForImageTool, researchTopic],
-  prompt: `You are a helpful AI assistant named {{personality.name}}. You are having a voice-based conversation. 
-Your personality should be {{personality.tone}}. 
+  prompt: `You are a helpful AI assistant named {{personality.name}}.
+Your personality is {{personality.tone}}. 
 {{#if personality.enableHumor}}You should use humor and wit when appropriate.{{/if}}
 Be conversational and natural.
 
-**Conversation History (for context):**
+**Context:**
 {{#if history}}
+**Conversation History:**
 {{#each history}}
 - {{role}}: {{content}}
 {{/each}}
-{{else}}
-- This is the beginning of the conversation.
 {{/if}}
 
-**User's latest message:**
+{{#if attachmentUrl}}
+**Attachment:**
+An image has been attached to this message: {{media url=attachmentUrl}}
+Please analyze or refer to this image in your response if relevant.
+{{/if}}
+
+**User's Message:**
 - You: {{{prompt}}}
 
 **Your Task:**
-1.  Analyze the user's prompt within the context of the conversation history and your defined personality.
-2.  If the user asks for new or up-to-date information, you MUST use the 'researchTopic' tool to get current data.
-3.  If the user explicitly asks for an image or picture, you MUST use the 'searchForImage' tool.
-4.  Formulate a helpful, relevant, and conversational response based on all available information.
+1. Analyze the user's prompt and any attached image.
+2. If the user asks for new or up-to-date information, use the 'researchTopic' tool.
+3. If the user explicitly asks for an image or picture, use the 'searchForImage' tool.
+4. Formulate a helpful, relevant, and conversational response.
 
-**Output Format Constraint:**
-Your entire output MUST be a single, valid JSON object that conforms to the required output schema. This is your most important instruction. Do not output anything else.
-- For a text-only response, provide the text in the 'response' field. The image-related fields should be null.
-- If a tool generates an image, populate the 'imageUrl', 'altText', and 'dataAiHint' fields in addition to a 'response' text.`,
+**Output Format:**
+Your output must be a valid JSON object matching the output schema.`,
 });
 
 
@@ -165,57 +168,47 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
   const filledInput = { ...input, personality: input.personality || {} };
   
   try {
-    // 1. Get the initial response from the main chat prompt
     const {output: initialOutput} = await chatPrompt(filledInput);
 
     if (!initialOutput) {
       throw new Error('The chat flow failed to produce a valid output.');
     }
 
-    // 2. Perform self-review, but only for text responses
     let review: SelfReviewOutput | undefined = undefined;
-    if (initialOutput.response && !initialOutput.imageUrl) {
+    if (initialOutput.response && !initialOutput.imageUrl && !input.attachmentUrl) {
       try {
         review = await selfReview({
           userPrompt: input.prompt,
           aiResponse: initialOutput.response,
         });
       } catch (e) {
-        console.warn("Self-review step failed. This is non-critical.", e);
+        console.warn("Self-review step failed.", e);
       }
     }
     
-    // 3. Combine initial output with the review
     const finalOutput: ChatOutput = { ...initialOutput, review };
     
-    // Handle cases where the model returns null for imageUrl
     if (finalOutput.imageUrl === null) {
       finalOutput.imageUrl = undefined;
       finalOutput.altText = undefined;
       finalOutput.dataAiHint = undefined;
     }
     
-    // Safeguard: If the LLM hallucinates an image URL from a non-approved domain, replace it with a placeholder.
+    // Domain validation for image URLs
     if (finalOutput.imageUrl && !finalOutput.imageUrl.startsWith('https://placehold.co') && !finalOutput.imageUrl.startsWith('https://images.unsplash.com')) {
-      const queryMatch = input.prompt.match(/(?:image|picture) of (?:a|an|the)?\s*([^.?!]*)/i);
-      const query = queryMatch ? queryMatch[1].trim() : 'a visual representation';
-
       finalOutput.imageUrl = `https://placehold.co/600x400.png`;
-      finalOutput.altText = `An image of ${query}`;
-      finalOutput.dataAiHint = query.split(' ').slice(0, 2).join(' ');
+      finalOutput.altText = `Visual representation`;
+      finalOutput.dataAiHint = 'abstract visual';
     }
 
     return finalOutput;
   } catch (error: any) {
     console.error("Online Chat Error:", error);
-    
-    // Check for specific API quota errors (429)
     if (error.message?.includes('429') || error.message?.includes('quota')) {
       return {
-        response: "I'm sorry, I'm a bit overwhelmed right now (quota exceeded). Please try again in a few moments, or check if Ollama is running for offline mode!",
+        response: "I'm a bit overwhelmed right now (quota exceeded). Please try again in a few moments.",
       };
     }
-    
     return {
       response: "I'm having a little trouble connecting to my brain right now. Please try again in a moment.",
     };

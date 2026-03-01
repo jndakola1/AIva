@@ -10,10 +10,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Camera, File, Globe, Image as ImageIcon, Plus, Telescope, Wand2 } from 'lucide-react';
 import type React from 'react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
-const ActionButton = ({ icon: Icon, children }: { icon: React.ElementType, children: React.ReactNode }) => (
-    <button className="flex flex-col items-center justify-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring">
+const ActionButton = ({ icon: Icon, children, onClick }: { icon: React.ElementType, children: React.ReactNode, onClick?: () => void }) => (
+    <button 
+      onClick={onClick}
+      className="flex flex-col items-center justify-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+    >
         <div className="flex items-center justify-center h-16 w-16 rounded-2xl bg-muted/60">
             <Icon className="h-7 w-7 text-muted-foreground" />
         </div>
@@ -38,17 +41,28 @@ const AttachmentMenu = ({
   disabled, 
   onGenerateImage,
   onWebSearch,
+  onImageSelect,
 }: { 
   disabled?: boolean, 
   onGenerateImage: () => void,
-  onWebSearch: () => void
+  onWebSearch: () => void,
+  onImageSelect: (file: File) => void
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAction = (action: () => void) => {
     if (disabled) return;
     action();
     setIsOpen(false);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onImageSelect(file);
+      setIsOpen(false);
+    }
   };
   
   return (
@@ -66,9 +80,18 @@ const AttachmentMenu = ({
         <SheetHeader className="sr-only">
           <SheetTitle>Attachments & Actions</SheetTitle>
         </SheetHeader>
+        
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept="image/*" 
+          onChange={handleFileChange}
+        />
+
         <div className="grid grid-cols-3 gap-4 text-center mb-6">
-            <ActionButton icon={Camera}>Camera</ActionButton>
-            <ActionButton icon={ImageIcon}>Photos</ActionButton>
+            <ActionButton icon={Camera} onClick={() => fileInputRef.current?.click()}>Camera</ActionButton>
+            <ActionButton icon={ImageIcon} onClick={() => fileInputRef.current?.click()}>Photos</ActionButton>
             <ActionButton icon={File}>Files</ActionButton>
         </div>
         <div className="space-y-1">

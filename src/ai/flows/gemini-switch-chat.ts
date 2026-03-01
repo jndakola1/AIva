@@ -32,36 +32,26 @@ async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama3', // Using a more common default model
+        model: 'llama3', 
         prompt: prompt,
         stream: false,
-        system: "You are a helpful, conversational AI assistant named Aiva. Respond naturally as if you are in a voice conversation. Keep your responses concise."
+        system: "You are a helpful, conversational AI assistant named Aiva. Respond naturally. Keep your responses concise."
       }),
     });
 
     if (!res.ok) {
-        console.error("Ollama API Error:", res.status, res.statusText);
         return {
             response: "Sorry, I'm having trouble connecting to the local AI model. Please ensure Ollama is running.",
         };
     }
     
     const data = await res.json();
-
-    if (!data.response) {
-      console.error("Invalid Ollama response format:", data);
-      return {
-          response: "Sorry, I received an unexpected response from the local AI model."
-      }
-    }
-
     return {
-      response: data.response,
+      response: data.response || "Sorry, I received an unexpected response from the local AI model.",
     };
   } catch (error) {
-    console.error('Failed to fetch from Ollama:', error);
     return {
-      response: "It seems you're offline, but I can't reach the local AI model. Please make sure Ollama is running on your machine.",
+      response: "It seems you're offline, but I can't reach the local AI model. Please make sure Ollama is running.",
     };
   }
 }
@@ -69,7 +59,7 @@ async function ollamaChat(prompt: string): Promise<GeminiSwitchChatOutput> {
 export async function geminiSwitchChat(
   input: GeminiSwitchChatInput
 ): Promise<GeminiSwitchChatOutput> {
-  const { prompt, isOnline, performResearch, history, userId } = input;
+  const { prompt, isOnline, performResearch, history, userId, attachmentUrl } = input;
   if (isOnline) {
     let personality: PersonalitySettings | undefined;
     
@@ -78,8 +68,7 @@ export async function geminiSwitchChat(
         const userSettings = await getUserSettings(userId);
         personality = userSettings.personality;
       } catch (e) {
-        console.error("Failed to fetch user settings, using defaults.", e);
-        // Proceed with default personality
+        console.error("Failed to fetch user settings.", e);
       }
     }
 
@@ -87,7 +76,14 @@ export async function geminiSwitchChat(
       role: msg.speaker,
       content: msg.text,
     }));
-    return onlineChat({ prompt, performResearch, history: mappedHistory, personality });
+    
+    return onlineChat({ 
+      prompt, 
+      performResearch, 
+      history: mappedHistory, 
+      personality,
+      attachmentUrl,
+    });
   } else {
     const historyString = history?.map(msg => `${msg.speaker}: ${msg.text}`).join('\n') || '';
     const fullPrompt = `${historyString}\nYou: ${prompt}\nAIva:`;

@@ -179,7 +179,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                         className={cn(
                                           "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all text-base font-medium",
                                           pathname === link.href 
-                                            ? "bg-primary/10 text-primary border border-primary/20" 
+                                            ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(217,119,87,0.2)]" 
                                             : "text-muted-foreground hover:bg-white/5"
                                         )}
                                     >
@@ -193,7 +193,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                       className={cn(
                                         "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all text-base font-medium",
                                         pathname === "/settings" 
-                                          ? "bg-primary/10 text-primary border border-primary/20" 
+                                          ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(217,119,87,0.2)]" 
                                           : "text-muted-foreground hover:bg-white/5"
                                       )}
                                   >
@@ -228,7 +228,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                 >
                   <div className={cn(
                     "p-2 rounded-xl transition-all",
-                    pathname === link.href ? "bg-primary/10 scale-110" : "group-hover:bg-white/5"
+                    pathname === link.href ? "bg-primary/10 scale-110 shadow-[0_0_15px_rgba(217,119,87,0.3)]" : "group-hover:bg-white/5"
                   )}>
                     <link.icon className="h-5 w-5" />
                   </div>

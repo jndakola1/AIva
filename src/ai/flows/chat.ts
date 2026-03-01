@@ -63,11 +63,20 @@ const researchTopic = ai.defineTool(
     }),
     outputSchema: z.object({
       summary: z.string().describe('A summary of the research findings.'),
+      sections: z.array(z.object({
+          title: z.string(),
+          content: z.string(),
+      })).optional(),
     }),
   },
   async ({ topic }) => {
     return {
-      summary: `Detailed research findings for "${topic}": 1. Market trends show a 15% increase in adoption this year. 2. Recent breakthroughs in technology have reduced costs by 30%. 3. Experts predict a major shift toward sustainable practices by 2026. (Simulated Research Data)`,
+      summary: `Detailed research findings for "${topic}".`,
+      sections: [
+          { title: "Market Overview", content: "Global trends show a sharp increase in adoption for this sector." },
+          { title: "Technological Impact", content: "Neural synthesis has reduced operational costs by nearly 40%." },
+          { title: "Strategic Outlook", content: "Experts recommend a transition toward decentralized intelligence by Q4." }
+      ]
     };
   }
 );
@@ -240,7 +249,7 @@ export const ChatOutputSchema = z.object({
   dataAiHint: z.string().optional(),
   review: SelfReviewOutputSchema.optional(),
   toolData: z.object({
-    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather']),
+    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather', 'research']),
     data: z.any(),
   }).optional(),
 });
@@ -273,7 +282,7 @@ const chatPrompt = ai.definePrompt({
 Tone: {{personality.tone}}
 Humor enabled: {{personality.enableHumor}}
 
-When a user asks to set an alarm, manage their calendar, check emails, find hospitals, or check weather, use the appropriate tool. 
+When a user asks to set an alarm, manage their calendar, check emails, find hospitals, perform research, or check weather, use the appropriate tool. 
 ALWAYS populate the 'toolData' field in your output with the data returned by the tool if you used one.
 
 {{#if history}}
@@ -412,8 +421,25 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
       };
     }
 
+    if (lowerPrompt.includes('research') || lowerPrompt.includes('report') || lowerPrompt.includes('synthesis')) {
+        return {
+          response: "I've performed a neural synthesis of your request. Here's the core intel report.",
+          toolData: {
+            type: 'research',
+            data: {
+                summary: "Synthesis complete.",
+                sections: [
+                    { title: "Strategic Trends", content: "Hyper-automation is leading to a 30% shift in core infrastructure." },
+                    { title: "Competitive Edge", content: "Early adopters of neural interfaces report significant efficiency gains." },
+                    { title: "Risk Mitigation", content: "Focus on decentralized security protocols to ensure data integrity." }
+                ]
+            }
+          }
+        };
+      }
+
     return { 
-      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about hospitals, alarms, or your calendar to see my specialized cards." 
+      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about hospitals, alarms, research reports, or your calendar to see my specialized cards." 
     };
   }
 }

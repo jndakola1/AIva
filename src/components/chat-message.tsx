@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText } from "lucide-react";
 import Image from "next/image";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
@@ -24,7 +24,7 @@ type ChatMessageProps = {
   dataAiHint?: string;
   review?: SelfReviewOutput;
   toolData?: {
-    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather';
+    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather' | 'research';
     data: any;
   };
   onPlayAudio?: (messageId: string, text: string) => void;
@@ -277,6 +277,46 @@ const WeatherCard = ({ data }: { data: any }) => (
   </Card>
 );
 
+const ResearchCard = ({ data }: { data: any }) => (
+  <Card className="mt-3 overflow-hidden border-white/10 bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-2xl animate-in slide-in-from-left-4 duration-500">
+    <div className="p-7 relative bg-gradient-to-br from-primary/10 via-transparent to-transparent">
+      <div className="flex items-center gap-4 mb-6">
+        <div className="h-12 w-12 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30 shadow-lg shadow-primary/20">
+          <Telescope className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <CardTitle className="text-white text-xl font-bold">Intel Synthesis</CardTitle>
+          <p className="text-[10px] uppercase tracking-widest font-bold text-primary/60">Research Report Module</p>
+        </div>
+      </div>
+      <div className="space-y-6 text-sm leading-relaxed text-white/90">
+          {data.sections ? (
+              data.sections.map((section: any, i: number) => (
+                  <div key={i} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          <h4 className="font-bold text-white uppercase tracking-wider text-xs">{section.title}</h4>
+                      </div>
+                      <p className="text-white/60 pl-3.5 border-l border-white/5">{section.content}</p>
+                  </div>
+              ))
+          ) : (
+              <p className="whitespace-pre-wrap">{data.summary}</p>
+          )}
+      </div>
+    </div>
+    <div className="bg-[#1A1A1C] p-4 border-t border-white/5 flex gap-3">
+      <Button variant="ghost" className="flex-1 rounded-2xl h-12 text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5">
+        <FileText className="h-4 w-4 mr-2" />
+        Export PDF
+      </Button>
+      <Button className="flex-1 bg-primary text-white rounded-2xl h-12 font-bold text-xs uppercase tracking-widest shadow-lg active:scale-95">
+        Share Intel
+      </Button>
+    </div>
+  </Card>
+);
+
 export default function ChatMessage({ id, role, content, isLoading, imageUrl, altText, dataAiHint, review, toolData, onPlayAudio, isSpeaking }: ChatMessageProps) {
   const isAi = role === "AIva";
   const isVideo = imageUrl?.startsWith('data:video/mp4');
@@ -314,7 +354,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
         <div className={cn(
             "relative max-w-full md:max-w-2xl px-6 py-4 rounded-[2rem] transition-all duration-300 shadow-2xl",
             isAi 
-                ? "bg-[#161618] border border-white/10 rounded-tl-none text-white/95" 
+                ? "bg-[#0F0F10] border border-white/10 rounded-tl-none text-white" 
                 : "bg-primary border border-primary shadow-[0_10px_30px_rgba(217,119,87,0.2)] rounded-tr-none text-white font-semibold"
         )}>
           {isLoading ? (
@@ -328,7 +368,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
               {content && (
                 <p className={cn(
                   "whitespace-pre-wrap text-sm md:text-[15px] leading-relaxed font-medium",
-                  isAi ? "text-white/95" : "text-white"
+                  isAi ? "text-white" : "text-white"
                 )}>
                   {content}
                 </p>
@@ -341,6 +381,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                   {toolData.type === 'email' && <EmailCard data={toolData.data} />}
                   {toolData.type === 'hospital' && <HospitalCard data={toolData.data} />}
                   {toolData.type === 'weather' && <WeatherCard data={toolData.data} />}
+                  {toolData.type === 'research' && <ResearchCard data={toolData.data} />}
                 </div>
               )}
 

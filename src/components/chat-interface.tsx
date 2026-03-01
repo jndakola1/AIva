@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -31,10 +30,10 @@ declare global {
 }
 
 const STARTER_PROMPTS = [
-  { icon: Sparkles, text: "Write a short story about a time-traveling cat." },
-  { icon: Brain, text: "Explain quantum physics to a five-year-old." },
-  { icon: Globe, text: "What are the top travel destinations for 2024?" },
-  { icon: Palette, text: "Give me creative ideas for a DIY home office setup." },
+  { icon: Sparkles, text: "Write a short story about a time-traveling cat.", color: "text-orange-400 bg-orange-400/10" },
+  { icon: Brain, text: "Explain quantum physics to a five-year-old.", color: "text-blue-400 bg-blue-400/10" },
+  { icon: Globe, text: "What are the top travel destinations for 2024?", color: "text-green-400 bg-green-400/10" },
+  { icon: Palette, text: "Give me creative ideas for a DIY home office setup.", color: "text-pink-400 bg-pink-400/10" },
 ];
 
 export default function ChatInterface() {
@@ -123,7 +122,7 @@ export default function ChatInterface() {
 
       if (isDeep) {
         const { report } = await deepResearch({ topic: prompt });
-        addMessage({ role: "AI", content: report });
+        addMessage({ role: "AIva", content: report });
       } else {
         const aiResponse = await geminiSwitchChat({ 
           prompt, 
@@ -135,7 +134,7 @@ export default function ChatInterface() {
         });
 
         addMessage({
-          role: "AI",
+          role: "AIva",
           content: aiResponse.response,
           imageUrl: aiResponse.imageUrl,
           altText: aiResponse.altText,
@@ -146,7 +145,7 @@ export default function ChatInterface() {
       }
     } catch (error) {
       console.error(error);
-      addMessage({ role: "AI", content: "Sorry, I ran into an error. Please try again later." });
+      addMessage({ role: "AIva", content: "Sorry, I ran into an error. Please try again later." });
     } finally {
       setIsSending(false);
       setIsProcessingTask(false);
@@ -164,13 +163,13 @@ export default function ChatInterface() {
     try {
       const imageResponse = await generateImage({ prompt });
       addMessage({ 
-        role: "AI",
+        role: "AIva",
         content: `Here's the image you asked for.`,
         imageUrl: imageResponse.imageUrl,
         altText: imageResponse.altText,
       });
     } catch (error) {
-      addMessage({ role: "AI", content: `Failed to generate image.` });
+      addMessage({ role: "AIva", content: `Failed to generate image.` });
     } finally {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);
@@ -187,19 +186,18 @@ export default function ChatInterface() {
     setInput("");
     setIsProcessingTask(true);
     setCurrentTaskLabel("Veo 3 is crafting your video with sound...");
-    toast({ title: "Generating Video", description: "This may take up to a minute. Veo 3 is crafting your video with sound." });
     
     try {
       const { videoUrl, altText } = await generateVideo({ prompt });
       addMessage({ 
-        role: "AI",
+        role: "AIva",
         content: `Your cinematic video with sound is ready!`,
         imageUrl: videoUrl, 
         altText: altText,
       });
     } catch (error: any) {
       console.error(error);
-      addMessage({ role: "AI", content: `Failed to generate video: ${error.message}` });
+      addMessage({ role: "AIva", content: `Failed to generate video: ${error.message}` });
     } finally {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);
@@ -220,13 +218,13 @@ export default function ChatInterface() {
     try {
       const { audioUrl, description } = await generateMusic({ prompt });
       addMessage({ 
-        role: "AI",
+        role: "AIva",
         content: `I've composed a musical atmosphere for you: ${description}`,
         imageUrl: audioUrl,
       });
     } catch (error: any) {
       console.error(error);
-      addMessage({ role: "AI", content: `Failed to generate music: ${error.message}` });
+      addMessage({ role: "AIva", content: `Failed to generate music: ${error.message}` });
     } finally {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);
@@ -291,29 +289,31 @@ export default function ChatInterface() {
   const isDisabled = isSending || isEnhancing || isRecording || isProcessingTask || isSpeaking;
 
   return (
-    <div className="flex flex-col h-full bg-background text-foreground relative overflow-hidden">
+    <div className="flex flex-col h-full bg-[#0A0A0B] text-foreground relative overflow-hidden">
       <main className="flex-1 overflow-hidden relative">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
-          <div className="py-8 px-4 space-y-8 max-w-3xl mx-auto pb-40">
+          <div className="py-12 px-6 space-y-12 max-w-4xl mx-auto pb-48">
              {loadingHistory ? (
                 <div className="flex justify-center items-center h-full pt-20">
-                  <Loader className="h-8 w-8 animate-spin text-muted-foreground" />
+                  <Loader className="h-10 w-10 animate-spin text-primary/40" />
                 </div>
               ) : messages.length === 0 ? (
-                <div className="flex flex-col h-full items-center justify-center text-center pt-10">
-                  <div className="h-16 w-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-3xl font-bold mb-6 shadow-xl">A</div>
-                  <h1 className="text-3xl font-semibold mb-8">How can I help you today?</h1>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl w-full px-4">
+                <div className="flex flex-col h-full items-center justify-center text-center pt-20 animate-in fade-in duration-700">
+                  <div className="h-24 w-24 bg-primary rounded-[2.5rem] flex items-center justify-center text-4xl font-bold mb-8 shadow-[0_0_40px_rgba(59,130,246,0.5)] rotate-3">A</div>
+                  <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">Hello. I'm AIva.</h1>
+                  <p className="text-muted-foreground mb-12 text-lg max-w-md mx-auto">Your high-performance AI companion, powered by Gemini and Veo.</p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl w-full px-4">
                     {STARTER_PROMPTS.map((starter, i) => (
                       <button
                         key={i}
                         onClick={() => sendMessage(starter.text)}
-                        className="flex items-center gap-3 p-4 rounded-xl border border-border bg-card hover:bg-muted transition-all text-left group shadow-sm"
+                        className="flex items-center gap-4 p-5 rounded-3xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all text-left group shadow-lg"
                       >
-                        <div className="p-2 bg-muted rounded-lg group-hover:bg-primary/10 transition-colors">
-                          <starter.icon className="h-4 w-4 text-primary" />
+                        <div className={cn("p-3 rounded-2xl group-hover:scale-110 transition-transform", starter.color)}>
+                          <starter.icon className="h-5 w-5" />
                         </div>
-                        <span className="text-sm font-medium">{starter.text}</span>
+                        <span className="text-sm font-semibold text-white/80 group-hover:text-white transition-colors">{starter.text}</span>
                       </button>
                     ))}
                   </div>
@@ -330,59 +330,63 @@ export default function ChatInterface() {
             )}
             
             {isProcessingTask && currentTaskLabel && (
-                <div className="flex flex-col items-center justify-center gap-3 py-6 animate-in fade-in zoom-in duration-300">
-                    <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/5 border border-primary/10 rounded-full shadow-sm">
-                        <Loader className="h-4 w-4 animate-spin text-primary" />
-                        <span className="text-xs font-bold text-primary uppercase tracking-widest">{currentTaskLabel}</span>
+                <div className="flex flex-col items-center justify-center gap-4 py-8 animate-in fade-in zoom-in duration-500">
+                    <div className="flex items-center gap-4 px-6 py-3 bg-primary/10 border border-primary/20 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.2)] backdrop-blur-xl">
+                        <Loader className="h-5 w-5 animate-spin text-primary" />
+                        <span className="text-xs font-bold text-primary uppercase tracking-[0.2em]">{currentTaskLabel}</span>
                     </div>
                 </div>
             )}
 
             {(isSending && !isProcessingTask) && (
-                <ChatMessage id="loading" role="AI" content="" isLoading={true} />
+                <ChatMessage id="loading" role="AIva" content="" isLoading={true} />
             )}
             <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
       </main>
 
-      <footer className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none z-10">
+      {/* Glass Pill Input Area */}
+      <footer className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#0A0A0B] via-[#0A0A0B]/90 to-transparent pointer-events-none z-10">
         <div className="max-w-3xl mx-auto pointer-events-auto">
           {(imagePreview || selectedFile) && (
-            <div className="mb-4 flex gap-2 animate-in slide-in-from-bottom-4 duration-300">
+            <div className="mb-4 flex gap-3 animate-in slide-in-from-bottom-6 duration-500">
               {imagePreview && (
                 <div className="relative inline-block">
-                  <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-border shadow-md">
-                    <Image src={imagePreview} alt="Upload preview" fill className="object-cover" />
+                  <div className="relative h-24 w-24 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl group">
+                    <Image src={imagePreview} alt="Upload preview" fill className="object-cover transition-transform group-hover:scale-110" />
+                    <div className="absolute inset-0 bg-black/20" />
                   </div>
-                  <button onClick={clearSelections} className="absolute -top-2 -right-2 h-6 w-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-destructive/90 transition-colors"><X className="h-4 w-4" /></button>
+                  <button onClick={clearSelections} className="absolute -top-2 -right-2 h-7 w-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-xl hover:bg-red-600 transition-colors border-2 border-[#0A0A0B]"><X className="h-4 w-4" /></button>
                 </div>
               )}
               {selectedFile && (
                 <div className="relative inline-block">
-                  <div className="h-20 w-32 flex flex-col items-center justify-center bg-card rounded-xl border border-border p-2 gap-1 shadow-md">
-                    <Telescope className="h-6 w-6 text-primary" />
-                    <span className="text-[10px] font-medium truncate w-full text-center">{selectedFile.name}</span>
+                  <div className="h-24 w-36 flex flex-col items-center justify-center bg-white/5 rounded-3xl border-2 border-white/10 p-3 gap-2 shadow-2xl">
+                    <div className="p-2 bg-primary/20 rounded-xl">
+                      <Telescope className="h-6 w-6 text-primary" />
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider truncate w-full text-center text-white/60">{selectedFile.name}</span>
                   </div>
-                  <button onClick={clearSelections} className="absolute -top-2 -right-2 h-6 w-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-destructive/90 transition-colors"><X className="h-4 w-4" /></button>
+                  <button onClick={clearSelections} className="absolute -top-2 -right-2 h-7 w-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-xl hover:bg-red-600 transition-colors border-2 border-[#0A0A0B]"><X className="h-4 w-4" /></button>
                 </div>
               )}
             </div>
           )}
           
-          <div className="relative bg-card/80 backdrop-blur-xl border border-border rounded-[2rem] shadow-2xl transition-all hover:shadow-primary/5 focus-within:shadow-primary/10">
+          <div className="relative bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all focus-within:border-primary/40 focus-within:shadow-[0_20px_50px_rgba(59,130,246,0.15)] ring-1 ring-white/5">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isRecording ? "Listening..." : "Message AIva..."}
-              className="bg-transparent border-none rounded-[2rem] pr-28 pl-24 py-4 text-base min-h-[56px] resize-none focus-visible:ring-0 shadow-none"
+              placeholder={isRecording ? "Listening to you..." : "Message AIva..."}
+              className="bg-transparent border-none rounded-[2.5rem] pr-32 pl-24 py-5 text-base md:text-lg min-h-[64px] resize-none focus-visible:ring-0 shadow-none no-scrollbar font-medium"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
               }}
               disabled={isDisabled}
               rows={1}
             />
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-1">
               <AttachmentMenu 
                 disabled={isDisabled}
                 onGenerateImage={handleGenerateImage}
@@ -394,30 +398,30 @@ export default function ChatInterface() {
                 onFileSelect={handleFileSelect}
               />
                <Button 
-                  variant="ghost" size="icon" className={cn('rounded-full text-muted-foreground transition-colors', { 'text-blue-500 animate-pulse bg-blue-500/10': isRecording })}
-                  onClick={handleMicClick} disabled={isDisabled} title="Voice Input"
+                  variant="ghost" size="icon" className={cn('rounded-full text-white/40 hover:text-primary transition-all h-11 w-11', { 'text-primary animate-pulse bg-primary/10 shadow-[0_0_15px_rgba(59,130,246,0.4)]': isRecording })}
+                  onClick={handleMicClick} disabled={isDisabled}
                 >
                   <Mic className="h-5 w-5" />
                 </Button>
             </div>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 <Button 
-                  variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
-                  onClick={handleEnhancePrompt} disabled={isDisabled || !input.trim()} title="Enhance Prompt"
+                  variant="ghost" size="icon" className="rounded-full text-white/40 hover:text-white hover:bg-white/10 transition-all h-11 w-11"
+                  onClick={handleEnhancePrompt} disabled={isDisabled || !input.trim()}
                 >
                   {isEnhancing ? <Loader className="h-5 w-5 animate-spin" /> : <SlidersHorizontal className="h-5 w-5" />}
                 </Button>
               <Button
                   onClick={() => sendMessage(input)} disabled={isDisabled || (!input.trim() && !imagePreview && !selectedFile)}
-                  size="icon" className="rounded-full w-10 h-10 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted shadow-lg transition-all active:scale-95"
+                  size="icon" className="rounded-2xl w-11 h-11 bg-primary text-white hover:bg-primary/90 disabled:bg-white/5 disabled:text-white/20 shadow-xl transition-all active:scale-90"
                 >
                   {isSending ? <Loader className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
               </Button>
             </div>
           </div>
           
-          <p className="text-[10px] text-center text-muted-foreground mt-2 opacity-60">
-            Aiva can make mistakes. Check important info.
+          <p className="text-[10px] text-center text-white/20 mt-4 uppercase tracking-[0.3em] font-bold">
+            AIva Context Engine v1.2
           </p>
         </div>
       </footer>

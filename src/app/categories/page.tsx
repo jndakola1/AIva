@@ -16,7 +16,8 @@ import {
   Clock,
   Film,
   Music,
-  Video
+  Video,
+  ChevronRight
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -25,50 +26,50 @@ import { cn } from '@/lib/utils';
 const features = [
   {
     icon: Film,
-    category: 'Creativity',
-    title: 'Cinematic Video',
-    description: 'Generate 4K videos with sound via Veo 3.',
-    color: 'bg-red-500/10 text-red-500',
+    category: 'Motion Engine',
+    title: 'Cinematic Veo',
+    description: 'Generate 4K cinematic videos with spatial sound.',
+    color: 'text-red-400 bg-red-400/10 border-red-400/20',
     href: '/'
   },
   {
     icon: Music,
-    category: 'Audio',
-    title: 'AI Music Gen',
-    description: 'Create unique soundtracks and melodies.',
-    color: 'bg-indigo-500/10 text-indigo-500',
+    category: 'Audio Studio',
+    title: 'Neural Composing',
+    description: 'Create unique soundtracks and spatial audio.',
+    color: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
     href: '/'
   },
   {
     icon: Mic,
-    category: 'Voice',
-    title: 'Audio Live Chat',
-    description: 'Talk to AIva in real-time with vision.',
-    color: 'bg-orange-500/10 text-orange-500',
+    category: 'Vision Live',
+    title: 'Voice Intercept',
+    description: 'Real-time video chat with multimodal vision.',
+    color: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
     href: '/audio'
   },
   {
     icon: ImageIcon,
-    category: 'Image',
-    title: 'Image Studio',
-    description: 'Create stunning visuals from text.',
-    color: 'bg-blue-500/10 text-blue-500',
+    category: 'Imaging',
+    title: 'Pixel Synthesis',
+    description: 'Hyper-realistic visuals from text descriptions.',
+    color: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
     href: '/'
   },
   {
     icon: Telescope,
-    category: 'Research',
-    title: 'Deep Synthesis',
-    description: 'Perform complex web research.',
-    color: 'bg-green-500/10 text-green-500',
+    category: 'Analysis',
+    title: 'Deep Research',
+    description: 'Multi-step web synthesis and report generation.',
+    color: 'text-green-400 bg-green-400/10 border-green-400/20',
     href: '/'
   },
   {
     icon: Eye,
-    category: 'Vision',
-    title: 'Visual Intel',
-    description: 'Describe any scene or image.',
-    color: 'bg-pink-500/10 text-pink-500',
+    category: 'Perception',
+    title: 'Visual Logic',
+    description: 'Describe complex scenes and identify objects.',
+    color: 'text-pink-400 bg-pink-400/10 border-pink-400/20',
     href: '/audio'
   }
 ];
@@ -77,73 +78,89 @@ export default function CategoriesPage() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col h-full bg-[#1A1616] text-white">
+    <div className="flex flex-col h-full bg-[#0A0A0B] text-white">
       {/* Header */}
-      <header className="p-6 flex items-center justify-between">
+      <header className="p-8 flex items-center justify-between">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="rounded-full bg-white/5 hover:bg-white/10 text-white"
+          className="rounded-2xl bg-white/5 hover:bg-white/10 text-white h-12 w-12 border border-white/10 shadow-xl"
           onClick={() => router.back()}
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-6 w-6" />
         </Button>
+        <div className="flex-1 px-6">
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent">Capabilities</h1>
+            <p className="text-xs uppercase tracking-[0.3em] font-bold text-white/30 mt-1">AIva OS v1.2</p>
+        </div>
         <Button 
           variant="ghost" 
           size="icon" 
-          className="rounded-full bg-white/5 hover:bg-white/10 text-white"
+          className="rounded-2xl bg-white/5 hover:bg-white/10 text-white h-12 w-12 border border-white/10 shadow-xl"
         >
-          <MoreHorizontal className="h-5 w-5" />
+          <MoreHorizontal className="h-6 w-6" />
         </Button>
       </header>
 
-      {/* Title */}
-      <div className="px-8 py-4">
-        <h1 className="text-4xl font-semibold tracking-tight">Capabilities</h1>
-      </div>
-
       {/* Grid */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8">
-        <div className="grid grid-cols-2 gap-4 max-w-4xl mx-auto">
+      <main className="flex-1 overflow-y-auto p-8 pt-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {features.map((feature, i) => (
             <button
               key={i}
               onClick={() => router.push(feature.href)}
-              className="flex flex-col items-start p-6 rounded-[2.5rem] bg-[#2D2424] hover:bg-[#3D3434] transition-all text-left group border border-white/5 shadow-2xl h-48 md:h-56"
+              className="flex flex-col items-start p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left group shadow-2xl h-64 md:h-72 relative overflow-hidden"
             >
-              <div className={cn("p-3 rounded-2xl mb-auto", feature.color)}>
-                <feature.icon className="h-6 w-6" />
+              <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0 translate-x-4">
+                  <ChevronRight className="h-6 w-6 text-primary" />
               </div>
-              <div className="space-y-1">
-                <p className="text-[10px] uppercase font-bold tracking-[0.2em] text-white/40">
+              <div className={cn("p-4 rounded-2xl mb-auto border shadow-lg transition-transform group-hover:scale-110", feature.color)}>
+                <feature.icon className="h-7 w-7" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-white/30 group-hover:text-primary transition-colors">
                   {feature.category}
                 </p>
-                <h3 className="text-lg font-bold leading-tight group-hover:text-primary transition-colors">
+                <h3 className="text-2xl font-bold leading-tight text-white/90 group-hover:text-white">
                   {feature.title}
                 </h3>
+                <p className="text-sm text-white/40 font-medium leading-relaxed max-w-[200px]">
+                    {feature.description}
+                </p>
               </div>
             </button>
           ))}
         </div>
 
-        {/* Extra Info / Tips */}
-        <div className="mt-12 max-w-4xl mx-auto px-2">
-            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-yellow-500" />
-                Pro Features
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-5 rounded-3xl bg-white/5 border border-white/5 flex flex-col gap-3">
-                    <Video className="h-5 w-5 text-red-400" />
-                    <p className="text-sm font-medium text-white/80">Veo 3 now generates cinematic 5-8 second clips with synchronized sound.</p>
+        {/* Pro Features Section */}
+        <div className="mt-20 max-w-7xl mx-auto mb-12">
+            <div className="flex items-center gap-4 mb-8">
+                <div className="h-1px flex-1 bg-gradient-to-r from-transparent to-white/10" />
+                <h2 className="text-sm font-bold uppercase tracking-[0.4em] text-primary flex items-center gap-3">
+                    <Sparkles className="h-5 w-5" />
+                    Neural Modules
+                </h2>
+                <div className="h-1px flex-1 bg-gradient-to-l from-transparent to-white/10" />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4 group hover:bg-white/[0.04] transition-all">
+                    <div className="h-12 w-12 bg-red-500/10 rounded-2xl flex items-center justify-center border border-red-500/20 group-hover:scale-110 transition-transform">
+                        <Video className="h-6 w-6 text-red-400" />
+                    </div>
+                    <p className="text-sm font-bold text-white/80 leading-relaxed">Veo 3 Pro now synthesizes high-fidelity 4K sequences with spatial audio tracks.</p>
                 </div>
-                <div className="p-5 rounded-3xl bg-white/5 border border-white/5 flex flex-col gap-3">
-                    <Music className="h-5 w-5 text-indigo-400" />
-                    <p className="text-sm font-medium text-white/80">Use "Create music" to generate atmospheric sounds for your videos.</p>
+                <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4 group hover:bg-white/[0.04] transition-all">
+                    <div className="h-12 w-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform">
+                        <Music className="h-6 w-6 text-indigo-400" />
+                    </div>
+                    <p className="text-sm font-bold text-white/80 leading-relaxed">Compose atmospheric audio loops and neural soundscapes for multimedia projects.</p>
                 </div>
-                <div className="p-5 rounded-3xl bg-white/5 border border-white/5 flex flex-col gap-3">
-                    <Zap className="h-5 w-5 text-blue-400" />
-                    <p className="text-sm font-medium text-white/80">Attachment menu now supports camera, photo, and file uploads directly.</p>
+                <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4 group hover:bg-white/[0.04] transition-all">
+                    <div className="h-12 w-12 bg-blue-500/10 rounded-2xl flex items-center justify-center border border-blue-500/20 group-hover:scale-110 transition-transform">
+                        <Zap className="h-6 w-6 text-blue-400" />
+                    </div>
+                    <p className="text-sm font-bold text-white/80 leading-relaxed">Multimodal input terminal now supports direct camera injection and encrypted files.</p>
                 </div>
             </div>
         </div>

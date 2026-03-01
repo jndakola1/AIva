@@ -31,7 +31,7 @@ type Message = {
   dataAiHint?: string;
   review?: SelfReviewOutput;
   toolData?: {
-    type: 'alarm' | 'calendar' | 'email';
+    type: 'alarm' | 'calendar' | 'email' | 'hospital';
     data: any;
   };
   createdAt?: Timestamp;

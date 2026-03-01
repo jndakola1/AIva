@@ -134,6 +134,7 @@ export default function ChatInterface() {
           altText: aiResponse.altText,
           dataAiHint: aiResponse.dataAiHint,
           review: aiResponse.review,
+          toolData: aiResponse.toolData,
         });
       }
     } catch (error) {

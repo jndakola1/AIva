@@ -1,5 +1,5 @@
 /**
- * @fileOverview A multi-modal chat AI agent that can display images, perform research, and analyze uploaded photos.
+ * @fileOverview A multi-modal chat AI agent that can display images, perform research, analyze photos, and manage tasks.
  *
  * - onlineChat - A function that handles a chat conversation using online models.
  * - ChatInput - The input type for the chat function.
@@ -84,10 +84,66 @@ const researchTopic = ai.defineTool(
   },
   async ({ topic }) => {
     console.log(`Researching topic: ${topic}`);
-    // In a real app, this would perform a web search.
     return {
       summary: `Research findings for "${topic}": This topic is currently trending. Recent developments suggest a significant shift in public interest towards more integrated and efficient solutions. Experts highlight the importance of security and scalability in this domain.`,
     };
+  }
+);
+
+const setAlarmTool = ai.defineTool(
+  {
+    name: 'setAlarm',
+    description: 'Sets an alarm or reminder for a specific time.',
+    inputSchema: z.object({
+      time: z.string().describe('The time to set the alarm for (e.g., "5:00 PM" or "in 10 minutes").'),
+      label: z.string().optional().describe('An optional label for the alarm.'),
+    }),
+    outputSchema: z.object({
+      confirmation: z.string(),
+    }),
+  },
+  async ({ time, label }) => {
+    console.log(`Setting alarm for ${time}${label ? ` (${label})` : ''}`);
+    return { confirmation: `Alarm set successfully for ${time}${label ? `: ${label}` : ''}.` };
+  }
+);
+
+const manageCalendarTool = ai.defineTool(
+  {
+    name: 'manageCalendar',
+    description: 'Adds an event to the calendar or retrieves upcoming events.',
+    inputSchema: z.object({
+      action: z.enum(['add', 'list']).describe('Whether to add a new event or list existing ones.'),
+      details: z.string().optional().describe('The event details (e.g., "Meeting with Bob at 2 PM on Friday").'),
+    }),
+    outputSchema: z.object({
+      result: z.string(),
+    }),
+  },
+  async ({ action, details }) => {
+    if (action === 'add') {
+      return { result: `Event added to your calendar: ${details}` };
+    }
+    return { result: "You have 3 events tomorrow: 9 AM Standup, 12 PM Lunch with Sarah, 4 PM Code Review." };
+  }
+);
+
+const analyzeEmailsTool = ai.defineTool(
+  {
+    name: 'analyzeEmails',
+    description: 'Analyzes the user\'s inbox to summarize recent emails or find specific information.',
+    inputSchema: z.object({
+      query: z.string().optional().describe('A specific search query or topic to look for in emails.'),
+    }),
+    outputSchema: z.object({
+      summary: z.string(),
+    }),
+  },
+  async ({ query }) => {
+    if (query) {
+      return { summary: `Found 2 emails related to "${query}". One from HR about benefits and another from a client regarding a project update.` };
+    }
+    return { summary: "You have 5 unread emails. The most important one is an invitation to a webinar next Thursday." };
   }
 );
 
@@ -130,11 +186,18 @@ const chatPrompt = ai.definePrompt({
     altText: z.string().nullable().optional().describe('The alt text for the image.'),
     dataAiHint: z.string().nullable().optional().describe('A hint for a real image search.'),
   })},
-  tools: [searchForImageTool, researchTopic],
+  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool],
   prompt: `You are a helpful AI assistant named {{personality.name}}.
 Your personality is {{personality.tone}}. 
 {{#if personality.enableHumor}}You should use humor and wit when appropriate.{{/if}}
 Be conversational and natural.
+
+**Capabilities:**
+- You can set alarms and reminders.
+- You can manage calendar events (adding and listing).
+- You can analyze and summarize emails.
+- You can perform web research.
+- You can find and display images.
 
 **Context:**
 {{#if history}}
@@ -154,10 +217,13 @@ Please analyze or refer to this image in your response if relevant.
 - You: {{{prompt}}}
 
 **Your Task:**
-1. Analyze the user's prompt and any attached image.
-2. If the user asks for new or up-to-date information, use the 'researchTopic' tool.
-3. If the user explicitly asks for an image or picture, use the 'searchForImage' tool.
-4. Formulate a helpful, relevant, and conversational response.
+1. Analyze the user's prompt. 
+2. If the user asks to set an alarm, use 'setAlarm'.
+3. If the user asks about their calendar or to add an event, use 'manageCalendar'.
+4. If the user asks about their emails, use 'analyzeEmails'.
+5. If the user asks for information you don't have, use 'researchTopic'.
+6. If the user asks for an image, use 'searchForImage'.
+7. Formulate a helpful, relevant, and conversational response.
 
 **Output Format:**
 Your output must be a valid JSON object matching the output schema.`,

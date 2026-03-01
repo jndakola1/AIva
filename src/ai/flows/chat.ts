@@ -164,14 +164,6 @@ const MessageSchema = z.object({
   content: z.string(),
 });
 
-const ChatInputSchema = z.object({
-  prompt: z.string().describe("The user's message."),
-  performResearch: z.boolean().optional(),
-  history: z.array(MessageSchema).optional(),
-  personality: z.any().optional(),
-  attachmentUrl: z.string().optional(),
-});
-
 export const ChatOutputSchema = z.object({
   response: z.string(),
   imageUrl: z.string().nullable().optional(),
@@ -187,11 +179,27 @@ export const ChatOutputSchema = z.object({
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
+const ChatInputSchema = z.object({
+  prompt: z.string().describe("The user's message."),
+  performResearch: z.boolean().optional(),
+  history: z.array(MessageSchema).optional(),
+  personality: z.any().optional(),
+  attachmentUrl: z.string().optional(),
+});
+
 const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
   tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool],
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+    ]
+  },
   prompt: `You are {{personality.name}}, a helpful AI assistant.
 Tone: {{personality.tone}}
 Humor enabled: {{personality.enableHumor}}
@@ -214,13 +222,14 @@ User Message: {{{prompt}}}`,
 });
 
 export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
-  const filledInput = { ...input, personality: input.personality || { name: 'AIva', tone: 'friendly', enableHumor: true } };
+  const personality = input.personality || { name: 'AIva', tone: 'friendly', enableHumor: true };
+  const filledInput = { ...input, personality };
   
   try {
     const {output: initialOutput} = await chatPrompt(filledInput);
 
     if (!initialOutput) {
-      return { response: "I'm sorry, I couldn't process that. Let's try something else." };
+      throw new Error("No output from model.");
     }
 
     let review: SelfReviewOutput | undefined = undefined;
@@ -235,9 +244,62 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     
     return { ...initialOutput, review };
   } catch (error: any) {
-    console.error("Chat Error:", error);
+    console.error("Chat Error (Falling back to mock):", error);
+    
+    // MOCK FALLBACK FOR DEVELOPMENT
+    // This allows the user to see the UI cards even if the API is down.
+    const lowerPrompt = input.prompt.toLowerCase();
+    
+    if (lowerPrompt.includes('alarm')) {
+      return {
+        response: "I'm having a little trouble with my connection, but I've simulated setting that alarm for you! Here are the details.",
+        toolData: {
+          type: 'alarm',
+          data: { 
+            confirmation: "Alarm scheduled successfully (Simulated).", 
+            alarmDetails: { time: "7:00 AM", label: "Morning Wakeup" } 
+          }
+        }
+      };
+    }
+
+    if (lowerPrompt.includes('calendar') || lowerPrompt.includes('meeting') || lowerPrompt.includes('event')) {
+      return {
+        response: "I'm currently in mock mode due to a connection issue, but here's a look at your simulated calendar for today.",
+        toolData: {
+          type: 'calendar',
+          data: {
+            result: "Here are your simulated upcoming events.",
+            events: [
+              { title: "Product Strategy", time: "10:30 AM", date: "Today" },
+              { title: "Lunch with Team", time: "1:00 PM", date: "Today" },
+              { title: "Developer Sync", time: "4:00 PM", date: "Today" }
+            ]
+          }
+        }
+      };
+    }
+
+    if (lowerPrompt.includes('email') || lowerPrompt.includes('mail')) {
+      return {
+        response: "I can't reach your live inbox right now, but I can show you a summary of your simulated recent mail.",
+        toolData: {
+          type: 'email',
+          data: {
+            summary: "You have 3 simulated important emails.",
+            emails: [
+              { sender: "Alice", subject: "Review Required", snippet: "Could you take a look at the latest designs..." },
+              { sender: "Support", subject: "Account Update", snippet: "Your subscription has been successfully renewed..." },
+              { sender: "Security", subject: "New Login Detected", snippet: "We noticed a new login from a device in London..." }
+            ]
+          }
+        }
+      };
+    }
+
+    // Default generic fallback if no keywords matched
     return { 
-      response: "I'm having a little trouble connecting to my brain right now. In the meantime, I can still help you with basic tasks if you try again!" 
+      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about alarms, your calendar, or emails to see my specialized cards." 
     };
   }
 }

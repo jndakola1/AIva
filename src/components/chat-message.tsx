@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus } from "lucide-react";
 import Image from "next/image";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
@@ -11,6 +11,7 @@ import {
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Switch } from "./ui/switch";
 
 
 type ChatMessageProps = {
@@ -61,72 +62,103 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
 );
 
 const AlarmCard = ({ data }: { data: any }) => (
-  <Card className="mt-3 border-orange-500/20 bg-orange-500/5 overflow-hidden">
-    <CardHeader className="p-4 pb-2">
-      <CardTitle className="text-sm font-bold flex items-center gap-2 text-orange-600">
-        <AlarmClock className="h-4 w-4" />
-        Alarm Set
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="p-4 pt-0">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-2xl font-bold tracking-tighter text-orange-700">{data.alarmDetails?.time}</p>
-          <p className="text-xs text-orange-600/70 font-medium uppercase tracking-wider">{data.alarmDetails?.label || 'General Reminder'}</p>
+  <div className="space-y-4">
+    <Card className="mt-3 overflow-hidden border-none bg-[#FDF0F3] rounded-3xl shadow-xl max-w-[280px]">
+      <div className="relative aspect-[4/3] w-full bg-[#FFE8EC] flex items-center justify-center p-6">
+        <Image 
+          src={`https://picsum.photos/seed/${encodeURIComponent(data.alarmDetails?.label || 'alarm')}/400/300`}
+          alt="Alarm Illustration"
+          fill
+          className="object-contain p-4"
+          data-ai-hint="alarm clock"
+        />
+      </div>
+      <div className="bg-[#3D2C2E] p-6 text-white space-y-4">
+        <div className="flex justify-between items-start">
+          <div className="space-y-1">
+            <p className="text-[10px] text-white/60 font-medium uppercase tracking-widest">{data.alarmDetails?.label || 'General Reminder'}</p>
+            <p className="text-3xl font-bold tracking-tight">{data.alarmDetails?.time}</p>
+          </div>
+          <Switch defaultChecked className="data-[state=checked]:bg-[#FF4D6D]" />
         </div>
-        <div className="h-10 w-10 bg-orange-500/10 rounded-full flex items-center justify-center">
-          <Clock className="h-5 w-5 text-orange-600 animate-pulse" />
+        <div className="flex items-center justify-between pt-2 border-t border-white/10">
+          <p className="text-[10px] text-white/50">Occurs every: <span className="text-white">One Time</span></p>
+          <button className="text-[10px] font-bold text-white underline underline-offset-4">Change</button>
         </div>
       </div>
-    </CardContent>
-  </Card>
+    </Card>
+    <Button variant="secondary" className="w-full max-w-[280px] bg-[#3D2C2E] hover:bg-[#4D3C3E] text-white rounded-2xl h-12 text-sm font-semibold">
+      Make Another
+    </Button>
+  </div>
 );
 
 const CalendarCard = ({ data }: { data: any }) => (
-  <Card className="mt-3 border-blue-500/20 bg-blue-500/5">
-    <CardHeader className="p-4 pb-2">
-      <CardTitle className="text-sm font-bold flex items-center gap-2 text-blue-600">
-        <CalendarIcon className="h-4 w-4" />
-        Calendar Events
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="p-4 pt-0 space-y-3">
-      {data.events?.map((event: any, i: number) => (
-        <div key={i} className="flex items-start gap-3 p-2 rounded-lg bg-white/50 border border-blue-500/10">
-          <div className="text-center w-10 shrink-0">
-            <p className="text-[10px] uppercase font-bold text-blue-500/70">{event.date}</p>
-            <p className="text-xs font-bold text-blue-600">{event.time.split(' ')[0]}</p>
+  <div className="space-y-4">
+    <Card className="mt-3 overflow-hidden border-none bg-[#F0F4FD] rounded-3xl shadow-xl max-w-[320px]">
+      <div className="relative h-24 w-full bg-[#E8EEFF] flex items-center justify-center">
+        <Image 
+          src="https://picsum.photos/seed/calendar/400/100"
+          alt="Calendar Illustration"
+          fill
+          className="object-cover opacity-80"
+          data-ai-hint="calendar office"
+        />
+        <div className="absolute inset-0 bg-blue-900/10 backdrop-blur-[2px]" />
+        <CardTitle className="relative text-blue-900 text-lg flex items-center gap-2">
+          <CalendarIcon className="h-5 w-5" />
+          Today's Events
+        </CardTitle>
+      </div>
+      <div className="bg-white p-4 space-y-3">
+        {data.events?.map((event: any, i: number) => (
+          <div key={i} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100 group hover:border-blue-200 transition-all">
+            <div className="text-center w-12 shrink-0 border-r border-slate-200 pr-3">
+              <p className="text-[10px] uppercase font-bold text-blue-500">{event.date}</p>
+              <p className="text-sm font-bold text-slate-700">{event.time.split(' ')[0]}</p>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <p className="text-sm font-bold text-slate-800 truncate">{event.title}</p>
+              <p className="text-[10px] text-slate-500">{event.time}</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-blue-400 transition-colors" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground/80">{event.title}</p>
-            <p className="text-[10px] text-muted-foreground">{event.time}</p>
-          </div>
-        </div>
-      ))}
-    </CardContent>
-  </Card>
+        ))}
+      </div>
+    </Card>
+    <Button variant="outline" className="w-full max-w-[320px] rounded-2xl h-12 text-sm font-semibold border-2 border-slate-100 hover:bg-slate-50">
+      <Plus className="h-4 w-4 mr-2" />
+      Add New Event
+    </Button>
+  </div>
 );
 
 const EmailCard = ({ data }: { data: any }) => (
-  <Card className="mt-3 border-purple-500/20 bg-purple-500/5">
-    <CardHeader className="p-4 pb-2">
-      <CardTitle className="text-sm font-bold flex items-center gap-2 text-purple-600">
-        <Mail className="h-4 w-4" />
-        Email Summary
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="p-4 pt-0 space-y-2">
+  <Card className="mt-3 overflow-hidden border-none bg-[#F7F0FD] rounded-3xl shadow-xl max-w-[320px]">
+    <div className="p-5 bg-[#EFDBFF]">
+      <div className="flex items-center justify-between mb-4">
+        <CardTitle className="text-purple-900 text-lg flex items-center gap-2">
+          <Mail className="h-5 w-5" />
+          Inbox Review
+        </CardTitle>
+        <Badge className="bg-purple-600 hover:bg-purple-700">{data.emails?.length || 0} New</Badge>
+      </div>
+      <p className="text-xs text-purple-900/60 leading-relaxed font-medium">
+        {data.summary || "You have some important messages needing attention."}
+      </p>
+    </div>
+    <div className="bg-white p-3 space-y-2">
       {data.emails?.map((email: any, i: number) => (
-        <div key={i} className="p-2 rounded-lg bg-white/50 border border-purple-500/10 hover:bg-white/80 transition-colors">
+        <div key={i} className="p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-purple-50 hover:border-purple-100 transition-all cursor-pointer">
           <div className="flex justify-between items-center mb-1">
             <p className="text-xs font-bold text-purple-700">{email.sender}</p>
-            <p className="text-[10px] text-muted-foreground">Today</p>
+            <p className="text-[10px] text-slate-400 font-medium">Today</p>
           </div>
-          <p className="text-xs font-semibold line-clamp-1">{email.subject}</p>
-          <p className="text-[10px] text-muted-foreground line-clamp-1 italic">{email.snippet}</p>
+          <p className="text-sm font-bold text-slate-800 line-clamp-1">{email.subject}</p>
+          <p className="text-[10px] text-slate-500 line-clamp-1 mt-1 leading-relaxed">{email.snippet}</p>
         </div>
       ))}
-    </CardContent>
+    </div>
   </Card>
 );
 

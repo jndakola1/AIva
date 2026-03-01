@@ -187,6 +187,14 @@ const chatPrompt = ai.definePrompt({
     dataAiHint: z.string().nullable().optional().describe('A hint for a real image search.'),
   })},
   tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool],
+  config: {
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+    ]
+  },
   prompt: `You are a helpful AI assistant named {{personality.name}}.
 Your personality is {{personality.tone}}. 
 {{#if personality.enableHumor}}You should use humor and wit when appropriate.{{/if}}
@@ -218,15 +226,13 @@ Please analyze or refer to this image in your response if relevant.
 
 **Your Task:**
 1. Analyze the user's prompt. 
-2. If the user asks to set an alarm, use 'setAlarm'.
-3. If the user asks about their calendar or to add an event, use 'manageCalendar'.
-4. If the user asks about their emails, use 'analyzeEmails'.
-5. If the user asks for information you don't have, use 'researchTopic'.
-6. If the user asks for an image, use 'searchForImage'.
-7. Formulate a helpful, relevant, and conversational response.
+2. Use the appropriate tool if the user asks for a specific action (alarm, calendar, email, research, image).
+3. Formulate a helpful, relevant, and conversational response.
+4. If you use a tool, integrate its output naturally into your final 'response'.
 
 **Output Format:**
-Your output must be a valid JSON object matching the output schema.`,
+You MUST respond with a valid JSON object. Do not include any text outside the JSON block.
+Ensure the 'response' field contains your conversational message.`,
 });
 
 
@@ -237,10 +243,14 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     const {output: initialOutput} = await chatPrompt(filledInput);
 
     if (!initialOutput) {
-      throw new Error('The chat flow failed to produce a valid output.');
+      // If output is null, it's often a safety filter block even with BLOCK_NONE (some filters are mandatory)
+      return {
+        response: "I'm sorry, I can't discuss that topic. Let's talk about something else!",
+      };
     }
 
     let review: SelfReviewOutput | undefined = undefined;
+    // Only perform self-review if we have a text response and no heavy media generation was requested
     if (initialOutput.response && !initialOutput.imageUrl && !input.attachmentUrl) {
       try {
         review = await selfReview({
@@ -254,14 +264,15 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     
     const finalOutput: ChatOutput = { ...initialOutput, review };
     
+    // Clean up null values to satisfy the schema if necessary
     if (finalOutput.imageUrl === null) {
       finalOutput.imageUrl = undefined;
       finalOutput.altText = undefined;
       finalOutput.dataAiHint = undefined;
     }
     
-    // Domain validation for image URLs
-    if (finalOutput.imageUrl && !finalOutput.imageUrl.startsWith('https://placehold.co') && !finalOutput.imageUrl.startsWith('https://images.unsplash.com')) {
+    // Domain validation for image URLs to ensure UI safety
+    if (finalOutput.imageUrl && !finalOutput.imageUrl.startsWith('https://placehold.co') && !finalOutput.imageUrl.startsWith('https://images.unsplash.com') && !finalOutput.imageUrl.startsWith('data:')) {
       finalOutput.imageUrl = `https://placehold.co/600x400.png`;
       finalOutput.altText = `Visual representation`;
       finalOutput.dataAiHint = 'abstract visual';
@@ -269,14 +280,24 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
 
     return finalOutput;
   } catch (error: any) {
-    console.error("Online Chat Error:", error);
-    if (error.message?.includes('429') || error.message?.includes('quota')) {
+    console.error("Online Chat Error Detailed:", error);
+    
+    const errorMessage = error.message?.toLowerCase() || "";
+    
+    if (errorMessage.includes('429') || errorMessage.includes('quota')) {
       return {
         response: "I'm a bit overwhelmed right now (quota exceeded). Please try again in a few moments.",
       };
     }
+
+    if (errorMessage.includes('safety') || errorMessage.includes('candidate')) {
+       return {
+        response: "I'm sorry, but I'm not allowed to respond to that prompt due to safety guidelines.",
+      };
+    }
+
     return {
-      response: "I'm having a little trouble connecting to my brain right now. Please try again in a moment.",
+      response: "I'm having a little trouble connecting to my brain right now. This can happen if the prompt is too complex or the connection is unstable. Please try again in a moment.",
     };
   }
 }

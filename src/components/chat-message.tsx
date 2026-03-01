@@ -41,8 +41,8 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
     </PopoverTrigger>
     <PopoverContent className="w-80 p-0 overflow-hidden border-white/10 bg-[#161618]/95 backdrop-blur-2xl shadow-2xl">
       <div className="p-4 border-b border-white/5 bg-white/[0.02]">
-          <h4 className="font-bold leading-none flex items-center text-sm">
-            <BrainCircuit className="h-4 w-4 mr-2 text-primary" />
+          <h4 className="font-bold leading-none flex items-center text-sm text-primary">
+            <BrainCircuit className="h-4 w-4 mr-2" />
             AI Self-Analysis
           </h4>
           <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground mt-2 opacity-50">
@@ -68,8 +68,8 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
 const AlarmCard = ({ data }: { data: any }) => (
   <div className="space-y-4 max-w-[300px] animate-in slide-in-from-left-4 duration-500">
     <Card className="mt-3 overflow-hidden border-white/10 bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl relative group">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#FF4D6D]/10 to-transparent opacity-50" />
-      <div className="relative aspect-[4/3] w-full bg-[#FF4D6D]/5 flex items-center justify-center p-8">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
+      <div className="relative aspect-[4/3] w-full bg-primary/5 flex items-center justify-center p-8">
         <Image 
           src={placeholderData.alarm.imageUrl}
           alt="Alarm Illustration"
@@ -84,7 +84,7 @@ const AlarmCard = ({ data }: { data: any }) => (
             <p className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em]">{data.alarmDetails?.label || 'General Reminder'}</p>
             <p className="text-4xl font-bold tracking-tighter text-white">{data.alarmDetails?.time}</p>
           </div>
-          <Switch defaultChecked className="data-[state=checked]:bg-[#FF4D6D] scale-125" />
+          <Switch defaultChecked className="data-[state=checked]:bg-primary scale-125" />
         </div>
         <div className="flex items-center justify-between pt-4 border-t border-white/5">
           <div className="flex items-center gap-2">
@@ -104,8 +104,8 @@ const AlarmCard = ({ data }: { data: any }) => (
 const CalendarCard = ({ data }: { data: any }) => (
   <div className="space-y-4 max-w-[340px] animate-in slide-in-from-left-4 duration-500">
     <Card className="mt-3 overflow-hidden border-white/10 bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-50" />
-      <div className="relative h-32 w-full flex flex-col items-center justify-center bg-blue-500/5">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
+      <div className="relative h-32 w-full flex flex-col items-center justify-center bg-primary/5">
         <Image 
           src={placeholderData.calendar.imageUrl}
           alt="Calendar Illustration"
@@ -114,7 +114,7 @@ const CalendarCard = ({ data }: { data: any }) => (
           data-ai-hint="calendar office"
         />
         <div className="relative flex flex-col items-center gap-2">
-            <div className="h-10 w-10 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/40">
+            <div className="h-10 w-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40">
                 <CalendarIcon className="h-5 w-5 text-white" />
             </div>
             <CardTitle className="text-white text-lg font-bold">Schedule Update</CardTitle>
@@ -122,16 +122,16 @@ const CalendarCard = ({ data }: { data: any }) => (
       </div>
       <div className="relative bg-[#1A1A1C] p-5 space-y-3 border-t border-white/5">
         {data.events?.map((event: any, i: number) => (
-          <div key={i} className="flex items-center gap-4 p-4 rounded-3xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.06] hover:border-blue-500/30 transition-all cursor-pointer">
+          <div key={i} className="flex items-center gap-4 p-4 rounded-3xl bg-white/[0.03] border border-white/5 group hover:bg-white/[0.06] hover:border-primary/30 transition-all cursor-pointer">
             <div className="text-center w-14 shrink-0 border-r border-white/5 pr-4">
-              <p className="text-[9px] uppercase font-bold text-blue-400 tracking-widest mb-1">{event.date}</p>
+              <p className="text-[9px] uppercase font-bold text-primary tracking-widest mb-1">{event.date}</p>
               <p className="text-sm font-bold text-white">{event.time.split(' ')[0]}</p>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-white/90 truncate group-hover:text-white">{event.title}</p>
               <p className="text-[10px] text-white/40 font-medium uppercase tracking-wider">{event.time}</p>
             </div>
-            <ChevronRight className="h-4 w-4 text-white/20 group-hover:translate-x-1 group-hover:text-blue-400 transition-all" />
+            <ChevronRight className="h-4 w-4 text-white/20 group-hover:translate-x-1 group-hover:text-primary transition-all" />
           </div>
         ))}
       </div>
@@ -146,15 +146,15 @@ const CalendarCard = ({ data }: { data: any }) => (
 const EmailCard = ({ data }: { data: any }) => (
   <Card className="mt-3 overflow-hidden border-white/10 bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
     <div className="p-7 relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
       <div className="relative flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-purple-500 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/40">
+            <div className="h-10 w-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40">
                 <Mail className="h-5 w-5 text-white" />
             </div>
             <CardTitle className="text-white text-lg font-bold">Inbox Overview</CardTitle>
         </div>
-        <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg font-bold px-3 py-1 h-7">{data.emails?.length || 0} New</Badge>
+        <Badge className="bg-primary/20 text-primary border border-primary/30 rounded-lg font-bold px-3 py-1 h-7">{data.emails?.length || 0} New</Badge>
       </div>
       <p className="relative text-sm text-white/60 leading-relaxed font-medium mb-2">
         {data.summary || "You have some important messages needing attention."}
@@ -162,9 +162,9 @@ const EmailCard = ({ data }: { data: any }) => (
     </div>
     <div className="bg-[#1A1A1C] p-4 space-y-2.5 border-t border-white/5">
       {data.emails?.map((email: any, i: number) => (
-        <div key={i} className="p-4 rounded-3xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-purple-500/30 transition-all cursor-pointer group">
+        <div key={i} className="p-4 rounded-3xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-primary/30 transition-all cursor-pointer group">
           <div className="flex justify-between items-center mb-1.5">
-            <p className="text-xs font-bold text-purple-400 uppercase tracking-wider">{email.sender}</p>
+            <p className="text-xs font-bold text-primary uppercase tracking-wider">{email.sender}</p>
             <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest">Recently</p>
           </div>
           <p className="text-sm font-bold text-white group-hover:text-primary transition-colors line-clamp-1">{email.subject}</p>
@@ -220,7 +220,7 @@ const HospitalCard = ({ data }: { data: any }) => (
         </div>
       </Card>
     ))}
-    <Button className="w-full h-14 bg-primary text-white rounded-[2rem] font-bold text-sm shadow-[0_0_30px_rgba(59,130,246,0.3)] transition-all active:scale-95">
+    <Button className="w-full h-14 bg-primary text-white rounded-[2rem] font-bold text-sm shadow-[0_0_30px_rgba(217,119,87,0.3)] transition-all active:scale-95">
       Find More Options
     </Button>
   </div>
@@ -228,8 +228,8 @@ const HospitalCard = ({ data }: { data: any }) => (
 
 const WeatherCard = ({ data }: { data: any }) => (
   <Card className="mt-3 overflow-hidden border-white/10 bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-[320px] animate-in slide-in-from-left-4 duration-500">
-    <div className="relative aspect-[4/3] w-full bg-blue-500/5 flex items-center justify-center group">
-       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-transparent to-transparent" />
+    <div className="relative aspect-[4/3] w-full bg-primary/5 flex items-center justify-center group">
+       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent" />
        <Image 
           src={placeholderData.weather.imageUrl}
           alt="Weather Illustration"
@@ -238,7 +238,7 @@ const WeatherCard = ({ data }: { data: any }) => (
           data-ai-hint="cloudy weather"
         />
         <div className="absolute top-6 left-6 flex items-center gap-3 bg-white/10 backdrop-blur-2xl rounded-2xl px-4 py-2 border border-white/20 shadow-xl">
-          <Cloud className="h-4 w-4 text-blue-400" />
+          <Cloud className="h-4 w-4 text-primary" />
           <span className="text-[10px] font-bold text-white uppercase tracking-[0.2em]">{data.location}</span>
         </div>
     </div>
@@ -255,8 +255,8 @@ const WeatherCard = ({ data }: { data: any }) => (
       </div>
       <div className="grid grid-cols-2 gap-8 pt-6 border-t border-white/5">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-500/10 rounded-xl">
-            <Droplets className="h-4 w-4 text-blue-400" />
+          <div className="p-2 bg-primary/10 rounded-xl">
+            <Droplets className="h-4 w-4 text-primary" />
           </div>
           <div className="space-y-0.5">
             <p className="text-[9px] uppercase font-bold tracking-widest text-white/30">Humidity</p>
@@ -308,14 +308,14 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
           {isAi && review && <ReviewPopover review={review} />}
           {isVideo && <Badge variant="secondary" className="bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg h-6 px-2.5 text-[9px] uppercase font-bold tracking-widest"><Film className="w-3 h-3 mr-1.5" /> Veo 3.0</Badge>}
           {isAudio && <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 rounded-lg h-6 px-2.5 text-[9px] uppercase font-bold tracking-widest"><Music className="w-3 h-3 mr-1.5" /> AI Studio</Badge>}
-          {isImageGen && <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-lg h-6 px-2.5 text-[9px] uppercase font-bold tracking-widest"><Sparkles className="w-3 h-3 mr-1.5" /> Gemini 2.0</Badge>}
+          {isImageGen && <Badge variant="secondary" className="bg-primary/10 text-primary border border-primary/20 rounded-lg h-6 px-2.5 text-[9px] uppercase font-bold tracking-widest"><Sparkles className="w-3 h-3 mr-1.5" /> Gemini 2.0</Badge>}
         </div>
 
         <div className={cn(
             "relative max-w-full md:max-w-2xl px-6 py-4 rounded-[2rem] transition-all duration-300",
             isAi 
                 ? "bg-white/[0.03] border border-white/5 rounded-tl-none shadow-xl" 
-                : "bg-primary border border-primary shadow-[0_10px_30px_rgba(59,130,246,0.2)] rounded-tr-none text-white"
+                : "bg-primary border border-primary shadow-[0_10px_30px_rgba(217,119,87,0.2)] rounded-tr-none text-white font-semibold"
         )}>
           {isLoading ? (
             <div className="flex items-center space-x-2 py-2">
@@ -346,14 +346,14 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                       className="w-full h-auto aspect-video bg-black/40"
                     />
                   ) : isAudio ? (
-                    <div className="p-8 bg-indigo-500/10 border border-indigo-500/20 rounded-[2.5rem] flex flex-col gap-6 backdrop-blur-xl">
+                    <div className="p-8 bg-primary/10 border border-primary/20 rounded-[2.5rem] flex flex-col gap-6 backdrop-blur-xl">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-indigo-500 rounded-2xl text-white shadow-lg shadow-indigo-500/40">
+                            <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-primary/40">
                                 <Music className="h-6 w-6" />
                             </div>
                             <div>
                                 <span className="text-sm font-bold text-white block uppercase tracking-wider">AI Mastered Audio</span>
-                                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Procedural Generation</span>
+                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Procedural Generation</span>
                             </div>
                         </div>
                         <audio controls className="w-full h-10 opacity-80 filter invert grayscale brightness-200">

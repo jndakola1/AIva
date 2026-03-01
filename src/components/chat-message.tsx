@@ -12,7 +12,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Switch } from "./ui/switch";
-
+import placeholderData from "@/app/lib/placeholder-images.json";
 
 type ChatMessageProps = {
   id: string;
@@ -66,7 +66,7 @@ const AlarmCard = ({ data }: { data: any }) => (
     <Card className="mt-3 overflow-hidden border-none bg-[#FDF0F3] rounded-3xl shadow-xl max-w-[280px]">
       <div className="relative aspect-[4/3] w-full bg-[#FFE8EC] flex items-center justify-center p-6">
         <Image 
-          src={`https://picsum.photos/seed/${encodeURIComponent(data.alarmDetails?.label || 'alarm')}/400/300`}
+          src={placeholderData.alarm.imageUrl}
           alt="Alarm Illustration"
           fill
           className="object-contain p-4"
@@ -98,7 +98,7 @@ const CalendarCard = ({ data }: { data: any }) => (
     <Card className="mt-3 overflow-hidden border-none bg-[#F0F4FD] rounded-3xl shadow-xl max-w-[320px]">
       <div className="relative h-24 w-full bg-[#E8EEFF] flex items-center justify-center">
         <Image 
-          src="https://picsum.photos/seed/calendar/400/100"
+          src={placeholderData.calendar.imageUrl}
           alt="Calendar Illustration"
           fill
           className="object-cover opacity-80"

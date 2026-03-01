@@ -5,6 +5,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { selfReview, SelfReviewOutput, SelfReviewOutputSchema } from './self-review';
+import placeholderData from '@/app/lib/placeholder-images.json';
 
 const searchForImageTool = ai.defineTool(
   {
@@ -186,14 +187,14 @@ const searchHospitalTool = ai.defineTool(
           type: "General Hospital",
           rating: 4.9,
           reviews: "1,4K Reviews",
-          imageUrl: `https://picsum.photos/seed/hosp1/100/100`,
+          imageUrl: placeholderData.hospital.imageUrl,
         },
         {
           name: "Saint Borromeus",
           type: "Private Hospital",
           rating: 4.8,
           reviews: "520 Reviews",
-          imageUrl: `https://picsum.photos/seed/hosp2/100/100`,
+          imageUrl: placeholderData.hospitalFallback.imageUrl,
         }
       ]
     };
@@ -285,14 +286,14 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     
     return { ...initialOutput, review };
   } catch (error: any) {
-    console.error("Chat Error (Falling back to mock):", error);
+    console.error("Chat Error (Falling back to mock mode):", error);
     
-    // MOCK FALLBACK FOR DEVELOPMENT
     const lowerPrompt = input.prompt.toLowerCase();
     
-    if (lowerPrompt.includes('hospital')) {
+    // BROAD KEYWORD MATCHING FOR ROBUST MOCK DATA
+    if (lowerPrompt.includes('hospital') || lowerPrompt.includes('doctor') || lowerPrompt.includes('medical') || lowerPrompt.includes('hosp')) {
       return {
-        response: "Yes, there are 2 recommendations with good ratings for hospitals in your area.",
+        response: "I found a couple of highly-rated hospitals nearby. Here are the recommendations based on your area.",
         toolData: {
           type: 'hospital',
           data: {
@@ -303,14 +304,14 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
                 type: "General Hospital",
                 rating: 4.9,
                 reviews: "1,4K Reviews",
-                imageUrl: `https://picsum.photos/seed/hosp1/100/100`,
+                imageUrl: placeholderData.hospital.imageUrl,
               },
               {
                 name: "Saint Borromeus",
                 type: "Private Hospital",
                 rating: 4.8,
                 reviews: "520 Reviews",
-                imageUrl: `https://picsum.photos/seed/hosp2/100/100`,
+                imageUrl: placeholderData.hospitalFallback.imageUrl,
               }
             ]
           }
@@ -318,22 +319,25 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
       };
     }
 
-    if (lowerPrompt.includes('alarm')) {
+    if (lowerPrompt.includes('alarm') || lowerPrompt.includes('remind') || lowerPrompt.includes('wake')) {
       return {
         response: "I've simulated setting that alarm for you! Here are the details.",
         toolData: {
           type: 'alarm',
           data: { 
             confirmation: "Alarm scheduled successfully.", 
-            alarmDetails: { time: "7:00 AM", label: "Morning Wakeup" } 
+            alarmDetails: { 
+                time: lowerPrompt.match(/\d+:\d+/)?.[0] || "7:00 AM", 
+                label: "Morning Wakeup" 
+            } 
           }
         }
       };
     }
 
-    if (lowerPrompt.includes('calendar') || lowerPrompt.includes('meeting') || lowerPrompt.includes('event')) {
+    if (lowerPrompt.includes('calendar') || lowerPrompt.includes('meeting') || lowerPrompt.includes('event') || lowerPrompt.includes('schedule')) {
       return {
-        response: "Here's a look at your calendar for today.",
+        response: "Here's a look at your calendar for today. You have a few things scheduled.",
         toolData: {
           type: 'calendar',
           data: {
@@ -348,9 +352,9 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
       };
     }
 
-    if (lowerPrompt.includes('email') || lowerPrompt.includes('mail')) {
+    if (lowerPrompt.includes('email') || lowerPrompt.includes('mail') || lowerPrompt.includes('inbox')) {
       return {
-        response: "I've summarized your recent mail for you.",
+        response: "I've summarized your recent mail for you. You have a few unread items.",
         toolData: {
           type: 'email',
           data: {
@@ -366,7 +370,7 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     }
 
     return { 
-      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about alarms, your calendar, or hospitals to see my specialized cards." 
+      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about hospitals, alarms, or your calendar to see my specialized cards." 
     };
   }
 }

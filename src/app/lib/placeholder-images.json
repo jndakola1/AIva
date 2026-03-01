@@ -1,0 +1,22 @@
+{
+  "hospital": {
+    "imageUrl": "https://picsum.photos/seed/hosp1/100/100",
+    "altText": "Hospital Building",
+    "dataAiHint": "hospital building"
+  },
+  "hospitalFallback": {
+    "imageUrl": "https://picsum.photos/seed/hosp2/100/100",
+    "altText": "Private Clinic",
+    "dataAiHint": "medical clinic"
+  },
+  "alarm": {
+    "imageUrl": "https://picsum.photos/seed/alarmclock/400/300",
+    "altText": "Alarm Clock Illustration",
+    "dataAiHint": "alarm clock"
+  },
+  "calendar": {
+    "imageUrl": "https://picsum.photos/seed/calendar/400/100",
+    "altText": "Calendar View",
+    "dataAiHint": "calendar office"
+  }
+}

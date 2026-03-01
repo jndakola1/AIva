@@ -62,7 +62,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         {/* Desktop Sidebar */}
         <nav className="hidden md:flex flex-col items-center gap-4 px-3 py-6 border-r border-white/5 bg-white/[0.02] backdrop-blur-2xl w-16 lg:w-64 transition-all">
           <div className="flex items-center gap-3 w-full px-2 mb-6 group cursor-pointer" onClick={() => router.push('/')}>
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-transform group-hover:scale-105">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-[0_0_20px_rgba(217,119,87,0.5)] transition-transform group-hover:scale-105">
               <Bot className="h-6 w-6 text-white" />
             </div>
             <div className="hidden lg:block">
@@ -89,7 +89,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                     className={cn(
                       "w-full lg:justify-start gap-4 rounded-2xl transition-all h-12",
                       pathname === link.href 
-                        ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]" 
+                        ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(217,119,87,0.1)]" 
                         : "text-muted-foreground hover:bg-white/5"
                     )}
                     asChild
@@ -97,7 +97,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                     <Link href={link.href}>
                       <link.icon className={cn("h-5 w-5 shrink-0 transition-transform", pathname === link.href && "scale-110")} />
                       <span className="hidden lg:block font-medium">{link.label}</span>
-                      {pathname === link.href && <span className="hidden lg:block ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(59,130,246,0.5)]" />}
+                      {pathname === link.href && <span className="hidden lg:block ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(217,119,87,0.5)]" />}
                     </Link>
                   </Button>
                 </TooltipTrigger>
@@ -140,7 +140,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             {/* Mobile Header */}
             <header className="sticky top-0 z-20 flex h-16 items-center justify-between bg-[#0A0A0B]/80 backdrop-blur-xl px-4 border-b border-white/5 md:hidden">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.4)]">
+                  <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(217,119,87,0.4)]">
                     <Bot className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -149,20 +149,20 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Button onClick={handleNewChat} variant="ghost" size="icon" className="rounded-full bg-white/5">
+                  <Button onClick={handleNewChat} variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10">
                     <PlusCircle className="h-5 w-5 text-primary" />
                   </Button>
                   <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                       <SheetTrigger asChild>
-                        <Button size="icon" variant="ghost" className="rounded-full bg-white/5">
-                            <Menu className="h-5 w-5" />
+                        <Button size="icon" variant="ghost" className="rounded-full bg-white/5 hover:bg-white/10 group">
+                            <Menu className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
                         </Button>
                       </SheetTrigger>
                       <SheetContent side="left" className="w-[300px] p-0 border-r border-white/5 bg-[#0A0A0B]">
                           <div className="flex flex-col h-full">
                             <SheetHeader className="p-6 border-b border-white/5 bg-white/[0.02]">
                               <SheetTitle className="flex items-center gap-4">
-                                <div className="p-2.5 bg-primary rounded-2xl text-white shadow-lg">
+                                <div className="p-2.5 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
                                   <Bot className="h-6 w-6" />
                                 </div>
                                 <div className="text-left">
@@ -234,7 +234,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                   </div>
                   <span className="text-[9px] font-bold uppercase tracking-widest">{link.label}</span>
                   {pathname === link.href && (
-                    <span className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(59,130,246,0.6)]" />
+                    <span className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(217,119,87,0.6)]" />
                   )}
                 </Link>
               ))}

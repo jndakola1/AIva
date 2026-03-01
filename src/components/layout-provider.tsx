@@ -43,6 +43,7 @@ export function LayoutProvider({ children }: { children: React.Node }) {
 
   const navLinks = [
     { href: '/', label: 'Chat', icon: MessageSquare },
+    { href: '/categories', label: 'Features', icon: LayoutDashboard },
     { href: '/audio', label: 'Video Chat', icon: Video },
     { href: '/history', label: 'History', icon: History },
   ];

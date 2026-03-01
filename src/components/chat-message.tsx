@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music } from "lucide-react";
 import Image from "next/image";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
@@ -254,6 +254,8 @@ const WeatherCard = ({ data }: { data: any }) => (
 export default function ChatMessage({ id, role, content, isLoading, imageUrl, altText, dataAiHint, review, toolData, onPlayAudio, isSpeaking }: ChatMessageProps) {
   const isAi = role === "AI" || role === "AIva";
   const isVideo = imageUrl?.startsWith('data:video/mp4');
+  const isAudio = imageUrl?.startsWith('data:audio/wav');
+  const isImageGen = imageUrl && !isVideo && !isAudio && content?.toLowerCase().includes('image');
 
   return (
     <div className="flex items-start gap-4 group animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -263,9 +265,12 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
           </AvatarFallback>
       </Avatar>
       <div className="flex-1 pt-0.5 space-y-2">
-        <div className="font-semibold flex items-center text-sm md:text-base">
+        <div className="font-semibold flex items-center gap-2 text-sm md:text-base">
           {isAi ? "AIva" : "You"}
           {isAi && review && <ReviewPopover review={review} />}
+          {isVideo && <Badge variant="secondary" className="bg-red-500/10 text-red-500 border-none h-5 px-2 text-[10px] uppercase font-bold tracking-wider"><Film className="w-3 h-3 mr-1" /> Veo 3.0</Badge>}
+          {isAudio && <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-500 border-none h-5 px-2 text-[10px] uppercase font-bold tracking-wider"><Music className="w-3 h-3 mr-1" /> AI Music</Badge>}
+          {isImageGen && <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-none h-5 px-2 text-[10px] uppercase font-bold tracking-wider"><Sparkles className="w-3 h-3 mr-1" /> Gemini 2.0</Badge>}
         </div>
         <div className="text-foreground/90 relative pr-10">
           {isLoading ? (
@@ -296,6 +301,18 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                       controls 
                       className="w-full h-auto aspect-video bg-black"
                     />
+                  ) : isAudio ? (
+                    <div className="p-6 bg-indigo-50 flex flex-col gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-500 rounded-lg text-white">
+                                <Music className="h-5 w-5" />
+                            </div>
+                            <span className="text-sm font-bold text-indigo-900">AI Composed Soundscape</span>
+                        </div>
+                        <audio controls className="w-full">
+                            <source src={imageUrl} />
+                        </audio>
+                    </div>
                   ) : (
                     <Image
                       src={imageUrl}
@@ -305,11 +322,6 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                       className="w-full h-auto object-cover transition-transform duration-500 group-hover/media:scale-105"
                       data-ai-hint={dataAiHint}
                     />
-                  )}
-                  {isVideo && (
-                    <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md rounded-full p-2 text-white shadow-lg">
-                      <Film className="h-4 w-4" />
-                    </div>
                   )}
                 </div>
               )}

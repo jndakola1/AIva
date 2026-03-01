@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -46,6 +47,7 @@ export default function ChatInterface() {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingTask, setIsProcessingTask] = useState(false);
+  const [currentTaskLabel, setCurrentTaskLabel] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(null);
 
@@ -108,6 +110,10 @@ export default function ChatInterface() {
     setInput("");
     clearSelections();
     setIsSending(true);
+    if (isDeep) {
+        setCurrentTaskLabel("Synthesizing research data...");
+        setIsProcessingTask(true);
+    }
     
     try {
       const currentHistoryForAI = messages.map(msg => ({
@@ -143,6 +149,8 @@ export default function ChatInterface() {
       addMessage({ role: "AI", content: "Sorry, I ran into an error. Please try again later." });
     } finally {
       setIsSending(false);
+      setIsProcessingTask(false);
+      setCurrentTaskLabel(null);
     }
   }, [isOnline, addMessage, messages, user, imagePreview, selectedFile, clearSelections]);
 
@@ -152,6 +160,7 @@ export default function ChatInterface() {
     addMessage({ role: "You", content: `Create an image of: ${prompt}` });
     setInput("");
     setIsProcessingTask(true);
+    setCurrentTaskLabel("Gemini is painting your vision...");
     try {
       const imageResponse = await generateImage({ prompt });
       addMessage({ 
@@ -164,6 +173,7 @@ export default function ChatInterface() {
       addMessage({ role: "AI", content: `Failed to generate image.` });
     } finally {
       setIsProcessingTask(false);
+      setCurrentTaskLabel(null);
     }
   }, [input, addMessage]);
 
@@ -176,6 +186,7 @@ export default function ChatInterface() {
     addMessage({ role: "You", content: `Create a cinematic video of: ${prompt}` });
     setInput("");
     setIsProcessingTask(true);
+    setCurrentTaskLabel("Veo 3 is crafting your video with sound...");
     toast({ title: "Generating Video", description: "This may take up to a minute. Veo 3 is crafting your video with sound." });
     
     try {
@@ -191,6 +202,7 @@ export default function ChatInterface() {
       addMessage({ role: "AI", content: `Failed to generate video: ${error.message}` });
     } finally {
       setIsProcessingTask(false);
+      setCurrentTaskLabel(null);
     }
   }, [input, addMessage, toast]);
 
@@ -203,19 +215,21 @@ export default function ChatInterface() {
     addMessage({ role: "You", content: `Compose AI music for: ${prompt}` });
     setInput("");
     setIsProcessingTask(true);
+    setCurrentTaskLabel("Composing unique audio snippets...");
     
     try {
       const { audioUrl, description } = await generateMusic({ prompt });
       addMessage({ 
         role: "AI",
         content: `I've composed a musical atmosphere for you: ${description}`,
-        imageUrl: audioUrl, // Note: We use the same field for audio data uris
+        imageUrl: audioUrl,
       });
     } catch (error: any) {
       console.error(error);
       addMessage({ role: "AI", content: `Failed to generate music: ${error.message}` });
     } finally {
       setIsProcessingTask(false);
+      setCurrentTaskLabel(null);
     }
   }, [input, addMessage, toast]);
 
@@ -314,7 +328,17 @@ export default function ChatInterface() {
                 />
               ))
             )}
-            {(isSending || isProcessingTask) && (
+            
+            {isProcessingTask && currentTaskLabel && (
+                <div className="flex flex-col items-center justify-center gap-3 py-6 animate-in fade-in zoom-in duration-300">
+                    <div className="flex items-center gap-3 px-5 py-2.5 bg-primary/5 border border-primary/10 rounded-full shadow-sm">
+                        <Loader className="h-4 w-4 animate-spin text-primary" />
+                        <span className="text-xs font-bold text-primary uppercase tracking-widest">{currentTaskLabel}</span>
+                    </div>
+                </div>
+            )}
+
+            {(isSending && !isProcessingTask) && (
                 <ChatMessage id="loading" role="AI" content="" isLoading={true} />
             )}
             <div ref={messagesEndRef} />

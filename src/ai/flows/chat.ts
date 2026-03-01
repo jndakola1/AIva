@@ -1,9 +1,5 @@
 /**
  * @fileOverview A multi-modal chat AI agent that can display images, perform research, analyze photos, and manage tasks.
- *
- * - onlineChat - A function that handles a chat conversation using online models.
- * - ChatInput - The input type for the chat function.
- * - ChatOutput - The return type for the chat function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -13,7 +9,7 @@ import { selfReview, SelfReviewOutput, SelfReviewOutputSchema } from './self-rev
 const searchForImageTool = ai.defineTool(
   {
     name: 'searchForImage',
-    description: 'Searches for a real image on Unsplash based on a query when the user explicitly asks for a picture or visual.',
+    description: 'Searches for a real image on Unsplash based on a query.',
     inputSchema: z.object({
       query: z.string().describe('The search query for the image.'),
     }),
@@ -24,14 +20,13 @@ const searchForImageTool = ai.defineTool(
     }),
   },
   async ({query}) => {
-    console.log(`Searching for real image with query: ${query}`);
     const accessKey = process.env.UNSPLASH_ACCESS_KEY;
-
+    
     if (!accessKey) {
-      console.warn('UNSPLASH_ACCESS_KEY not found. Returning placeholder image.');
+      // Return a high-quality placeholder for development
       return {
-        imageUrl: `https://placehold.co/600x400.png`,
-        altText: `A placeholder image for: ${query}`,
+        imageUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/600/400`,
+        altText: `A mock image for: ${query}`,
         dataAiHint: query.split(' ').slice(0, 2).join(' '),
       };
     }
@@ -42,23 +37,17 @@ const searchForImageTool = ai.defineTool(
           query
         )}&client_id=${accessKey}`
       );
-
-      if (!response.ok) {
-        throw new Error(`Unsplash API error: ${response.status}`);
-      }
-      
+      if (!response.ok) throw new Error(`Unsplash error: ${response.status}`);
       const data = await response.json();
-      
       return {
         imageUrl: data.urls.regular,
         altText: data.alt_description || `An image of ${query}`,
         dataAiHint: query.split(' ').slice(0, 2).join(' '),
       };
     } catch (error) {
-      console.error('Error fetching from Unsplash, returning placeholder.', error);
       return {
-        imageUrl: `https://placehold.co/600x400.png`,
-        altText: `A placeholder image for: ${query}`,
+        imageUrl: `https://picsum.photos/seed/${encodeURIComponent(query)}/600/400`,
+        altText: `A fallback image for: ${query}`,
         dataAiHint: query.split(' ').slice(0, 2).join(' '),
       };
     }
@@ -68,7 +57,7 @@ const searchForImageTool = ai.defineTool(
 const researchTopic = ai.defineTool(
   {
     name: 'researchTopic',
-    description: 'Performs a web search to find current information on a given topic.',
+    description: 'Performs a web search to find current information.',
     inputSchema: z.object({
       topic: z.string().describe('The topic to research.'),
     }),
@@ -78,7 +67,7 @@ const researchTopic = ai.defineTool(
   },
   async ({ topic }) => {
     return {
-      summary: `Research findings for "${topic}": This is a simulated research result. In a real-world scenario, I would be browsing the live web right now to find the most recent facts, figures, and news regarding this subject.`,
+      summary: `Detailed research findings for "${topic}": 1. Market trends show a 15% increase in adoption this year. 2. Recent breakthroughs in technology have reduced costs by 30%. 3. Experts predict a major shift toward sustainable practices by 2026. (Simulated Research Data)`,
     };
   }
 );
@@ -88,7 +77,7 @@ const setAlarmTool = ai.defineTool(
     name: 'setAlarm',
     description: 'Sets an alarm or reminder for a specific time.',
     inputSchema: z.object({
-      time: z.string().describe('The time for the alarm (e.g., "5:00 PM", "in 10 minutes").'),
+      time: z.string().describe('The time for the alarm (e.g., "5:00 PM").'),
       label: z.string().optional().describe('What the alarm is for.'),
     }),
     outputSchema: z.object({
@@ -96,7 +85,7 @@ const setAlarmTool = ai.defineTool(
     }),
   },
   async ({ time, label }) => {
-    return { confirmation: `I've set an alarm for ${time}${label ? ` labeled "${label}"` : ''}.` };
+    return { confirmation: `[MOCK CONFIRMATION] I've scheduled your alarm for ${time}${label ? `: "${label}"` : ''}. I'll notify you when it goes off.` };
   }
 );
 
@@ -114,9 +103,11 @@ const manageCalendarTool = ai.defineTool(
   },
   async ({ action, details }) => {
     if (action === 'add') {
-      return { result: `Success: Added "${details}" to your calendar.` };
+      return { result: `[MOCK SUCCESS] I've added "${details}" to your calendar for this Thursday.` };
     }
-    return { result: "Your next event is a Standup Meeting at 9:00 AM tomorrow." };
+    return { 
+      result: "Your next 3 events: \n1. Team Standup (9:00 AM)\n2. Lunch with Client (12:30 PM)\n3. Strategy Review (4:00 PM)" 
+    };
   }
 );
 
@@ -133,18 +124,11 @@ const analyzeEmailsTool = ai.defineTool(
   },
   async ({ query }) => {
     if (query) {
-      return { summary: `Searching for "${query}"... Found one email from Alice regarding the project launch.` };
+      return { summary: `[MOCK SEARCH] Found 2 emails matching "${query}". One is a project update from David, and the other is a confirmation for your flight.` };
     }
-    return { summary: "You have 3 unread emails. One is a shipping notification, and two are newsletters." };
+    return { summary: "You have 5 new emails: 3 from the Marketing team regarding the Q3 campaign, and 2 from HR about the upcoming holiday schedule." };
   }
 );
-
-const PersonalitySchema = z.object({
-  tone: z.enum(['friendly', 'professional', 'witty', 'concise']).default('friendly'),
-  enableHumor: z.boolean().default(true),
-  name: z.string().default('AIva'),
-}).default({});
-
 
 const MessageSchema = z.object({
   role: z.enum(['You', 'AIva']),
@@ -153,75 +137,51 @@ const MessageSchema = z.object({
 
 const ChatInputSchema = z.object({
   prompt: z.string().describe("The user's message."),
-  performResearch: z.boolean().optional().describe('Force research tool usage.'),
-  history: z.array(MessageSchema).optional().describe('Previous chat history.'),
-  personality: PersonalitySchema.optional().describe('Personality settings.'),
-  attachmentUrl: z.string().optional().describe('Optional image attachment data URI.'),
+  performResearch: z.boolean().optional(),
+  history: z.array(MessageSchema).optional(),
+  personality: z.any().optional(),
+  attachmentUrl: z.string().optional(),
 });
-export type ChatInput = z.infer<typeof ChatInputSchema>;
 
 export const ChatOutputSchema = z.object({
-  response: z.string().describe('Your text response to the user.'),
-  imageUrl: z.string().nullable().optional().describe('URL of an image to display.'),
-  altText: z.string().optional().describe('Alt text for the image.'),
-  dataAiHint: z.string().optional().describe('Search hint for Unsplash.'),
-  review: SelfReviewOutputSchema.optional().describe('Self-review of the response.'),
+  response: z.string(),
+  imageUrl: z.string().nullable().optional(),
+  altText: z.string().optional(),
+  dataAiHint: z.string().optional(),
+  review: SelfReviewOutputSchema.optional(),
 });
-export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
 const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
   tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool],
-  config: {
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-    ]
-  },
-  prompt: `You are {{personality.name}}, a helpful AI assistant with a {{personality.tone}} personality.
-{{#if personality.enableHumor}}Use wit and humor where appropriate.{{/if}}
-
-**Your capabilities:**
-- Set alarms/reminders.
-- Manage calendar events.
-- Analyze emails.
-- Perform web research.
-- Find images.
-
-**Instructions:**
-1. If the user asks for an action covered by your tools, USE the tool.
-2. Integrate tool results naturally into your conversation.
-3. Be concise and natural.
+  prompt: `You are {{personality.name}}, a helpful AI assistant.
+Tone: {{personality.tone}}
+Humor enabled: {{personality.enableHumor}}
 
 {{#if history}}
-**History:**
+History:
 {{#each history}}
 - {{role}}: {{content}}
 {{/each}}
 {{/if}}
 
 {{#if attachmentUrl}}
-**Image Input:** {{media url=attachmentUrl}}
+Image Input: {{media url=attachmentUrl}}
 {{/if}}
 
-**User Message:** {{{prompt}}}`,
+User Message: {{{prompt}}}`,
 });
 
-
-export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
-  const filledInput = { ...input, personality: input.personality || {} };
+export async function onlineChat(input: any): Promise<any> {
+  const filledInput = { ...input, personality: input.personality || { name: 'AIva', tone: 'friendly', enableHumor: true } };
   
   try {
     const {output: initialOutput} = await chatPrompt(filledInput);
 
     if (!initialOutput) {
-      return {
-        response: "I'm sorry, my safety filters blocked that request. Let's try talking about something else!",
-      };
+      return { response: "I'm sorry, I couldn't process that. Let's try something else." };
     }
 
     let review: SelfReviewOutput | undefined = undefined;
@@ -231,26 +191,14 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
           userPrompt: input.prompt,
           aiResponse: initialOutput.response,
         });
-      } catch (e) {
-        console.warn("Self-review failed.", e);
-      }
+      } catch (e) {}
     }
     
     return { ...initialOutput, review };
   } catch (error: any) {
-    console.error("Detailed Chat Error:", error);
-    
-    const msg = error.message?.toLowerCase() || "";
-    if (msg.includes('429') || msg.includes('quota')) {
-      return { response: "I'm hitting a usage limit (quota exceeded). Please wait a few seconds and try again." };
-    }
-
-    if (msg.includes('safety')) {
-       return { response: "I can't respond to that for safety reasons. Please try a different prompt." };
-    }
-
+    console.error("Chat Error:", error);
     return { 
-      response: "I'm having a little trouble connecting to my brain. This usually happens if the connection is unstable or the request is too complex. Let's try again in a moment!" 
+      response: "I'm having a little trouble connecting to my brain right now. In the meantime, I can still help you with basic tasks if you try again!" 
     };
   }
 }

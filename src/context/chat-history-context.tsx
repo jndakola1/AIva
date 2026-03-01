@@ -20,7 +20,6 @@ import {
   orderBy,
   Timestamp,
   writeBatch,
-  where,
 } from 'firebase/firestore';
 
 type Message = {
@@ -47,6 +46,27 @@ const ChatHistoryContext = createContext<ChatHistoryContextType | undefined>(
 
 const LOCAL_HISTORY_KEY = 'chatHistory_guest';
 
+const MOCK_DEVELOPMENT_DATA: Message[] = [
+  {
+    id: 'mock-1',
+    role: 'AI',
+    content: "Hi! I'm AIva. I've pre-loaded some messages to help you see how I look. I can manage your calendar, set alarms, and even generate cinematic videos!",
+    createdAt: Timestamp.now(),
+  },
+  {
+    id: 'mock-2',
+    role: 'You',
+    content: "Can you show me my calendar for this week?",
+    createdAt: Timestamp.now(),
+  },
+  {
+    id: 'mock-3',
+    role: 'AI',
+    content: "Certainly! You have a 'Product Launch Sync' on Tuesday at 10:00 AM and a 'Coffee with Sarah' on Friday at 3:00 PM. Would you like me to set a reminder for those?",
+    createdAt: Timestamp.now(),
+  }
+];
+
 export function ChatHistoryProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -55,13 +75,12 @@ export function ChatHistoryProvider({ children }: { children: ReactNode }) {
 
   // Fetch history
   useEffect(() => {
-    if (authLoading) return; // Wait for auth state to be determined
+    if (authLoading) return;
 
     const fetchHistory = async () => {
       setLoadingHistory(true);
       try {
         if (user) {
-          // USER IS LOGGED IN: Fetch from Firestore
           const q = query(
             collection(db, 'users', user.uid, 'messages'),
             orderBy('createdAt', 'asc')
@@ -71,14 +90,20 @@ export function ChatHistoryProvider({ children }: { children: ReactNode }) {
             id: doc.id,
             ...doc.data(),
           })) as Message[];
-          setMessages(firestoreMessages);
+          
+          if (firestoreMessages.length === 0) {
+            setMessages(MOCK_DEVELOPMENT_DATA);
+          } else {
+            setMessages(firestoreMessages);
+          }
         } else {
-          // USER IS GUEST: Fetch from localStorage
           const storedHistory = localStorage.getItem(LOCAL_HISTORY_KEY);
           if (storedHistory) {
             setMessages(JSON.parse(storedHistory));
           } else {
-            setMessages([]);
+            // Seed with mock data for new guest users
+            setMessages(MOCK_DEVELOPMENT_DATA);
+            localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(MOCK_DEVELOPMENT_DATA));
           }
         }
       } catch (error) {
@@ -102,23 +127,21 @@ export function ChatHistoryProvider({ children }: { children: ReactNode }) {
     const newMessage = {
       ...message,
       createdAt: Timestamp.now(),
-      id: `temp-${Date.now()}` // Temporary ID for UI
+      id: `temp-${Date.now()}`
     };
     
     setMessages((prev) => [...prev, newMessage]);
 
     try {
       if (user) {
-        // USER IS LOGGED IN: Save to Firestore
         const docRef = await addDoc(collection(db, 'users', user.uid, 'messages'), {
           ...message,
           createdAt: Timestamp.now(),
         });
-        // Update message with real ID from Firestore
         setMessages(prev => prev.map(m => m.id === newMessage.id ? { ...m, id: docRef.id } : m));
       } else {
-        // USER IS GUEST: Save to localStorage
-        const updatedHistory = [...messages, newMessage];
+        const currentMessages = JSON.parse(localStorage.getItem(LOCAL_HISTORY_KEY) || '[]');
+        const updatedHistory = [...currentMessages, newMessage];
         localStorage.setItem(LOCAL_HISTORY_KEY, JSON.stringify(updatedHistory));
       }
     } catch (error) {
@@ -128,17 +151,15 @@ export function ChatHistoryProvider({ children }: { children: ReactNode }) {
         title: 'Error',
         description: 'Could not save your message.',
       });
-      // Rollback UI update on error
       setMessages(prev => prev.filter(m => m.id !== newMessage.id));
     }
-  }, [user, messages, toast]);
+  }, [user, toast]);
 
 
   // Clear history
   const clearHistory = useCallback(async () => {
     try {
       if (user) {
-        // USER IS LOGGED IN: Delete from Firestore
         const q = query(collection(db, 'users', user.uid, 'messages'));
         const querySnapshot = await getDocs(q);
         const batch = writeBatch(db);
@@ -147,7 +168,6 @@ export function ChatHistoryProvider({ children }: { children: ReactNode }) {
         });
         await batch.commit();
       } else {
-        // USER IS GUEST: Clear localStorage
         localStorage.removeItem(LOCAL_HISTORY_KEY);
       }
       setMessages([]);

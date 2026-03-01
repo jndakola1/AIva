@@ -51,12 +51,21 @@ export default function ChatInterface() {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { toast } = useToast();
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const isOnline = useOnlineStatus();
   const { user } = useAuth();
+
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isSending, isProcessingTask, scrollToBottom]);
 
   const handleImageSelect = useCallback((file: File) => {
     setSelectedImage(file);
@@ -105,7 +114,6 @@ export default function ChatInterface() {
         text: msg.content,
       }));
 
-      // If it's deep research, use the specialized flow
       if (isDeep) {
         const { report } = await deepResearch({ topic: prompt });
         addMessage({ role: "AI", content: report });
@@ -173,7 +181,6 @@ export default function ChatInterface() {
       addMessage({ 
         role: "AI",
         content: `Your video is ready!`,
-        // We'll treat videoUrl similarly to imageUrl for now in the UI logic
         imageUrl: videoUrl, 
         altText: altText,
       });
@@ -243,10 +250,10 @@ export default function ChatInterface() {
   const isDisabled = isSending || isEnhancing || isRecording || isProcessingTask || isSpeaking;
 
   return (
-    <div className="flex flex-col h-full bg-background text-foreground">
-      <main className="flex-1 overflow-auto">
+    <div className="flex flex-col h-full bg-background text-foreground relative overflow-hidden">
+      <main className="flex-1 overflow-hidden relative">
         <ScrollArea className="h-full" ref={scrollAreaRef}>
-          <div className="py-8 px-4 space-y-8 max-w-3xl mx-auto">
+          <div className="py-8 px-4 space-y-8 max-w-3xl mx-auto pb-40">
              {loadingHistory ? (
                 <div className="flex justify-center items-center h-full pt-20">
                   <Loader className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -283,39 +290,41 @@ export default function ChatInterface() {
             {(isSending || isProcessingTask) && (
                 <ChatMessage id="loading" role="AI" content="" isLoading={true} />
             )}
+            <div ref={messagesEndRef} />
           </div>
         </ScrollArea>
       </main>
 
-      <footer className="p-4 bg-background border-t flex-shrink-0">
-        <div className="max-w-3xl mx-auto">
+      <footer className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none z-10">
+        <div className="max-w-3xl mx-auto pointer-events-auto">
           {(imagePreview || selectedFile) && (
-            <div className="mb-4 flex gap-2">
+            <div className="mb-4 flex gap-2 animate-in slide-in-from-bottom-4 duration-300">
               {imagePreview && (
                 <div className="relative inline-block">
-                  <div className="relative h-20 w-20 rounded-lg overflow-hidden border border-border shadow-sm">
+                  <div className="relative h-20 w-20 rounded-xl overflow-hidden border border-border shadow-md">
                     <Image src={imagePreview} alt="Upload preview" fill className="object-cover" />
                   </div>
-                  <button onClick={clearSelections} className="absolute -top-2 -right-2 h-6 w-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md hover:bg-destructive/90 transition-colors"><X className="h-4 w-4" /></button>
+                  <button onClick={clearSelections} className="absolute -top-2 -right-2 h-6 w-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-destructive/90 transition-colors"><X className="h-4 w-4" /></button>
                 </div>
               )}
               {selectedFile && (
                 <div className="relative inline-block">
-                  <div className="h-20 w-32 flex flex-col items-center justify-center bg-muted rounded-lg border border-border p-2 gap-1">
+                  <div className="h-20 w-32 flex flex-col items-center justify-center bg-card rounded-xl border border-border p-2 gap-1 shadow-md">
                     <Telescope className="h-6 w-6 text-primary" />
                     <span className="text-[10px] font-medium truncate w-full text-center">{selectedFile.name}</span>
                   </div>
-                  <button onClick={clearSelections} className="absolute -top-2 -right-2 h-6 w-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-md hover:bg-destructive/90 transition-colors"><X className="h-4 w-4" /></button>
+                  <button onClick={clearSelections} className="absolute -top-2 -right-2 h-6 w-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center shadow-lg hover:bg-destructive/90 transition-colors"><X className="h-4 w-4" /></button>
                 </div>
               )}
             </div>
           )}
-          <div className="relative">
+          
+          <div className="relative bg-card/80 backdrop-blur-xl border border-border rounded-[2rem] shadow-2xl transition-all hover:shadow-primary/5 focus-within:shadow-primary/10">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={isRecording ? "Listening..." : "Message AIva..."}
-              className="bg-card rounded-2xl shadow-sm border-input pr-28 pl-24 py-3 text-base min-h-[52px] resize-none focus-visible:ring-1"
+              className="bg-transparent border-none rounded-[2rem] pr-28 pl-24 py-4 text-base min-h-[56px] resize-none focus-visible:ring-0 shadow-none"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
               }}
@@ -341,19 +350,23 @@ export default function ChatInterface() {
             </div>
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                 <Button 
-                  variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-primary/5 hover:text-primary transition-all"
+                  variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all"
                   onClick={handleEnhancePrompt} disabled={isDisabled || !input.trim()} title="Enhance Prompt"
                 >
                   {isEnhancing ? <Loader className="h-5 w-5 animate-spin" /> : <SlidersHorizontal className="h-5 w-5" />}
                 </Button>
               <Button
                   onClick={() => sendMessage(input)} disabled={isDisabled || (!input.trim() && !imagePreview && !selectedFile)}
-                  size="icon" className="rounded-full w-9 h-9 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted shadow-md transition-all active:scale-95"
+                  size="icon" className="rounded-full w-10 h-10 bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted shadow-lg transition-all active:scale-95"
                 >
                   {isSending ? <Loader className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
               </Button>
             </div>
           </div>
+          
+          <p className="text-[10px] text-center text-muted-foreground mt-2 opacity-60">
+            Aiva can make mistakes. Check important info.
+          </p>
         </div>
       </footer>
       <audio ref={audioRef} className="hidden" />

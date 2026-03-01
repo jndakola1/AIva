@@ -162,48 +162,62 @@ Your entire output MUST be a single, valid JSON object that conforms to the requ
 
 
 export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
-  // 1. Get the initial response from the main chat prompt
   const filledInput = { ...input, personality: input.personality || {} };
-  const {output: initialOutput} = await chatPrompt(filledInput);
+  
+  try {
+    // 1. Get the initial response from the main chat prompt
+    const {output: initialOutput} = await chatPrompt(filledInput);
 
-  if (!initialOutput) {
-    throw new Error('The chat flow failed to produce a valid output. The model may have returned an empty or invalid response.');
-  }
-
-  // 2. Perform self-review, but only for text responses
-  let review: SelfReviewOutput | undefined = undefined;
-  if (initialOutput.response && !initialOutput.imageUrl) {
-    try {
-      review = await selfReview({
-        userPrompt: input.prompt,
-        aiResponse: initialOutput.response,
-      });
-    } catch (e) {
-      console.warn("Self-review step failed. This is non-critical.", e);
-      // This is non-critical, so we can continue without a review.
+    if (!initialOutput) {
+      throw new Error('The chat flow failed to produce a valid output.');
     }
-  }
-  
-  // 3. Combine initial output with the review
-  const finalOutput: ChatOutput = { ...initialOutput, review };
-  
-  // Handle cases where the model returns null for imageUrl
-  if (finalOutput.imageUrl === null) {
-    finalOutput.imageUrl = undefined;
-    finalOutput.altText = undefined;
-    finalOutput.dataAiHint = undefined;
-  }
-  
-  // Safeguard: If the LLM hallucinates an image URL from a non-approved domain, replace it with a placeholder to prevent crashes.
-  if (finalOutput.imageUrl && !finalOutput.imageUrl.startsWith('https://placehold.co') && !finalOutput.imageUrl.startsWith('https://images.unsplash.com')) {
-    // Try to extract a query from the prompt for better alt text.
-    const queryMatch = input.prompt.match(/(?:image|picture) of (?:a|an|the)?\s*([^.?!]*)/i);
-    const query = queryMatch ? queryMatch[1].trim() : 'a visual representation';
 
-    finalOutput.imageUrl = `https://placehold.co/600x400.png`;
-    finalOutput.altText = `An image of ${query}`;
-    finalOutput.dataAiHint = query.split(' ').slice(0, 2).join(' ');
-  }
+    // 2. Perform self-review, but only for text responses
+    let review: SelfReviewOutput | undefined = undefined;
+    if (initialOutput.response && !initialOutput.imageUrl) {
+      try {
+        review = await selfReview({
+          userPrompt: input.prompt,
+          aiResponse: initialOutput.response,
+        });
+      } catch (e) {
+        console.warn("Self-review step failed. This is non-critical.", e);
+      }
+    }
+    
+    // 3. Combine initial output with the review
+    const finalOutput: ChatOutput = { ...initialOutput, review };
+    
+    // Handle cases where the model returns null for imageUrl
+    if (finalOutput.imageUrl === null) {
+      finalOutput.imageUrl = undefined;
+      finalOutput.altText = undefined;
+      finalOutput.dataAiHint = undefined;
+    }
+    
+    // Safeguard: If the LLM hallucinates an image URL from a non-approved domain, replace it with a placeholder.
+    if (finalOutput.imageUrl && !finalOutput.imageUrl.startsWith('https://placehold.co') && !finalOutput.imageUrl.startsWith('https://images.unsplash.com')) {
+      const queryMatch = input.prompt.match(/(?:image|picture) of (?:a|an|the)?\s*([^.?!]*)/i);
+      const query = queryMatch ? queryMatch[1].trim() : 'a visual representation';
 
-  return finalOutput;
+      finalOutput.imageUrl = `https://placehold.co/600x400.png`;
+      finalOutput.altText = `An image of ${query}`;
+      finalOutput.dataAiHint = query.split(' ').slice(0, 2).join(' ');
+    }
+
+    return finalOutput;
+  } catch (error: any) {
+    console.error("Online Chat Error:", error);
+    
+    // Check for specific API quota errors (429)
+    if (error.message?.includes('429') || error.message?.includes('quota')) {
+      return {
+        response: "I'm sorry, I'm a bit overwhelmed right now (quota exceeded). Please try again in a few moments, or check if Ollama is running for offline mode!",
+      };
+    }
+    
+    return {
+      response: "I'm having a little trouble connecting to my brain right now. Please try again in a moment.",
+    };
+  }
 }

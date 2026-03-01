@@ -8,3 +8,5 @@ import '@/ai/flows/generate-image.ts';
 import '@/ai/flows/summarize.ts';
 import '@/ai/flows/self-review.ts';
 import '@/ai/flows/describe-image.ts';
+import '@/ai/flows/deep-research.ts';
+import '@/ai/flows/generate-video.ts';

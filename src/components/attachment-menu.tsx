@@ -8,7 +8,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Camera, File, Globe, Image as ImageIcon, Plus, Telescope, Wand2 } from 'lucide-react';
+import { Camera, FileText, Globe, Image as ImageIcon, Plus, Telescope, Wand2, Film } from 'lucide-react';
 import type React from 'react';
 import { useState, useRef } from 'react';
 
@@ -40,15 +40,22 @@ const MenuLink = ({ icon: Icon, children, detail, onClick, disabled }: { icon: R
 const AttachmentMenu = ({ 
   disabled, 
   onGenerateImage,
+  onGenerateVideo,
   onWebSearch,
+  onDeepResearch,
   onImageSelect,
+  onFileSelect,
 }: { 
   disabled?: boolean, 
   onGenerateImage: () => void,
+  onGenerateVideo: () => void,
   onWebSearch: () => void,
-  onImageSelect: (file: File) => void
+  onDeepResearch: () => void,
+  onImageSelect: (file: File) => void,
+  onFileSelect: (file: File) => void,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAction = (action: () => void) => {
@@ -57,10 +64,18 @@ const AttachmentMenu = ({
     setIsOpen(false);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       onImageSelect(file);
+      setIsOpen(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      onFileSelect(file);
       setIsOpen(false);
     }
   };
@@ -83,21 +98,30 @@ const AttachmentMenu = ({
         
         <input 
           type="file" 
-          ref={fileInputRef} 
+          ref={imageInputRef} 
           className="hidden" 
           accept="image/*" 
+          onChange={handleImageChange}
+        />
+
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          className="hidden" 
+          accept=".txt,.pdf,.md,.doc,.docx" 
           onChange={handleFileChange}
         />
 
         <div className="grid grid-cols-3 gap-4 text-center mb-6">
-            <ActionButton icon={Camera} onClick={() => fileInputRef.current?.click()}>Camera</ActionButton>
-            <ActionButton icon={ImageIcon} onClick={() => fileInputRef.current?.click()}>Photos</ActionButton>
-            <ActionButton icon={File}>Files</ActionButton>
+            <ActionButton icon={Camera} onClick={() => imageInputRef.current?.click()}>Camera</ActionButton>
+            <ActionButton icon={ImageIcon} onClick={() => imageInputRef.current?.click()}>Photos</ActionButton>
+            <ActionButton icon={FileText} onClick={() => fileInputRef.current?.click()}>Docs</ActionButton>
         </div>
         <div className="space-y-1">
             <MenuLink icon={Wand2} onClick={() => handleAction(onGenerateImage)} disabled={disabled}>Create an image</MenuLink>
+            <MenuLink icon={Film} onClick={() => handleAction(onGenerateVideo)} disabled={disabled}>Create a video</MenuLink>
             <MenuLink icon={Globe} onClick={() => handleAction(onWebSearch)} disabled={disabled}>Search the web</MenuLink>
-            <MenuLink icon={Telescope} detail="15 min">Run deep research</MenuLink>
+            <MenuLink icon={Telescope} onClick={() => handleAction(onDeepResearch)} detail="Quick synthesis" disabled={disabled}>Run deep research</MenuLink>
         </div>
       </SheetContent>
     </Sheet>

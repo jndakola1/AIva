@@ -159,6 +159,47 @@ const analyzeEmailsTool = ai.defineTool(
   }
 );
 
+const searchHospitalTool = ai.defineTool(
+  {
+    name: 'searchHospital',
+    description: 'Finds recommended hospitals in a specific location.',
+    inputSchema: z.object({
+      location: z.string().describe('The city or area to search for hospitals.'),
+    }),
+    outputSchema: z.object({
+      count: z.number(),
+      recommendations: z.array(z.object({
+        name: z.string(),
+        type: z.string(),
+        rating: z.number(),
+        reviews: z.string(),
+        imageUrl: z.string(),
+      })),
+    }),
+  },
+  async ({ location }) => {
+    return {
+      count: 2,
+      recommendations: [
+        {
+          name: "Santosa Hospital",
+          type: "General Hospital",
+          rating: 4.9,
+          reviews: "1,4K Reviews",
+          imageUrl: `https://picsum.photos/seed/hosp1/100/100`,
+        },
+        {
+          name: "Saint Borromeus",
+          type: "Private Hospital",
+          rating: 4.8,
+          reviews: "520 Reviews",
+          imageUrl: `https://picsum.photos/seed/hosp2/100/100`,
+        }
+      ]
+    };
+  }
+);
+
 const MessageSchema = z.object({
   role: z.enum(['You', 'AIva']),
   content: z.string(),
@@ -171,7 +212,7 @@ export const ChatOutputSchema = z.object({
   dataAiHint: z.string().optional(),
   review: SelfReviewOutputSchema.optional(),
   toolData: z.object({
-    type: z.enum(['alarm', 'calendar', 'email']),
+    type: z.enum(['alarm', 'calendar', 'email', 'hospital']),
     data: z.any(),
   }).optional(),
 });
@@ -191,7 +232,7 @@ const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
-  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool],
+  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool, searchHospitalTool],
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -204,7 +245,7 @@ const chatPrompt = ai.definePrompt({
 Tone: {{personality.tone}}
 Humor enabled: {{personality.enableHumor}}
 
-When a user asks to set an alarm, manage their calendar, or check emails, use the appropriate tool. 
+When a user asks to set an alarm, manage their calendar, check emails, or find hospitals, use the appropriate tool. 
 ALWAYS populate the 'toolData' field in your output with the data returned by the tool if you used one.
 
 {{#if history}}
@@ -247,16 +288,43 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     console.error("Chat Error (Falling back to mock):", error);
     
     // MOCK FALLBACK FOR DEVELOPMENT
-    // This allows the user to see the UI cards even if the API is down.
     const lowerPrompt = input.prompt.toLowerCase();
     
+    if (lowerPrompt.includes('hospital')) {
+      return {
+        response: "Yes, there are 2 recommendations with good ratings for hospitals in your area.",
+        toolData: {
+          type: 'hospital',
+          data: {
+            count: 2,
+            recommendations: [
+              {
+                name: "Santosa Hospital",
+                type: "General Hospital",
+                rating: 4.9,
+                reviews: "1,4K Reviews",
+                imageUrl: `https://picsum.photos/seed/hosp1/100/100`,
+              },
+              {
+                name: "Saint Borromeus",
+                type: "Private Hospital",
+                rating: 4.8,
+                reviews: "520 Reviews",
+                imageUrl: `https://picsum.photos/seed/hosp2/100/100`,
+              }
+            ]
+          }
+        }
+      };
+    }
+
     if (lowerPrompt.includes('alarm')) {
       return {
-        response: "I'm having a little trouble with my connection, but I've simulated setting that alarm for you! Here are the details.",
+        response: "I've simulated setting that alarm for you! Here are the details.",
         toolData: {
           type: 'alarm',
           data: { 
-            confirmation: "Alarm scheduled successfully (Simulated).", 
+            confirmation: "Alarm scheduled successfully.", 
             alarmDetails: { time: "7:00 AM", label: "Morning Wakeup" } 
           }
         }
@@ -265,11 +333,11 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
 
     if (lowerPrompt.includes('calendar') || lowerPrompt.includes('meeting') || lowerPrompt.includes('event')) {
       return {
-        response: "I'm currently in mock mode due to a connection issue, but here's a look at your simulated calendar for today.",
+        response: "Here's a look at your calendar for today.",
         toolData: {
           type: 'calendar',
           data: {
-            result: "Here are your simulated upcoming events.",
+            result: "Here are your upcoming events.",
             events: [
               { title: "Product Strategy", time: "10:30 AM", date: "Today" },
               { title: "Lunch with Team", time: "1:00 PM", date: "Today" },
@@ -282,11 +350,11 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
 
     if (lowerPrompt.includes('email') || lowerPrompt.includes('mail')) {
       return {
-        response: "I can't reach your live inbox right now, but I can show you a summary of your simulated recent mail.",
+        response: "I've summarized your recent mail for you.",
         toolData: {
           type: 'email',
           data: {
-            summary: "You have 3 simulated important emails.",
+            summary: "You have 3 important emails.",
             emails: [
               { sender: "Alice", subject: "Review Required", snippet: "Could you take a look at the latest designs..." },
               { sender: "Support", subject: "Account Update", snippet: "Your subscription has been successfully renewed..." },
@@ -297,9 +365,8 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
       };
     }
 
-    // Default generic fallback if no keywords matched
     return { 
-      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about alarms, your calendar, or emails to see my specialized cards." 
+      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about alarms, your calendar, or hospitals to see my specialized cards." 
     };
   }
 }

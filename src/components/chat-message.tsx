@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation } from "lucide-react";
 import Image from "next/image";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
@@ -24,7 +24,7 @@ type ChatMessageProps = {
   dataAiHint?: string;
   review?: SelfReviewOutput;
   toolData?: {
-    type: 'alarm' | 'calendar' | 'email';
+    type: 'alarm' | 'calendar' | 'email' | 'hospital';
     data: any;
   };
   onPlayAudio?: (messageId: string, text: string) => void;
@@ -162,6 +162,52 @@ const EmailCard = ({ data }: { data: any }) => (
   </Card>
 );
 
+const HospitalCard = ({ data }: { data: any }) => (
+  <div className="space-y-4 max-w-[340px]">
+    {data.recommendations?.map((hosp: any, i: number) => (
+      <Card key={i} className="overflow-hidden border-none bg-[#3D2C2E] rounded-3xl shadow-xl text-white">
+        <div className="p-5 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="relative h-14 w-14 rounded-2xl overflow-hidden bg-white/10 shrink-0">
+              <Image 
+                src={hosp.imageUrl}
+                alt={hosp.name}
+                fill
+                className="object-cover"
+                data-ai-hint="hospital building"
+              />
+            </div>
+            <div>
+              <p className="text-base font-bold leading-tight">{hosp.name}</p>
+              <p className="text-xs text-white/60 font-medium">{hosp.type}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center text-yellow-500">
+              <Star className="h-3 w-3 fill-current" />
+              <span className="ml-1 text-xs font-bold text-white">{hosp.rating}</span>
+            </div>
+            <span className="text-[10px] text-white/50 font-medium">{hosp.reviews}</span>
+          </div>
+        </div>
+        <div className="flex border-t border-white/10">
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold hover:bg-white/5 transition-colors border-r border-white/10">
+            <Globe className="h-3 w-3" />
+            Website
+          </button>
+          <button className="flex-1 flex items-center justify-center gap-2 py-3 text-xs font-semibold hover:bg-white/5 transition-colors">
+            <Navigation className="h-3 w-3" />
+            Direction
+          </button>
+        </div>
+      </Card>
+    ))}
+    <Button variant="secondary" className="w-full rounded-full h-14 bg-white/10 hover:bg-white/20 text-white border-none shadow-lg text-sm font-bold">
+      Open browser for more
+    </Button>
+  </div>
+);
+
 
 export default function ChatMessage({ id, role, content, isLoading, imageUrl, altText, dataAiHint, review, toolData, onPlayAudio, isSpeaking }: ChatMessageProps) {
   const isAi = role === "AI";
@@ -191,10 +237,11 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
               {content && <p className="whitespace-pre-wrap text-sm md:text-base leading-relaxed">{content}</p>}
               
               {toolData && (
-                <div className="max-w-md">
+                <div className="max-w-md pt-2">
                   {toolData.type === 'alarm' && <AlarmCard data={toolData.data} />}
                   {toolData.type === 'calendar' && <CalendarCard data={toolData.data} />}
                   {toolData.type === 'email' && <EmailCard data={toolData.data} />}
+                  {toolData.type === 'hospital' && <HospitalCard data={toolData.data} />}
                 </div>
               )}
 

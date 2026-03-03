@@ -1,8 +1,8 @@
 export const firebaseConfig = {
-  "projectId": "gemini-switch-2fdeg",
-  "appId": "1:516197541019:web:a1f0ad5e0e31085b4a123e",
-  "apiKey": "AIzaSyB5NaAMWWbPKqvqLU3s6oaJLi58sIXpqK4",
-  "authDomain": "gemini-switch-2fdeg.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "516197541019"
+  apiKey: "AIzaSyDYwUV4dRkRZEjhiAmnb86f9QiKXMq0EN8",
+  authDomain: "studio-7352806100-143c2.firebaseapp.com",
+  projectId: "studio-7352806100-143c2",
+  storageBucket: "studio-7352806100-143c2.firebasestorage.app",
+  messagingSenderId: "950293011656",
+  appId: "1:950293011656:web:12122997a33ed43ffa59fd"
 };

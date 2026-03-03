@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText, LayoutDashboard, Zap } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText, LayoutDashboard, Zap, Play, Activity } from "lucide-react";
 import Image from "next/image";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
@@ -461,37 +461,57 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
               {imageUrl && (
                 <div className="mt-4 relative group/media overflow-hidden rounded-[2rem] border-2 border-white/5 shadow-2xl">
                   {isVideo ? (
-                    <video 
-                      src={imageUrl} 
-                      controls 
-                      className="w-full h-auto aspect-video bg-black/40"
-                    />
+                    <div className="relative aspect-video group/video bg-black overflow-hidden">
+                        <video 
+                          src={imageUrl} 
+                          controls 
+                          className="w-full h-full object-cover opacity-80 group-hover/video:opacity-100 transition-opacity"
+                        />
+                        <div className="absolute top-4 left-4 flex items-center gap-2 pointer-events-none">
+                            <Badge className="bg-red-600 text-white border-none text-[8px] font-bold h-5 uppercase tracking-widest px-2">Veo 3 PRO</Badge>
+                            <Badge className="bg-black/40 backdrop-blur-md text-white/60 border-white/10 text-[8px] font-bold h-5 uppercase tracking-widest px-2">4K CINEMATIC</Badge>
+                        </div>
+                    </div>
                   ) : isAudio ? (
-                    <div className="p-8 bg-primary/10 border border-primary/20 rounded-[2.5rem] flex flex-col gap-6 backdrop-blur-xl">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-primary rounded-2xl text-white shadow-lg shadow-primary/40">
-                                <Music className="h-6 w-6" />
+                    <div className="p-8 bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/20 rounded-[2.5rem] flex flex-col gap-6 backdrop-blur-3xl relative overflow-hidden group/audio">
+                        <div className="absolute top-0 right-0 p-8 opacity-10 group-hover/audio:opacity-20 transition-opacity">
+                            <Activity className="h-32 w-32 text-indigo-400 animate-pulse" />
+                        </div>
+                        <div className="relative flex items-center gap-5">
+                            <div className="p-4 bg-indigo-500 rounded-2xl text-white shadow-xl shadow-indigo-500/30 group-hover/audio:scale-110 transition-transform">
+                                <Music className="h-7 w-7" />
                             </div>
-                            <div>
-                                <span className="text-sm font-bold text-white block uppercase tracking-wider">AI Mastered Audio</span>
-                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Procedural Generation</span>
+                            <div className="space-y-1">
+                                <span className="text-base font-bold text-white block">Neural Studio Output</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-[0.2em]">High Fidelity</span>
+                                    <span className="w-1 h-1 rounded-full bg-white/20" />
+                                    <span className="text-[9px] font-bold text-white/30 uppercase tracking-[0.2em]">Spatial Track</span>
+                                </div>
                             </div>
                         </div>
-                        <audio controls className="w-full h-10 opacity-80 filter invert grayscale brightness-200">
-                            <source src={imageUrl} />
-                        </audio>
+                        <div className="relative bg-black/40 rounded-2xl p-4 border border-white/5 shadow-inner">
+                            <audio controls className="w-full h-10 filter invert grayscale brightness-200 contrast-125">
+                                <source src={imageUrl} />
+                            </audio>
+                        </div>
                     </div>
                   ) : (
-                    <Image
-                      src={imageUrl}
-                      alt={altText || "AI generated media"}
-                      width={800}
-                      height={500}
-                      className="w-full h-auto object-cover transition-transform duration-1000 group-hover/media:scale-105"
-                      data-ai-hint={dataAiHint}
-                    />
+                    <div className="relative group/image">
+                        <Image
+                          src={imageUrl}
+                          alt={altText || "AI generated media"}
+                          width={800}
+                          height={500}
+                          className="w-full h-auto object-cover transition-transform duration-1000 group-hover/image:scale-105"
+                          data-ai-hint={dataAiHint}
+                        />
+                        <div className="absolute bottom-4 right-4 opacity-0 group-hover/image:opacity-100 transition-opacity">
+                             <Badge className="bg-primary/80 backdrop-blur-md text-white border-none text-[8px] font-bold h-5 uppercase tracking-widest px-2">G2 SYNTHESIS</Badge>
+                        </div>
+                    </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/media:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/media:opacity-100 transition-opacity pointer-events-none" />
                 </div>
               )}
                

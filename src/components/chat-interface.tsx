@@ -186,19 +186,19 @@ export default function ChatInterface() {
     addMessage({ role: "You", content: `Create a cinematic video of: ${prompt}` });
     setInput("");
     setIsProcessingTask(true);
-    setCurrentTaskLabel("Veo 3 is crafting your video with sound...");
+    setCurrentTaskLabel("Veo 3 PRO is synthesizing cinematic motion with spatial audio...");
     
     try {
       const { videoUrl, altText } = await generateVideo({ prompt });
       addMessage({ 
         role: "AIva",
-        content: `Your cinematic video with sound is ready!`,
+        content: `Your cinematic motion sequence with spatial sound is ready for review.`,
         imageUrl: videoUrl, 
         altText: altText,
       });
     } catch (error: any) {
       console.error(error);
-      addMessage({ role: "AIva", content: `Failed to generate video: ${error.message}` });
+      addMessage({ role: "AIva", content: `Motion Engine Error: ${error.message}` });
     } finally {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);
@@ -214,18 +214,18 @@ export default function ChatInterface() {
     addMessage({ role: "You", content: `Compose AI music for: ${prompt}` });
     setInput("");
     setIsProcessingTask(true);
-    setCurrentTaskLabel("Composing unique audio snippets...");
+    setCurrentTaskLabel("Neural Studio is mastering unique audio layers...");
     
     try {
       const { audioUrl, description } = await generateMusic({ prompt });
       addMessage({ 
         role: "AIva",
-        content: `I've composed a musical atmosphere for you: ${description}`,
+        content: `I've mastered a new spatial audio track: ${description}`,
         imageUrl: audioUrl,
       });
     } catch (error: any) {
       console.error(error);
-      addMessage({ role: "AIva", content: `Failed to generate music: ${error.message}` });
+      addMessage({ role: "AIva", content: `Audio Synthesis Error: ${error.message}` });
     } finally {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);

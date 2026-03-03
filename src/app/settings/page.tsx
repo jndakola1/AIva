@@ -63,7 +63,7 @@ import { Badge } from '@/components/ui/badge';
 
 function SettingsSection({ icon: Icon, title, description, children }: { icon: React.ElementType; title: string; description: string; children: React.ReactNode }) {
   return (
-    <Card className="bg-white/[0.02] border-white/5 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden shadow-2xl relative">
+    <Card className="bg-foreground/[0.02] border-foreground/5 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden shadow-2xl relative">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-50 pointer-events-none" />
       <CardHeader className="relative pb-2">
         <div className="flex items-center gap-5">
@@ -84,10 +84,10 @@ function SettingsSection({ icon: Icon, title, description, children }: { icon: R
 }
 
 const SettingsItem = ({ label, description, children, icon: Icon }: { label: string; description?: string; children: React.ReactNode; icon?: React.ElementType }) => (
-  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 rounded-[2rem] bg-white/[0.03] border border-white/5 gap-4 transition-all hover:bg-white/[0.05] group">
+  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 rounded-[2rem] bg-foreground/[0.03] border border-foreground/5 gap-4 transition-all hover:bg-foreground/[0.05] group">
     <div className="flex items-center gap-4 flex-grow">
       {Icon && (
-        <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 text-foreground/40 group-hover:text-primary transition-all">
+        <div className="h-10 w-10 rounded-xl bg-foreground/5 flex items-center justify-center border border-foreground/10 text-foreground/40 group-hover:text-primary transition-all">
             <Icon className="h-5 w-5" />
         </div>
       )}
@@ -135,7 +135,7 @@ export default function SettingsPage() {
       <main className="flex-1 p-8 pt-4 overflow-y-auto no-scrollbar">
         <div className="max-w-4xl mx-auto pb-24">
           <Tabs defaultValue="account" className="w-full">
-            <TabsList className="flex h-auto p-1.5 bg-white/[0.03] border border-white/5 rounded-[2rem] mb-12 backdrop-blur-xl overflow-x-auto no-scrollbar justify-start md:justify-center gap-2">
+            <TabsList className="flex h-auto p-1.5 bg-foreground/[0.03] border border-foreground/5 rounded-[2rem] mb-12 backdrop-blur-xl overflow-x-auto no-scrollbar justify-start md:justify-center gap-2">
               <TabsTrigger value="account" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
               <TabsTrigger value="integrations" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Cloud className="w-4 h-4 mr-2" />Neural Cloud</TabsTrigger>
               <TabsTrigger value="personality" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Smile className="w-4 h-4 mr-2" />Mood</TabsTrigger>
@@ -145,19 +145,19 @@ export default function SettingsPage() {
             <TabsContent value="account" className="space-y-8">
                <SettingsSection icon={User} title="User Profile" description="Manage your core identity and linked accounts.">
                   {authLoading ? (
-                    <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 animate-pulse">
+                    <div className="p-8 rounded-[2.5rem] bg-foreground/[0.03] border border-foreground/5 animate-pulse">
                       <div className="flex items-center gap-6">
-                        <Skeleton className="h-16 w-16 rounded-3xl bg-white/5" />
+                        <Skeleton className="h-16 w-16 rounded-3xl bg-foreground/5" />
                         <div className="space-y-3">
-                          <Skeleton className="h-5 w-40 bg-white/5" />
-                          <Skeleton className="h-3 w-64 bg-white/5" />
+                          <Skeleton className="h-5 w-40 bg-foreground/5" />
+                          <Skeleton className="h-3 w-64 bg-foreground/5" />
                         </div>
                       </div>
                     </div>
                   ) : user ? (
-                    <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="p-8 rounded-[2.5rem] bg-foreground/[0.03] border border-foreground/5 flex flex-col md:flex-row items-center justify-between gap-8">
                       <div className="flex items-center gap-6">
-                        <div className="h-20 w-20 rounded-[1.75rem] bg-primary border-4 border-white/10 flex items-center justify-center text-white text-3xl font-bold shadow-2xl">
+                        <div className="h-20 w-20 rounded-[1.75rem] bg-primary border-4 border-foreground/10 flex items-center justify-center text-white text-3xl font-bold shadow-2xl">
                           {user.displayName?.[0] || user.email?.[0]?.toUpperCase()}
                         </div>
                         <div>
@@ -188,7 +188,7 @@ export default function SettingsPage() {
                           value={settings.personality.tone} 
                           onValueChange={(value) => updateSettings('personality', 'tone', value)}
                         >
-                          <SelectTrigger className="rounded-2xl bg-white/5 border-white/10 h-12">
+                          <SelectTrigger className="rounded-2xl bg-foreground/5 border-foreground/10 h-12">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -205,7 +205,7 @@ export default function SettingsPage() {
                         <Input 
                             value={settings.personality.name} 
                             onChange={(e) => updateSettings('personality', 'name', e.target.value)}
-                            className="bg-white/5 border-white/10 rounded-2xl h-12 font-bold"
+                            className="bg-foreground/5 border-foreground/10 rounded-2xl h-12 font-bold"
                         />
                      </div>
                   </SettingsItem>
@@ -220,7 +220,7 @@ export default function SettingsPage() {
                           value={settings.appearance.theme} 
                           onValueChange={(value) => updateSettings('appearance', 'theme', value)}
                         >
-                          <SelectTrigger className="rounded-2xl bg-white/5 border-white/10 h-12">
+                          <SelectTrigger className="rounded-2xl bg-foreground/5 border-foreground/10 h-12">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -238,7 +238,7 @@ export default function SettingsPage() {
                           value={settings.appearance.primaryColor} 
                           onValueChange={(value) => updateSettings('appearance', 'primaryColor', value)}
                         >
-                          <SelectTrigger className="rounded-2xl bg-white/5 border-white/10 h-12">
+                          <SelectTrigger className="rounded-2xl bg-foreground/5 border-foreground/10 h-12">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -253,8 +253,8 @@ export default function SettingsPage() {
                </SettingsSection>
 
                <SettingsSection icon={Languages} title="Global Language Terminal" description="Translate the AIva interface into your preferred language.">
-                  <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 space-y-6">
-                      <div id="google_translate_element" className="relative z-10 p-4 bg-white/5 rounded-2xl" />
+                  <div className="p-8 rounded-[2.5rem] bg-foreground/[0.03] border-foreground/5 space-y-6">
+                      <div id="google_translate_element" className="relative z-10 p-4 bg-foreground/5 rounded-2xl" />
                   </div>
                </SettingsSection>
             </TabsContent>

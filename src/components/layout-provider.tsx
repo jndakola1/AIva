@@ -32,7 +32,6 @@ import {
   Palette
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useChatHistory } from '@/context/chat-history-context';
 import { useSettings } from '@/context/settings-context';
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
@@ -53,21 +52,22 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       if (settings.appearance.theme === 'system') {
         activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       } else {
-        activeTheme = settings.appearance.theme as 'light' | 'dark';
+        activeTheme = (settings.appearance.theme as 'light' | 'dark') || 'dark';
       }
 
       document.documentElement.classList.toggle('dark', activeTheme === 'dark');
       document.documentElement.style.colorScheme = activeTheme;
       
-      // Apply primary color variable
-      const colorMap = {
+      // Map primary color selection to CSS variables defined in globals.css
+      const colorMap: Record<string, string> = {
         orange: 'var(--primary-orange)',
         blue: 'var(--primary-blue)',
         green: 'var(--primary-green)',
         purple: 'var(--primary-purple)',
       };
       
-      document.documentElement.style.setProperty('--primary', colorMap[settings.appearance.primaryColor]);
+      const colorValue = colorMap[settings.appearance.primaryColor] || colorMap['orange'];
+      document.documentElement.style.setProperty('--primary', colorValue);
     };
 
     applyTheme();
@@ -89,7 +89,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
   ];
 
   const toggleTheme = () => {
-    const nextTheme = settings.appearance.theme === 'dark' ? 'light' : 'dark';
+    const currentTheme = settings.appearance.theme === 'system' 
+      ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+      : settings.appearance.theme;
+      
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
     updateSettings('appearance', 'theme', nextTheme);
   };
 
@@ -105,7 +109,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     <TooltipProvider>
       <div className="min-h-screen w-full flex bg-background text-foreground overflow-hidden">
         {/* Desktop Sidebar */}
-        <nav className="hidden md:flex flex-col items-center gap-4 px-3 py-6 border-r border-white/5 bg-white/[0.02] backdrop-blur-2xl w-16 lg:w-64 transition-all">
+        <nav className="hidden md:flex flex-col items-center gap-4 px-3 py-6 border-r border-foreground/5 bg-foreground/[0.02] backdrop-blur-2xl w-16 lg:w-64 transition-all">
           <div className="flex items-center gap-3 w-full px-2 mb-6 group cursor-pointer" onClick={() => router.push('/')}>
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-[0_0_20px_rgba(var(--primary),0.5)] transition-transform group-hover:scale-105">
               <Bot className="h-6 w-6 text-white" />
@@ -119,7 +123,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
           <Button 
             onClick={handleNewChat}
             variant="ghost" 
-            className="w-full lg:justify-start gap-3 mb-4 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl transition-all group"
+            className="w-full lg:justify-start gap-3 mb-4 bg-foreground/5 hover:bg-foreground/10 border border-foreground/5 rounded-2xl transition-all group"
           >
             <PlusCircle className="h-5 w-5 text-primary group-hover:rotate-90 transition-transform duration-300" />
             <span className="hidden lg:block font-semibold">New Session</span>
@@ -135,7 +139,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                       "w-full lg:justify-start gap-4 rounded-2xl transition-all h-12",
                       pathname === link.href 
                         ? "bg-primary/10 text-primary border border-primary/20" 
-                        : "text-muted-foreground hover:bg-white/5"
+                        : "text-muted-foreground hover:bg-foreground/5"
                     )}
                     asChild
                   >
@@ -156,7 +160,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                 <Button
                   variant="ghost"
                   onClick={toggleTheme}
-                  className="w-full lg:justify-start gap-4 rounded-2xl transition-all h-12 text-muted-foreground hover:bg-white/5"
+                  className="w-full lg:justify-start gap-4 rounded-2xl transition-all h-12 text-muted-foreground hover:bg-foreground/5"
                 >
                   {settings.appearance.theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                   <span className="hidden lg:block font-medium">Switch Theme</span>
@@ -171,7 +175,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                   variant="ghost"
                   className={cn(
                     "w-full lg:justify-start gap-4 rounded-2xl transition-all h-12",
-                    pathname === '/settings' ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:bg-white/5"
+                    pathname === '/settings' ? "bg-primary/10 text-primary border border-primary/20" : "text-muted-foreground hover:bg-foreground/5"
                   )}
                   asChild
                 >
@@ -189,8 +193,8 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         {/* Main Content Area */}
         <div className="flex flex-1 flex-col h-screen overflow-hidden">
             {/* Mobile Header */}
-            <header className="sticky top-0 z-20 flex h-16 items-center justify-between bg-background/80 backdrop-blur-xl px-4 border-b border-white/5 md:hidden">
-                <div className="flex items-center gap-3">
+            <header className="sticky top-0 z-20 flex h-16 items-center justify-between bg-background/80 backdrop-blur-xl px-4 border-b border-foreground/5 md:hidden">
+                <div className="flex items-center gap-3" onClick={() => router.push('/')}>
                   <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                     <Bot className="h-5 w-5 text-white" />
                   </div>
@@ -200,18 +204,18 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Button onClick={toggleTheme} variant="ghost" size="icon" className="rounded-full bg-white/5">
+                  <Button onClick={toggleTheme} variant="ghost" size="icon" className="rounded-full bg-foreground/5">
                     {settings.appearance.theme === 'dark' ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-primary" />}
                   </Button>
                   <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                       <SheetTrigger asChild>
-                        <Button size="icon" variant="ghost" className="rounded-full bg-white/5">
+                        <Button size="icon" variant="ghost" className="rounded-full bg-foreground/5">
                             <Menu className="h-5 w-5 text-primary" />
                         </Button>
                       </SheetTrigger>
-                      <SheetContent side="left" className="w-[300px] p-0 border-r border-white/5 bg-background">
+                      <SheetContent side="left" className="w-[300px] p-0 border-r border-foreground/5 bg-background">
                           <div className="flex flex-col h-full">
-                            <SheetHeader className="p-6 border-b border-white/5 bg-white/[0.02]">
+                            <SheetHeader className="p-6 border-b border-foreground/5 bg-foreground/[0.02]">
                               <SheetTitle className="flex items-center gap-4">
                                 <div className="p-2.5 bg-primary rounded-2xl text-white">
                                   <Bot className="h-6 w-6" />
@@ -231,21 +235,21 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                           "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all text-base font-medium",
                                           pathname === link.href 
                                             ? "bg-primary/10 text-primary border border-primary/20" 
-                                            : "text-muted-foreground hover:bg-white/5"
+                                            : "text-muted-foreground hover:bg-foreground/5"
                                         )}
                                     >
                                         <link.icon className="h-5 w-5" />
                                         {link.label}
                                     </Link>
                                 ))}
-                                <div className="mt-4 pt-4 border-t border-white/5">
+                                <div className="mt-4 pt-4 border-t border-foreground/5">
                                   <Link
                                       href="/settings"
                                       className={cn(
                                         "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all text-base font-medium",
                                         pathname === "/settings" 
                                           ? "bg-primary/10 text-primary border border-primary/20" 
-                                          : "text-muted-foreground hover:bg-white/5"
+                                          : "text-muted-foreground hover:bg-foreground/5"
                                       )}
                                   >
                                       <Settings className="h-5 w-5" />
@@ -264,7 +268,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             </main>
 
             {/* Mobile Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-20 items-center justify-around bg-background/80 backdrop-blur-2xl border-t border-white/5 md:hidden px-4 pb-4">
+            <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-20 items-center justify-around bg-background/80 backdrop-blur-2xl border-t border-foreground/5 md:hidden px-4 pb-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -276,7 +280,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                 >
                   <div className={cn(
                     "p-2 rounded-xl transition-all",
-                    pathname === link.href ? "bg-primary/10 scale-110 shadow-lg" : "group-hover:bg-white/5"
+                    pathname === link.href ? "bg-primary/10 scale-110 shadow-lg" : "group-hover:bg-foreground/5"
                   )}>
                     <link.icon className="h-5 w-5" />
                   </div>

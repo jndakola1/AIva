@@ -365,7 +365,7 @@ export default function ChatInterface() {
                   {...msg}
                   onPlayAudio={handlePlayAudio}
                   isSpeaking={isSpeaking && currentlyPlayingId === msg.id}
-                  onVoiceAction={sendMessage}
+                  onVoiceAction={(prompt) => sendMessage(prompt)}
                 />
               ))
             )}

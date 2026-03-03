@@ -402,7 +402,7 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     
     const lowerPrompt = input.prompt.toLowerCase();
 
-    // INTERCEPT SCENARIO SIMULATION
+    // SCENARIO INTERCEPTS
     if (lowerPrompt.includes('simulate intercept') || lowerPrompt.includes('incoming message')) {
         return {
             response: "Incoming intelligence intercept. You have a new message from Sarah Chen.",
@@ -413,6 +413,38 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
                     content: "Hey, I've finished the Q3 Vision draft. Can you take a look before the meeting at 4?",
                     time: "Just now",
                     canRead: true,
+                }
+            }
+        };
+    }
+
+    if (lowerPrompt.includes('simulate call') || lowerPrompt.includes('incoming call')) {
+        return {
+            response: "Incoming high-priority encrypted voice call. Identity: Marcus Thorne.",
+            toolData: {
+                type: 'comm-intercept',
+                data: {
+                    sender: "Marcus Thorne",
+                    type: "Voice Call",
+                    content: "Incoming encrypted call...",
+                    time: "Now",
+                    isCall: true
+                }
+            }
+        };
+    }
+
+    if (lowerPrompt.includes('voicemail') || lowerPrompt.includes('missed call')) {
+        return {
+            response: "You have one new neural voicemail from Sarah Chen.",
+            toolData: {
+                type: 'comm-intercept',
+                data: {
+                    sender: "Sarah Chen",
+                    type: "Voicemail",
+                    content: "Hey, I missed you. Call me back when you can about the Q3 vision.",
+                    time: "5m ago",
+                    isVoicemail: true
                 }
             }
         };

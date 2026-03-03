@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
@@ -30,10 +31,10 @@ declare global {
 }
 
 const STARTER_PROMPTS = [
-  { icon: Sparkles, text: "Write a short story about a time-traveling cat.", color: "text-orange-400 bg-orange-400/10" },
-  { icon: Brain, text: "Explain quantum physics to a five-year-old.", color: "text-blue-400 bg-blue-400/10" },
-  { icon: Globe, text: "What are the top travel destinations for 2024?", color: "text-green-400 bg-green-400/10" },
-  { icon: Palette, text: "Give me creative ideas for a DIY home office setup.", color: "text-pink-400 bg-pink-400/10" },
+  { icon: Sparkles, text: "Write a short story about a time-traveling cat.", color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
+  { icon: Brain, text: "Explain quantum physics to a five-year-old.", color: "text-orange-400 bg-orange-400/10 border-orange-400/20" },
+  { icon: Globe, text: "What are the top travel destinations for 2024?", color: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20" },
+  { icon: Palette, text: "Give me creative ideas for a DIY home office setup.", color: "text-primary bg-primary/10 border-primary/20" },
 ];
 
 export default function ChatInterface() {
@@ -299,7 +300,7 @@ export default function ChatInterface() {
                 </div>
               ) : messages.length === 0 ? (
                 <div className="flex flex-col h-full items-center justify-center text-center pt-20 animate-in fade-in duration-700">
-                  <div className="h-24 w-24 bg-primary rounded-[2.5rem] flex items-center justify-center text-4xl font-bold mb-8 shadow-[0_0_40px_rgba(59,130,246,0.5)] rotate-3">A</div>
+                  <div className="h-24 w-24 bg-primary rounded-[2.5rem] flex items-center justify-center text-4xl font-bold mb-8 shadow-[0_0_40px_rgba(217,119,87,0.5)] rotate-3">A</div>
                   <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">Hello. I'm AIva.</h1>
                   <p className="text-muted-foreground mb-12 text-lg max-w-md mx-auto">Your high-performance AI companion, powered by Gemini and Veo.</p>
                   
@@ -308,9 +309,9 @@ export default function ChatInterface() {
                       <button
                         key={i}
                         onClick={() => sendMessage(starter.text)}
-                        className="flex items-center gap-4 p-5 rounded-3xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-white/10 transition-all text-left group shadow-lg"
+                        className="flex items-center gap-4 p-5 rounded-3xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left group shadow-lg"
                       >
-                        <div className={cn("p-3 rounded-2xl group-hover:scale-110 transition-transform", starter.color)}>
+                        <div className={cn("p-3 rounded-2xl group-hover:scale-110 transition-transform border", starter.color)}>
                           <starter.icon className="h-5 w-5" />
                         </div>
                         <span className="text-sm font-semibold text-white/80 group-hover:text-white transition-colors">{starter.text}</span>
@@ -331,7 +332,7 @@ export default function ChatInterface() {
             
             {isProcessingTask && currentTaskLabel && (
                 <div className="flex flex-col items-center justify-center gap-4 py-8 animate-in fade-in zoom-in duration-500">
-                    <div className="flex items-center gap-4 px-6 py-3 bg-primary/10 border border-primary/20 rounded-2xl shadow-[0_0_30px_rgba(59,130,246,0.2)] backdrop-blur-xl">
+                    <div className="flex items-center gap-4 px-6 py-3 bg-primary/10 border border-primary/20 rounded-2xl shadow-[0_0_30px_rgba(217,119,87,0.2)] backdrop-blur-xl">
                         <Loader className="h-5 w-5 animate-spin text-primary" />
                         <span className="text-xs font-bold text-primary uppercase tracking-[0.2em]">{currentTaskLabel}</span>
                     </div>
@@ -374,7 +375,7 @@ export default function ChatInterface() {
             </div>
           )}
           
-          <div className="relative bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all focus-within:border-primary/40 focus-within:shadow-[0_20px_50px_rgba(59,130,246,0.15)] ring-1 ring-white/5">
+          <div className="relative bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all focus-within:border-primary/40 focus-within:shadow-[0_20px_50px_rgba(217,119,87,0.15)] ring-1 ring-white/5">
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -398,7 +399,7 @@ export default function ChatInterface() {
                 onFileSelect={handleFileSelect}
               />
                <Button 
-                  variant="ghost" size="icon" className={cn('rounded-full text-white/40 hover:text-primary transition-all h-11 w-11', { 'text-primary animate-pulse bg-primary/10 shadow-[0_0_15px_rgba(59,130,246,0.4)]': isRecording })}
+                  variant="ghost" size="icon" className={cn('rounded-full text-white/40 hover:text-primary transition-all h-11 w-11', { 'text-primary animate-pulse bg-primary/10 shadow-[0_0_15px_rgba(217,119,87,0.4)]': isRecording })}
                   onClick={handleMicClick} disabled={isDisabled}
                 >
                   <Mic className="h-5 w-5" />

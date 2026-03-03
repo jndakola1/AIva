@@ -1,6 +1,7 @@
+
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Zap, 
   Calendar as CalendarIcon, 
@@ -18,7 +19,9 @@ import {
   Droplets,
   Wind,
   ListTodo,
-  CheckCircle2
+  CheckCircle2,
+  Plus,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,6 +31,13 @@ import { useRouter } from 'next/navigation';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
 import { cn } from '@/lib/utils';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useUser, useCollection, useMemoFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { collection, doc, serverTimestamp, query, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const activityData = [
   { time: '6AM', value: 5 },
@@ -47,13 +57,6 @@ const mockEvents = [
   { title: "Deep Synthesis Session", time: "04:30 PM", category: "Neural", color: "bg-amber-400" },
 ];
 
-const mockTasks = [
-    { title: "Review Q3 Vision Doc", completed: false, priority: "High" },
-    { title: "Approve Architecture Proposal", completed: false, priority: "High" },
-    { title: "Schedule Team Retro", completed: true, priority: "Medium" },
-    { title: "Synthesize Market Intel", completed: false, priority: "Low" },
-];
-
 const mockEmails = [
   { sender: "Sarah Chen", subject: "Q3 Vision Document", time: "10m ago", read: false },
   { sender: "Project AIva", subject: "Synthesis Complete", time: "25m ago", read: false },
@@ -62,6 +65,44 @@ const mockEmails = [
 
 export default function NeuralDashboard() {
   const router = useRouter();
+  const { user } = useUser();
+  const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newPriority, setNewPriority] = useState('medium');
+
+  const tasksQuery = useMemoFirebase(() => {
+    if (!db || !user?.uid) return null;
+    return query(collection(db, 'users', user.uid, 'tasks'), orderBy('createdAt', 'desc'));
+  }, [user?.uid]);
+
+  const { data: firestoreTasks, isLoading: tasksLoading } = useCollection(tasksQuery);
+
+  const handleCreateTask = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.uid || !newTitle.trim()) return;
+
+    const tasksRef = collection(db, 'users', user.uid, 'tasks');
+    addDocumentNonBlocking(tasksRef, {
+      userId: user.uid,
+      title: newTitle,
+      status: 'pending',
+      priority: newPriority,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    setNewTitle('');
+    setIsAddTaskOpen(false);
+  };
+
+  const toggleTaskStatus = (taskId: string, currentStatus: string) => {
+    if (!user?.uid) return;
+    const taskRef = doc(db, 'users', user.uid, 'tasks', taskId);
+    updateDocumentNonBlocking(taskRef, {
+      status: currentStatus === 'completed' ? 'pending' : 'completed',
+      updatedAt: serverTimestamp(),
+    });
+  };
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
@@ -119,7 +160,7 @@ export default function NeuralDashboard() {
                             </div>
                             <div className="px-5 py-3 rounded-2xl bg-foreground/5 border border-foreground/10">
                                 <p className="text-[9px] uppercase font-bold text-foreground/30 tracking-widest mb-1">Tasks Pending</p>
-                                <p className="text-xl font-bold text-foreground">12</p>
+                                <p className="text-xl font-bold text-foreground">{firestoreTasks?.length || 0}</p>
                             </div>
                         </div>
                     </div>
@@ -185,20 +226,78 @@ export default function NeuralDashboard() {
                         <ListTodo className="h-5 w-5 text-primary" />
                         Intelligence Action Items
                     </h2>
-                    <Button variant="ghost" className="text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/10">Add Task</Button>
+                    
+                    <Dialog open={isAddTaskOpen} onOpenChange={setIsAddTaskOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" className="text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/10">Add Task</Button>
+                        </DialogTrigger>
+                        <DialogContent className="rounded-[2.5rem] bg-background/95 backdrop-blur-3xl border border-foreground/10 p-8 shadow-2xl">
+                            <form onSubmit={handleCreateTask} className="space-y-6">
+                                <DialogHeader>
+                                    <DialogTitle className="text-2xl font-bold">New Intelligence Task</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="title" className="text-xs uppercase tracking-widest font-bold opacity-40">Task Title</Label>
+                                        <Input 
+                                            id="title" 
+                                            value={newTitle} 
+                                            onChange={(e) => setNewTitle(e.target.value)} 
+                                            placeholder="Synthesize market intel..." 
+                                            className="bg-foreground/5 border-foreground/10 rounded-2xl h-12 font-bold"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="priority" className="text-xs uppercase tracking-widest font-bold opacity-40">Priority Matrix</Label>
+                                        <Select value={newPriority} onValueChange={setNewPriority}>
+                                            <SelectTrigger className="bg-foreground/5 border-foreground/10 rounded-2xl h-12 font-bold">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="low">Low Impact</SelectItem>
+                                                <SelectItem value="medium">Medium Priority</SelectItem>
+                                                <SelectItem value="high">High Urgency</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit" className="w-full h-14 bg-primary text-white rounded-2xl font-bold uppercase tracking-widest shadow-xl shadow-primary/20">
+                                        Create Entry
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
                 </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {mockTasks.map((task, i) => (
-                        <div key={i} className="p-6 rounded-[2rem] bg-foreground/[0.03] border border-foreground/5 flex items-center gap-5 group hover:bg-foreground/[0.06] hover:border-primary/20 transition-all cursor-pointer">
-                            <Checkbox checked={task.completed} className="h-6 w-6 rounded-lg border-foreground/10" />
-                            <div className="flex-1 min-w-0">
-                                <p className={cn("text-sm font-bold text-foreground transition-all truncate", task.completed && "text-foreground/20 line-through")}>{task.title}</p>
-                                <div className="flex items-center gap-3 mt-1">
-                                    <Badge className={cn("text-[8px] font-bold border-none h-4", task.priority === 'High' ? "bg-red-500/20 text-red-400" : "bg-foreground/5 text-foreground/40")}>{task.priority}</Badge>
+                    {tasksLoading ? (
+                        <div className="col-span-2 flex items-center justify-center py-20">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary/40" />
+                        </div>
+                    ) : firestoreTasks && firestoreTasks.length > 0 ? (
+                        firestoreTasks.map((task) => (
+                            <div 
+                                key={task.id} 
+                                onClick={() => toggleTaskStatus(task.id, task.status)}
+                                className="p-6 rounded-[2rem] bg-foreground/[0.03] border border-foreground/5 flex items-center gap-5 group hover:bg-foreground/[0.06] hover:border-primary/20 transition-all cursor-pointer"
+                            >
+                                <Checkbox checked={task.status === 'completed'} className="h-6 w-6 rounded-lg border-foreground/10" />
+                                <div className="flex-1 min-w-0">
+                                    <p className={cn("text-sm font-bold text-foreground transition-all truncate", task.status === 'completed' && "text-foreground/20 line-through")}>{task.title}</p>
+                                    <div className="flex items-center gap-3 mt-1">
+                                        <Badge className={cn("text-[8px] font-bold border-none h-4", task.priority === 'high' ? "bg-red-500/20 text-red-400" : "bg-foreground/5 text-foreground/40")}>{task.priority}</Badge>
+                                    </div>
                                 </div>
                             </div>
+                        ))
+                    ) : (
+                        <div className="col-span-2 p-12 text-center bg-foreground/[0.02] border border-dashed border-foreground/10 rounded-[2rem]">
+                            <p className="text-foreground/40 font-bold uppercase tracking-widest text-xs">No active intelligence tasks</p>
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
 

@@ -459,7 +459,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
           </span>
           {isAi && review && <ReviewPopover review={review} />}
           {isVideo && <Badge variant="secondary" className="bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg h-6 px-2.5 text-[9px] uppercase font-bold tracking-widest"><Film className="w-3 h-3 mr-1.5" /> Veo 3.0</Badge>}
-          {isAudio && <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-500 border border-indigo-500/20 rounded-lg h-6 px-2.5 text-[9px] uppercase font-bold tracking-widest"><Music className="w-3 h-3 mr-1.5" /> AI Studio</Badge>}
+          {isAudio && <Badge variant="secondary" className="bg-primary/10 text-primary border border-primary/20 rounded-lg h-6 px-2.5 text-[9px] uppercase font-bold tracking-widest"><Music className="w-3 h-3 mr-1.5" /> AI Studio</Badge>}
           {isImageGen && <Badge variant="secondary" className="bg-primary/10 text-primary border border-primary/20 rounded-lg h-6 px-2.5 text-[9px] uppercase font-bold tracking-widest"><Sparkles className="w-3 h-3 mr-1.5" /> Gemini 2.0</Badge>}
         </div>
 
@@ -514,18 +514,18 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                         </div>
                     </div>
                   ) : isAudio ? (
-                    <div className="p-8 bg-gradient-to-br from-indigo-500/10 to-transparent border border-indigo-500/20 rounded-[2.5rem] flex flex-col gap-6 backdrop-blur-3xl relative overflow-hidden group/audio">
+                    <div className="p-8 bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 rounded-[2.5rem] flex flex-col gap-6 backdrop-blur-3xl relative overflow-hidden group/audio">
                         <div className="absolute top-0 right-0 p-8 opacity-10 group-hover/audio:opacity-20 transition-opacity">
-                            <Activity className="h-32 w-32 text-indigo-400 animate-pulse" />
+                            <Activity className="h-32 w-32 text-primary animate-pulse" />
                         </div>
                         <div className="relative flex items-center gap-5">
-                            <div className="p-4 bg-indigo-500 rounded-2xl text-white shadow-xl shadow-indigo-500/30 group-hover/audio:scale-110 transition-transform">
+                            <div className="p-4 bg-primary rounded-2xl text-white shadow-xl shadow-primary/30 group-hover/audio:scale-110 transition-transform">
                                 <Music className="h-7 w-7" />
                             </div>
                             <div className="space-y-1">
                                 <span className="text-base font-bold text-foreground block">Neural Studio Output</span>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-[0.2em]">High Fidelity</span>
+                                    <span className="text-[9px] font-bold text-primary uppercase tracking-[0.2em]">High Fidelity</span>
                                     <span className="w-1 h-1 rounded-full bg-foreground/20" />
                                     <span className="text-[9px] font-bold text-foreground/30 uppercase tracking-[0.2em]">Spatial Track</span>
                                 </div>

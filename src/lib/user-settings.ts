@@ -9,6 +9,7 @@ export type PersonalitySettings = {
 
 export type AppearanceSettings = {
   theme: 'light' | 'dark' | 'system';
+  primaryColor: 'orange' | 'blue' | 'green' | 'purple';
 };
 
 export type UserSettings = {
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   },
   appearance: {
     theme: 'dark',
+    primaryColor: 'orange',
   },
 };
 
@@ -37,7 +39,6 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
 
   if (docSnap.exists()) {
     const dbSettings = docSnap.data() as Partial<UserSettings>;
-    // Deep merge with defaults to ensure all keys are present
     return {
       ...DEFAULT_SETTINGS,
       ...dbSettings,
@@ -51,14 +52,12 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
       },
     };
   } else {
-    // No settings found, return defaults
     return DEFAULT_SETTINGS;
   }
 }
 
 /**
  * Updates user settings in Firestore.
- * This performs a deep merge of the provided settings.
  */
 export async function updateUserSettings(userId: string, settings: Partial<UserSettings>): Promise<void> {
   const settingsRef = doc(db, 'users', userId, 'settings');

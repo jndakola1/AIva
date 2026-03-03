@@ -28,60 +28,58 @@ import {
   LayoutDashboard,
   Sparkles,
   Sun,
-  Moon
+  Moon,
+  Palette
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChatHistory } from '@/context/chat-history-context';
-import { useAuth } from '@/hooks/use-auth';
-import { getUserSettings } from '@/lib/user-settings';
+import { useSettings } from '@/context/settings-context';
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { messages } = useChatHistory();
-  const { user } = useAuth();
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  const { settings, updateSettings } = useSettings();
 
   useEffect(() => {
     setIsSheetOpen(false);
   }, [pathname]);
 
-  // Handle Theme Persistence and Application
+  // Handle Theme Application
   useEffect(() => {
-    const applyTheme = async () => {
+    const applyTheme = () => {
       let activeTheme: 'light' | 'dark' = 'dark';
       
-      if (user) {
-        try {
-          const settings = await getUserSettings(user.uid);
-          if (settings.appearance.theme === 'system') {
-            activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          } else {
-            activeTheme = settings.appearance.theme as 'light' | 'dark';
-          }
-        } catch (e) {
-          console.error("Failed to load theme settings");
-        }
-      } else {
-        // Guest fallback to system or dark
+      if (settings.appearance.theme === 'system') {
         activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } else {
+        activeTheme = settings.appearance.theme as 'light' | 'dark';
       }
 
-      setTheme(activeTheme);
       document.documentElement.classList.toggle('dark', activeTheme === 'dark');
       document.documentElement.style.colorScheme = activeTheme;
+      
+      // Apply primary color variable
+      const colorMap = {
+        orange: 'var(--primary-orange)',
+        blue: 'var(--primary-blue)',
+        green: 'var(--primary-green)',
+        purple: 'var(--primary-purple)',
+      };
+      
+      document.documentElement.style.setProperty('--primary', colorMap[settings.appearance.primaryColor]);
     };
 
     applyTheme();
     
-    // Listen for system theme changes if set to system (simulated)
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemChange = () => applyTheme();
+    const handleSystemChange = () => {
+        if (settings.appearance.theme === 'system') applyTheme();
+    };
     mediaQuery.addEventListener('change', handleSystemChange);
     
     return () => mediaQuery.removeEventListener('change', handleSystemChange);
-  }, [user]);
+  }, [settings.appearance.theme, settings.appearance.primaryColor]);
 
   const navLinks = [
     { href: '/', label: 'Chat', icon: MessageSquare },
@@ -89,6 +87,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
     { href: '/audio', label: 'Video Chat', icon: Video },
     { href: '/history', label: 'History', icon: History },
   ];
+
+  const toggleTheme = () => {
+    const nextTheme = settings.appearance.theme === 'dark' ? 'light' : 'dark';
+    updateSettings('appearance', 'theme', nextTheme);
+  };
 
   const handleNewChat = () => {
     if (pathname === '/') {
@@ -104,7 +107,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         {/* Desktop Sidebar */}
         <nav className="hidden md:flex flex-col items-center gap-4 px-3 py-6 border-r border-white/5 bg-white/[0.02] backdrop-blur-2xl w-16 lg:w-64 transition-all">
           <div className="flex items-center gap-3 w-full px-2 mb-6 group cursor-pointer" onClick={() => router.push('/')}>
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-[0_0_20px_rgba(217,119,87,0.5)] transition-transform group-hover:scale-105">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary shadow-[0_0_20px_rgba(var(--primary),0.5)] transition-transform group-hover:scale-105">
               <Bot className="h-6 w-6 text-white" />
             </div>
             <div className="hidden lg:block">
@@ -131,7 +134,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                     className={cn(
                       "w-full lg:justify-start gap-4 rounded-2xl transition-all h-12",
                       pathname === link.href 
-                        ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(217,119,87,0.1)]" 
+                        ? "bg-primary/10 text-primary border border-primary/20" 
                         : "text-muted-foreground hover:bg-white/5"
                     )}
                     asChild
@@ -139,7 +142,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                     <Link href={link.href}>
                       <link.icon className={cn("h-5 w-5 shrink-0 transition-transform", pathname === link.href && "scale-110")} />
                       <span className="hidden lg:block font-medium">{link.label}</span>
-                      {pathname === link.href && <span className="hidden lg:block ml-auto w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(217,119,87,0.5)]" />}
                     </Link>
                   </Button>
                 </TooltipTrigger>
@@ -149,13 +151,20 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="mt-auto w-full space-y-2">
-             <div className="hidden lg:block p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-transparent border border-white/5 mb-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-primary">Pro Status</span>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">You're currently using Gemini Pro & Veo 3 engine.</p>
-             </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  onClick={toggleTheme}
+                  className="w-full lg:justify-start gap-4 rounded-2xl transition-all h-12 text-muted-foreground hover:bg-white/5"
+                >
+                  {settings.appearance.theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  <span className="hidden lg:block font-medium">Switch Theme</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="lg:hidden">Toggle Theme</TooltipContent>
+            </Tooltip>
+            
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -182,7 +191,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             {/* Mobile Header */}
             <header className="sticky top-0 z-20 flex h-16 items-center justify-between bg-background/80 backdrop-blur-xl px-4 border-b border-white/5 md:hidden">
                 <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(217,119,87,0.4)]">
+                  <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                     <Bot className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -191,20 +200,20 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <Button onClick={handleNewChat} variant="ghost" size="icon" className="rounded-full bg-white/5 hover:bg-white/10">
-                    <PlusCircle className="h-5 w-5 text-primary" />
+                  <Button onClick={toggleTheme} variant="ghost" size="icon" className="rounded-full bg-white/5">
+                    {settings.appearance.theme === 'dark' ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-primary" />}
                   </Button>
                   <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                       <SheetTrigger asChild>
-                        <Button size="icon" variant="ghost" className="rounded-full bg-white/5 hover:bg-white/10 group">
-                            <Menu className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+                        <Button size="icon" variant="ghost" className="rounded-full bg-white/5">
+                            <Menu className="h-5 w-5 text-primary" />
                         </Button>
                       </SheetTrigger>
                       <SheetContent side="left" className="w-[300px] p-0 border-r border-white/5 bg-background">
                           <div className="flex flex-col h-full">
                             <SheetHeader className="p-6 border-b border-white/5 bg-white/[0.02]">
                               <SheetTitle className="flex items-center gap-4">
-                                <div className="p-2.5 bg-primary rounded-2xl text-white shadow-lg shadow-primary/20">
+                                <div className="p-2.5 bg-primary rounded-2xl text-white">
                                   <Bot className="h-6 w-6" />
                                 </div>
                                 <div className="text-left">
@@ -221,7 +230,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                         className={cn(
                                           "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all text-base font-medium",
                                           pathname === link.href 
-                                            ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(217,119,87,0.2)]" 
+                                            ? "bg-primary/10 text-primary border border-primary/20" 
                                             : "text-muted-foreground hover:bg-white/5"
                                         )}
                                     >
@@ -235,7 +244,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                       className={cn(
                                         "flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all text-base font-medium",
                                         pathname === "/settings" 
-                                          ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_15px_rgba(217,119,87,0.2)]" 
+                                          ? "bg-primary/10 text-primary border border-primary/20" 
                                           : "text-muted-foreground hover:bg-white/5"
                                       )}
                                   >
@@ -244,9 +253,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                   </Link>
                                 </div>
                             </nav>
-                            <div className="p-6 text-[10px] text-muted-foreground/40 text-center uppercase tracking-[0.2em] font-bold">
-                              AIva OS v1.2 Stable
-                            </div>
                           </div>
                       </SheetContent>
                   </Sheet>
@@ -270,14 +276,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                 >
                   <div className={cn(
                     "p-2 rounded-xl transition-all",
-                    pathname === link.href ? "bg-primary/10 scale-110 shadow-[0_0_15px_rgba(217,119,87,0.3)]" : "group-hover:bg-white/5"
+                    pathname === link.href ? "bg-primary/10 scale-110 shadow-lg" : "group-hover:bg-white/5"
                   )}>
                     <link.icon className="h-5 w-5" />
                   </div>
                   <span className="text-[9px] font-bold uppercase tracking-widest">{link.label}</span>
-                  {pathname === link.href && (
-                    <span className="absolute -top-px left-1/2 -translate-x-1/2 w-8 h-1 bg-primary rounded-full shadow-[0_0_10px_rgba(217,119,87,0.6)]" />
-                  )}
                 </Link>
               ))}
             </nav>

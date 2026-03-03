@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutProvider } from '@/components/layout-provider';
 import { ChatHistoryProvider } from '@/context/chat-history-context';
+import { SettingsProvider } from '@/context/settings-context';
 import { FirebaseClientProvider } from '@/firebase';
 import Script from 'next/script';
 
@@ -56,11 +57,13 @@ export default function RootLayout({
       </head>
       <body className="antialiased font-sans">
         <FirebaseClientProvider>
-          <ChatHistoryProvider>
-            <LayoutProvider>
-              {children}
-            </LayoutProvider>
-          </ChatHistoryProvider>
+          <SettingsProvider>
+            <ChatHistoryProvider>
+              <LayoutProvider>
+                {children}
+              </LayoutProvider>
+            </ChatHistoryProvider>
+          </SettingsProvider>
         </FirebaseClientProvider>
         <Toaster />
         <Script

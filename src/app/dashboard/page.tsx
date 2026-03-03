@@ -16,7 +16,9 @@ import {
   Search,
   ArrowUpRight,
   Droplets,
-  Wind
+  Wind,
+  ListTodo,
+  CheckCircle2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { useRouter } from 'next/navigation';
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartsTooltip } from 'recharts';
 import { cn } from '@/lib/utils';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const activityData = [
   { time: '6AM', value: 5 },
@@ -42,6 +45,13 @@ const mockEvents = [
   { title: "Executive Board Review", time: "11:00 AM", category: "Strategy", color: "bg-primary" },
   { title: "Client Vision Demo", time: "02:00 PM", category: "External", color: "bg-indigo-500" },
   { title: "Deep Synthesis Session", time: "04:30 PM", category: "Neural", color: "bg-amber-400" },
+];
+
+const mockTasks = [
+    { title: "Review Q3 Vision Doc", completed: false, priority: "High" },
+    { title: "Approve Architecture Proposal", completed: false, priority: "High" },
+    { title: "Schedule Team Retro", completed: true, priority: "Medium" },
+    { title: "Synthesize Market Intel", completed: false, priority: "Low" },
 ];
 
 const mockEmails = [
@@ -165,44 +175,39 @@ export default function NeuralDashboard() {
             </div>
           </section>
 
-          {/* Schedule & Communication Section */}
+          {/* Task Terminal & Schedule Section */}
           <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* Timeline */}
+            {/* Task Terminal */}
             <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center justify-between px-2">
                     <h2 className="text-xl font-bold flex items-center gap-3">
-                        <CalendarIcon className="h-5 w-5 text-primary" />
-                        Today's Synthesis
+                        <ListTodo className="h-5 w-5 text-primary" />
+                        Intelligence Action Items
                     </h2>
-                    <Button variant="ghost" className="text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/10">View Week</Button>
+                    <Button variant="ghost" className="text-xs font-bold uppercase tracking-widest text-primary hover:bg-primary/10">Add Task</Button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {mockEvents.map((event, i) => (
+                    {mockTasks.map((task, i) => (
                         <div key={i} className="p-6 rounded-[2rem] bg-white/[0.03] border border-white/5 flex items-center gap-5 group hover:bg-white/[0.06] hover:border-primary/20 transition-all cursor-pointer">
-                            <div className={cn("h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg", event.color)}>
-                                <Clock className="h-5 w-5 text-white" />
-                            </div>
+                            <Checkbox checked={task.completed} className="h-6 w-6 rounded-lg border-white/10" />
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-white group-hover:text-primary transition-colors truncate">{event.title}</p>
+                                <p className={cn("text-sm font-bold text-white transition-all truncate", task.completed && "text-white/20 line-through")}>{task.title}</p>
                                 <div className="flex items-center gap-3 mt-1">
-                                    <p className="text-[10px] uppercase tracking-widest font-bold text-white/30">{event.time}</p>
-                                    <span className="h-1 w-1 rounded-full bg-white/10" />
-                                    <p className="text-[10px] uppercase tracking-widest font-bold text-primary/60">{event.category}</p>
+                                    <Badge className={cn("text-[8px] font-bold border-none h-4", task.priority === 'High' ? "bg-red-500/20 text-red-400" : "bg-white/5 text-white/40")}>{task.priority}</Badge>
                                 </div>
                             </div>
-                            <ChevronRight className="h-4 w-4 text-white/10 group-hover:translate-x-1 group-hover:text-primary transition-all" />
                         </div>
                     ))}
                 </div>
             </div>
 
-            {/* Inbox */}
+            {/* Communication Terminal */}
             <div className="space-y-6">
                 <div className="flex items-center justify-between px-2">
                     <h2 className="text-xl font-bold flex items-center gap-3">
                         <Mail className="h-5 w-5 text-indigo-400" />
-                        Communication
+                        Comm Intercept
                     </h2>
                     <Badge className="bg-indigo-500/20 text-indigo-400 border-none">3 NEW</Badge>
                 </div>
@@ -216,30 +221,32 @@ export default function NeuralDashboard() {
                         </div>
                     ))}
                     <Button variant="ghost" className="w-full h-14 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 text-white/60 font-bold uppercase tracking-[0.2em] text-[10px]">
-                        Open Mail Terminal
+                        Open Comm Terminal
                     </Button>
                 </div>
             </div>
 
           </section>
 
-          {/* Intelligence Synthesis */}
-          <section className="p-10 rounded-[3rem] bg-gradient-to-br from-indigo-500/10 via-white/[0.02] to-primary/10 border border-white/5 relative group">
-              <div className="flex flex-col md:flex-row items-center gap-10">
-                  <div className="h-32 w-32 bg-primary rounded-[2.5rem] flex items-center justify-center shrink-0 shadow-[0_0_50px_rgba(217,119,87,0.3)] animate-pulse">
-                      <Zap className="h-16 w-16 text-white" />
+          {/* Schedule Visualization */}
+          <section className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 relative group overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-transparent opacity-50" />
+              <div className="relative flex flex-col md:flex-row items-center gap-10">
+                  <div className="h-32 w-32 bg-primary rounded-[2.5rem] flex items-center justify-center shrink-0 shadow-[0_0_50px_rgba(217,119,87,0.3)]">
+                      <CalendarIcon className="h-16 w-16 text-white" />
                   </div>
-                  <div className="space-y-4">
+                  <div className="flex-1 space-y-6">
                       <div className="flex items-center gap-3">
                           <Sparkles className="h-5 w-5 text-primary" />
-                          <h2 className="text-2xl font-bold tracking-tight">AIva Neural Synthesis</h2>
+                          <h2 className="text-2xl font-bold tracking-tight">Upcoming Synthesis</h2>
                       </div>
-                      <p className="text-lg text-white/70 leading-relaxed font-medium">
-                        Your terminal has synchronized successfully. You have a balanced day ahead with 4 key milestones. I've prioritized your morning briefing and filtered 12 lower-priority communications. Environmental conditions are optimal for deep work between 10:00 AM and 01:00 PM.
-                      </p>
-                      <div className="flex gap-4 pt-2">
-                          <Button className="rounded-2xl h-12 px-8 bg-primary text-white font-bold uppercase tracking-widest text-xs shadow-xl shadow-primary/20">Analyze Trends</Button>
-                          <Button variant="ghost" className="rounded-2xl h-12 px-8 bg-white/5 border border-white/10 text-white font-bold uppercase tracking-widest text-xs">Full Report</Button>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {mockEvents.map((event, i) => (
+                            <div key={i} className="p-5 rounded-3xl bg-white/5 border border-white/10 space-y-2">
+                                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{event.time}</p>
+                                <p className="text-sm font-bold text-white">{event.title}</p>
+                            </div>
+                        ))}
                       </div>
                   </div>
               </div>

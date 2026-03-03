@@ -31,7 +31,13 @@ import {
   Zap,
   Fingerprint,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Globe,
+  Mail,
+  Calendar,
+  Cloud,
+  CheckCircle2,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { auth, db } from '@/lib/firebase';
@@ -102,6 +108,24 @@ const SettingsItem = ({ label, description, children, icon: Icon }: { label: str
   </div>
 );
 
+const IntegrationCard = ({ icon: Icon, name, description, connected }: { icon: React.ElementType, name: string, description: string, connected: boolean }) => (
+    <div className="p-6 rounded-[2.5rem] bg-white/[0.03] border border-white/5 flex flex-col gap-4 group hover:bg-white/[0.05] transition-all">
+        <div className="flex items-center justify-between">
+            <div className="h-14 w-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-primary/30 transition-all">
+                <Icon className={cn("h-7 w-7 transition-all group-hover:scale-110", connected ? "text-primary" : "text-white/20")} />
+            </div>
+            <Switch checked={connected} className="data-[state=checked]:bg-primary" />
+        </div>
+        <div>
+            <p className="text-lg font-bold text-white">{name}</p>
+            <p className="text-xs text-white/40 font-medium mt-1">{description}</p>
+        </div>
+        <Button variant="ghost" className="w-full h-11 rounded-xl bg-white/5 border border-white/5 text-[10px] font-bold uppercase tracking-widest">
+            Configure Intercept
+        </Button>
+    </div>
+);
+
 export default function SettingsPage() {
   const { clearHistory, messages } = useChatHistory();
   const { user, loading: authLoading } = useAuth();
@@ -129,7 +153,7 @@ export default function SettingsPage() {
           });
         }
       };
-      fetchSettings();
+      fetchHistory();
     }
   }, [user]);
 
@@ -186,10 +210,9 @@ export default function SettingsPage() {
           <Tabs defaultValue="account" className="w-full">
             <TabsList className="flex h-auto p-1.5 bg-white/[0.03] border border-white/5 rounded-[2rem] mb-12 backdrop-blur-xl overflow-x-auto no-scrollbar justify-start md:justify-center gap-2">
               <TabsTrigger value="account" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
+              <TabsTrigger value="integrations" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Cloud className="w-4 h-4 mr-2" />Neural Cloud</TabsTrigger>
               <TabsTrigger value="personality" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Smile className="w-4 h-4 mr-2" />Mood</TabsTrigger>
-              <TabsTrigger value="voice" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Volume2 className="w-4 h-4 mr-2" />Audio</TabsTrigger>
-              <TabsTrigger value="intelligence" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Zap className="w-4 h-4 mr-2" />Neural</TabsTrigger>
-              <TabsTrigger value="identity" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Fingerprint className="w-4 h-4 mr-2" />Security</TabsTrigger>
+              <TabsTrigger value="intelligence" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Zap className="w-4 h-4 mr-2" />Neural Core</TabsTrigger>
             </TabsList>
             
             <TabsContent value="account" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -271,6 +294,17 @@ export default function SettingsPage() {
                </SettingsSection>
             </TabsContent>
 
+            <TabsContent value="integrations" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <SettingsSection icon={Cloud} title="Neural Cloud Sync" description="Synchronize your digital life across specialized AIva terminals.">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <IntegrationCard icon={Mail} name="Intelligence Comm" description="Synthesize emails and high-priority messages." connected={true} />
+                        <IntegrationCard icon={Calendar} name="Schedule Sync" description="Automatic event synthesis and agenda mapping." connected={true} />
+                        <IntegrationCard icon={Zap} name="Terminal Tasks" description="Sync actions items and neural to-do lists." connected={true} />
+                        <IntegrationCard icon={ShieldCheck} name="Biometric Auth" description="Multi-step validation for sensitive data." connected={false} />
+                    </div>
+                </SettingsSection>
+            </TabsContent>
+
             <TabsContent value="personality" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                <SettingsSection icon={Smile} title="Personality Matrix" description="Fine-tune AIva’s behavioral parameters and vocal tone.">
                   <SettingsItem label="Tone Synthesis" description="Adjust the verbal style of the AI assistant." icon={Palette}>
@@ -336,17 +370,6 @@ export default function SettingsPage() {
                             </Button>
                         </div>
                     </div>
-                </SettingsSection>
-            </TabsContent>
-            
-            <TabsContent value="identity" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <SettingsSection icon={VenetianMask} title="Identity & Access" description="Security protocols for multimodal authentication.">
-                     <SettingsItem label="Multimodal Vision" description="Allow AIva to identify you through video chat streams." icon={Bot}>
-                        <Switch defaultChecked className="data-[state=checked]:bg-primary" />
-                     </SettingsItem>
-                     <SettingsItem label="Terminal Biometrics" description="Require biometric verification for sensitive neural tasks." icon={Fingerprint}>
-                        <Switch defaultChecked className="data-[state=checked]:bg-primary" />
-                     </SettingsItem>
                 </SettingsSection>
             </TabsContent>
           </Tabs>

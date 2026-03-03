@@ -81,6 +81,37 @@ const researchTopic = ai.defineTool(
   }
 );
 
+const manageTasksTool = ai.defineTool(
+  {
+    name: 'manageTasks',
+    description: 'Adds, lists, or marks tasks as complete.',
+    inputSchema: z.object({
+      action: z.enum(['add', 'list', 'complete']).describe('Action to perform.'),
+      task: z.string().optional().describe('Task description.'),
+    }),
+    outputSchema: z.object({
+      result: z.string(),
+      tasks: z.array(z.object({
+        id: z.string(),
+        title: z.string(),
+        completed: z.boolean(),
+        priority: z.enum(['low', 'medium', 'high']),
+      })).optional(),
+    }),
+  },
+  async ({ action, task }) => {
+    const mockTasks = [
+      { id: '1', title: 'Review Q3 Vision', completed: false, priority: 'high' as const },
+      { id: '2', title: 'Client Sync', completed: true, priority: 'medium' as const },
+      { id: '3', title: 'Deep Research Synthesis', completed: false, priority: 'high' as const },
+    ];
+    if (action === 'add') {
+      return { result: `Task "${task}" added to your Neural List.`, tasks: [...mockTasks, { id: '4', title: task || 'New Task', completed: false, priority: 'medium' as const }] };
+    }
+    return { result: "Here are your active intelligence tasks.", tasks: mockTasks };
+  }
+);
+
 const setAlarmTool = ai.defineTool(
   {
     name: 'setAlarm',
@@ -292,7 +323,7 @@ export const ChatOutputSchema = z.object({
   dataAiHint: z.string().optional(),
   review: SelfReviewOutputSchema.optional(),
   toolData: z.object({
-    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather', 'research', 'briefing']),
+    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather', 'research', 'briefing', 'task']),
     data: z.any(),
   }).optional(),
 });
@@ -312,7 +343,7 @@ const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
-  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool, searchHospitalTool, getWeatherTool, getDailyBriefingTool],
+  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool, searchHospitalTool, getWeatherTool, getDailyBriefingTool, manageTasksTool],
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -325,6 +356,7 @@ const chatPrompt = ai.definePrompt({
 Tone: {{personality.tone}}
 Humor enabled: {{personality.enableHumor}}
 
+When a user asks for tasks, to-do lists, or "what do I need to do", use the manageTasks tool.
 When a user asks for a daily summary, briefing, or "how is my day looking", use the getDailyBriefing tool.
 For other specific tasks (hospitals, alarms, calendar, emails, research, weather), use the appropriate tool.
 ALWAYS populate the 'toolData' field in your output with the data returned by the tool if you used one.
@@ -370,6 +402,23 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     
     const lowerPrompt = input.prompt.toLowerCase();
     
+    if (lowerPrompt.includes('task') || lowerPrompt.includes('to-do') || lowerPrompt.includes('todo')) {
+        return {
+          response: "I've synchronized your Neural Task List. Here's what's currently in your queue.",
+          toolData: {
+            type: 'task',
+            data: {
+              result: "Here are your active intelligence tasks.",
+              tasks: [
+                { id: '1', title: 'Review Q3 Vision', completed: false, priority: 'high' },
+                { id: '2', title: 'Client Sync', completed: true, priority: 'medium' },
+                { id: '3', title: 'Deep Research Synthesis', completed: false, priority: 'high' },
+              ]
+            }
+          }
+        };
+    }
+
     if (lowerPrompt.includes('briefing') || lowerPrompt.includes('summary') || lowerPrompt.includes('my day')) {
       return {
         response: "Here's your Neural Daily Briefing. I've synthesized your schedule and updates for today.",

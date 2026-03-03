@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText, LayoutDashboard, Zap, Play, Activity } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText, LayoutDashboard, Zap, Play, Activity, ListTodo, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
@@ -13,6 +13,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Switch } from "./ui/switch";
+import { Checkbox } from "./ui/checkbox";
 import placeholderData from "@/app/lib/placeholder-images.json";
 import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip as RechartsTooltip } from 'recharts';
 
@@ -26,7 +27,7 @@ type ChatMessageProps = {
   dataAiHint?: string;
   review?: SelfReviewOutput;
   toolData?: {
-    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather' | 'research' | 'briefing';
+    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather' | 'research' | 'briefing' | 'task';
     data: any;
   };
   onPlayAudio?: (messageId: string, text: string) => void;
@@ -65,6 +66,42 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
       </div>
     </PopoverContent>
   </Popover>
+);
+
+const TaskCard = ({ data }: { data: any }) => (
+  <Card className="mt-3 overflow-hidden border-white/10 bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
+    <div className="p-7 relative bg-gradient-to-br from-primary/10 to-transparent">
+        <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40">
+                <ListTodo className="h-5 w-5 text-white" />
+            </div>
+            <CardTitle className="text-white text-lg font-bold">Intelligence Tasks</CardTitle>
+        </div>
+        <div className="space-y-3 relative">
+            {data.tasks?.map((task: any, i: number) => (
+                <div key={task.id} className="flex items-center gap-4 p-4 rounded-3xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-all group">
+                    <Checkbox checked={task.completed} className="border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
+                    <div className="flex-1 min-w-0">
+                        <p className={cn("text-sm font-bold text-white/90 truncate", task.completed && "line-through text-white/30")}>{task.title}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className={cn("text-[8px] uppercase tracking-widest h-4 px-1.5 border-none", 
+                                task.priority === 'high' ? "bg-red-500/20 text-red-400" : "bg-white/5 text-white/30"
+                            )}>
+                                {task.priority} priority
+                            </Badge>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </div>
+    <div className="bg-[#1A1A1C] p-4 border-t border-white/5">
+        <Button variant="ghost" className="w-full text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/5 h-12 rounded-2xl">
+            <Plus className="h-4 w-4 mr-2" />
+            Add To-Do Item
+        </Button>
+    </div>
+  </Card>
 );
 
 const AlarmCard = ({ data }: { data: any }) => (
@@ -458,6 +495,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                   {toolData.type === 'weather' && <WeatherCard data={toolData.data} />}
                   {toolData.type === 'research' && <ResearchCard data={toolData.data} />}
                   {toolData.type === 'briefing' && <BriefingCard data={toolData.data} />}
+                  {toolData.type === 'task' && <TaskCard data={toolData.data} />}
                 </div>
               )}
 

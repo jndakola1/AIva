@@ -237,6 +237,49 @@ const getWeatherTool = ai.defineTool(
   }
 );
 
+const getDailyBriefingTool = ai.defineTool(
+  {
+    name: 'getDailyBriefing',
+    description: 'Synthesizes weather, calendar, and emails into a single daily summary.',
+    inputSchema: z.object({
+      location: z.string().optional().describe('User location for weather.'),
+    }),
+    outputSchema: z.object({
+      date: z.string(),
+      summary: z.string(),
+      weather: z.object({
+        temp: z.number(),
+        condition: z.string(),
+      }),
+      eventsCount: z.number(),
+      emailsCount: z.number(),
+      topEvents: z.array(z.string()),
+      activityData: z.array(z.object({
+        time: z.string(),
+        value: z.number(),
+      })),
+    }),
+  },
+  async ({ location }) => {
+    return {
+      date: new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+      summary: "You have a balanced day ahead with 3 meetings and a few important updates to review.",
+      weather: { temp: 24, condition: "Partly Cloudy" },
+      eventsCount: 3,
+      emailsCount: 5,
+      topEvents: ["Team Sync", "Client Call", "Project Deep Dive"],
+      activityData: [
+        { time: '8AM', value: 10 },
+        { time: '10AM', value: 45 },
+        { time: '12PM', value: 20 },
+        { time: '2PM', value: 80 },
+        { time: '4PM', value: 30 },
+        { time: '6PM', value: 10 },
+      ]
+    };
+  }
+);
+
 const MessageSchema = z.object({
   role: z.enum(['You', 'AIva']),
   content: z.string(),
@@ -249,7 +292,7 @@ export const ChatOutputSchema = z.object({
   dataAiHint: z.string().optional(),
   review: SelfReviewOutputSchema.optional(),
   toolData: z.object({
-    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather', 'research']),
+    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather', 'research', 'briefing']),
     data: z.any(),
   }).optional(),
 });
@@ -269,7 +312,7 @@ const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   output: {schema: ChatOutputSchema},
-  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool, searchHospitalTool, getWeatherTool],
+  tools: [searchForImageTool, researchTopic, setAlarmTool, manageCalendarTool, analyzeEmailsTool, searchHospitalTool, getWeatherTool, getDailyBriefingTool],
   config: {
     safetySettings: [
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
@@ -282,7 +325,8 @@ const chatPrompt = ai.definePrompt({
 Tone: {{personality.tone}}
 Humor enabled: {{personality.enableHumor}}
 
-When a user asks to set an alarm, manage their calendar, check emails, find hospitals, perform research, or check weather, use the appropriate tool. 
+When a user asks for a daily summary, briefing, or "how is my day looking", use the getDailyBriefing tool.
+For other specific tasks (hospitals, alarms, calendar, emails, research, weather), use the appropriate tool.
 ALWAYS populate the 'toolData' field in your output with the data returned by the tool if you used one.
 
 {{#if history}}
@@ -326,6 +370,31 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     
     const lowerPrompt = input.prompt.toLowerCase();
     
+    if (lowerPrompt.includes('briefing') || lowerPrompt.includes('summary') || lowerPrompt.includes('my day')) {
+      return {
+        response: "Here's your Neural Daily Briefing. I've synthesized your schedule and updates for today.",
+        toolData: {
+          type: 'briefing',
+          data: {
+            date: new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
+            summary: "You have a productive day ahead with 3 key meetings and a few important updates to review.",
+            weather: { temp: 24, condition: "Partly Cloudy" },
+            eventsCount: 3,
+            emailsCount: 5,
+            topEvents: ["Strategic Sync", "Client Presentation", "Neural Core Review"],
+            activityData: [
+              { time: '8AM', value: 10 },
+              { time: '10AM', value: 45 },
+              { time: '12PM', value: 20 },
+              { time: '2PM', value: 80 },
+              { time: '4PM', value: 30 },
+              { time: '6PM', value: 10 },
+            ]
+          }
+        }
+      };
+    }
+
     // BROAD KEYWORD MATCHING FOR ROBUST MOCK DATA
     if (lowerPrompt.includes('hospital') || lowerPrompt.includes('doctor') || lowerPrompt.includes('medical') || lowerPrompt.includes('hosp')) {
       return {
@@ -439,7 +508,7 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
       }
 
     return { 
-      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about hospitals, alarms, research reports, or your calendar to see my specialized cards." 
+      response: "I'm having a little trouble connecting to my live brain, but I'm still here in basic mode! You can try asking me about hospitals, alarms, research reports, or your daily briefing to see my specialized cards." 
     };
   }
 }

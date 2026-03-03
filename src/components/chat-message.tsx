@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText, LayoutDashboard, Zap } from "lucide-react";
 import Image from "next/image";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
@@ -13,6 +13,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Switch } from "./ui/switch";
 import placeholderData from "@/app/lib/placeholder-images.json";
+import { LineChart, Line, ResponsiveContainer, YAxis, XAxis, Tooltip as RechartsTooltip } from 'recharts';
 
 type ChatMessageProps = {
   id: string;
@@ -24,7 +25,7 @@ type ChatMessageProps = {
   dataAiHint?: string;
   review?: SelfReviewOutput;
   toolData?: {
-    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather' | 'research';
+    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather' | 'research' | 'briefing';
     data: any;
   };
   onPlayAudio?: (messageId: string, text: string) => void;
@@ -317,6 +318,77 @@ const ResearchCard = ({ data }: { data: any }) => (
   </Card>
 );
 
+const BriefingCard = ({ data }: { data: any }) => (
+  <Card className="mt-3 overflow-hidden border-white/10 bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-xl animate-in slide-in-from-left-4 duration-500">
+    <div className="p-8 relative bg-gradient-to-br from-primary/20 via-transparent to-transparent">
+        <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+                <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40">
+                    <Zap className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                    <CardTitle className="text-white text-xl font-bold">Daily Synthesis</CardTitle>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-primary">{data.date}</p>
+                </div>
+            </div>
+            <div className="text-right">
+                <div className="flex items-center gap-2 justify-end">
+                    <Cloud className="h-4 w-4 text-white/40" />
+                    <span className="text-2xl font-bold text-white">{data.weather.temp}°</span>
+                </div>
+                <p className="text-[9px] uppercase font-bold text-white/30 tracking-widest">{data.weather.condition}</p>
+            </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="p-5 rounded-3xl bg-white/[0.03] border border-white/5 backdrop-blur-xl">
+                <div className="flex items-center gap-3 mb-2">
+                    <CalendarIcon className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Schedule</span>
+                </div>
+                <p className="text-2xl font-bold text-white">{data.eventsCount} <span className="text-sm font-medium text-white/40">Events</span></p>
+                <div className="mt-4 space-y-1">
+                    {data.topEvents.map((ev: string, i: number) => (
+                        <p key={i} className="text-[10px] text-white/60 font-medium truncate">• {ev}</p>
+                    ))}
+                </div>
+            </div>
+            <div className="p-5 rounded-3xl bg-white/[0.03] border border-white/5 backdrop-blur-xl">
+                <div className="flex items-center gap-3 mb-2">
+                    <Mail className="h-4 w-4 text-primary" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Activity</span>
+                </div>
+                <p className="text-2xl font-bold text-white">{data.emailsCount} <span className="text-sm font-medium text-white/40">Alerts</span></p>
+                <div className="h-16 w-full mt-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={data.activityData}>
+                            <Line 
+                              type="monotone" 
+                              dataKey="value" 
+                              stroke="hsl(var(--primary))" 
+                              strokeWidth={3} 
+                              dot={false}
+                              animationDuration={2000}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </div>
+        </div>
+
+        <p className="text-sm text-white/70 leading-relaxed font-medium bg-white/5 p-4 rounded-2xl border border-white/5">
+            <Sparkles className="h-4 w-4 inline mr-2 text-primary" />
+            {data.summary}
+        </p>
+    </div>
+    <div className="bg-[#1A1A1C] p-4 border-t border-white/5">
+        <Button className="w-full h-12 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 font-bold text-[10px] uppercase tracking-[0.2em] transition-all">
+            Open Full Dashboard
+        </Button>
+    </div>
+  </Card>
+);
+
 export default function ChatMessage({ id, role, content, isLoading, imageUrl, altText, dataAiHint, review, toolData, onPlayAudio, isSpeaking }: ChatMessageProps) {
   const isAi = role === "AIva";
   const isVideo = imageUrl?.startsWith('data:video/mp4');
@@ -382,6 +454,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                   {toolData.type === 'hospital' && <HospitalCard data={toolData.data} />}
                   {toolData.type === 'weather' && <WeatherCard data={toolData.data} />}
                   {toolData.type === 'research' && <ResearchCard data={toolData.data} />}
+                  {toolData.type === 'briefing' && <BriefingCard data={toolData.data} />}
                 </div>
               )}
 

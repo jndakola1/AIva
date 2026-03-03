@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Loader, Mic, Send, SlidersHorizontal, X, Image as ImageIcon, Sparkles, Brain, Globe, Palette, Film, Telescope, Music } from "lucide-react";
+import { Loader, Mic, Send, SlidersHorizontal, X, Image as ImageIcon, Sparkles, Brain, Globe, Palette, Film, Telescope, Music, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,10 +31,10 @@ declare global {
 }
 
 const STARTER_PROMPTS = [
-  { icon: Sparkles, text: "Write a short story about a time-traveling cat.", color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
+  { icon: Zap, text: "Give me my daily briefing.", color: "text-primary bg-primary/10 border-primary/20" },
+  { icon: Sparkles, text: "Create a cinematic video of a futuristic forest.", color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
   { icon: Brain, text: "Explain quantum physics to a five-year-old.", color: "text-orange-400 bg-orange-400/10 border-orange-400/20" },
-  { icon: Globe, text: "What are the top travel destinations for 2024?", color: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20" },
-  { icon: Palette, text: "Give me creative ideas for a DIY home office setup.", color: "text-primary bg-primary/10 border-primary/20" },
+  { icon: Telescope, text: "Perform deep research on neural synthesis.", color: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20" },
 ];
 
 export default function ChatInterface() {
@@ -232,6 +232,10 @@ export default function ChatInterface() {
     }
   }, [input, addMessage, toast]);
 
+  const handleDailyBriefing = useCallback(() => {
+    sendMessage("Give me my daily briefing.");
+  }, [sendMessage]);
+
   const handleWebSearch = useCallback(() => {
     if (!input.trim()) return;
     sendMessage(input, { performResearch: true });
@@ -395,6 +399,7 @@ export default function ChatInterface() {
                 onGenerateMusic={handleGenerateMusic}
                 onWebSearch={handleWebSearch}
                 onDeepResearch={handleDeepResearch}
+                onDailyBriefing={handleDailyBriefing}
                 onImageSelect={handleImageSelect}
                 onFileSelect={handleFileSelect}
               />

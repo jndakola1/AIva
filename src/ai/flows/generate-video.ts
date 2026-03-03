@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI agent that generates cinematic videos with sound using the Veo 3.0 model.
@@ -66,8 +67,10 @@ const generateVideoFlow = ai.defineFlow(
         throw new Error('Generated video content not found.');
       }
 
-      // Fetch the video and convert to base64
-      const videoResponse = await fetch(`${videoPart.media.url}&key=${process.env.GEMINI_API_KEY}`);
+      // Fetch the video and convert to base64. 
+      // Using GOOGLE_GENAI_API_KEY which is the standard Genkit variable.
+      const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
+      const videoResponse = await fetch(`${videoPart.media.url}&key=${apiKey}`);
       if (!videoResponse.ok) throw new Error('Failed to download generated video.');
       
       const arrayBuffer = await videoResponse.arrayBuffer();

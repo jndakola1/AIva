@@ -189,8 +189,8 @@ const analyzeEmailsTool = ai.defineTool(
   },
   async ({ query }) => {
     const mockEmails = [
-      { sender: "David", subject: "Project Update", snippet: "The Q3 milestones are looking good..." },
-      { sender: "HR", subject: "Holiday Schedule", snippet: "Please note the upcoming office closures..." },
+      { sender: "Sarah Chen", subject: "Q3 Vision Document", snippet: "The Q3 milestones are looking good..." },
+      { sender: "Operations", subject: "Server Status Alert", snippet: "Please note the upcoming office closures..." },
       { sender: "Travel", subject: "Flight Confirmation", snippet: "Your flight to NYC is confirmed for Friday..." }
     ];
     return { 
@@ -250,10 +250,10 @@ const getWeatherTool = ai.defineTool(
     }),
     outputSchema: z.object({
       location: z.string(),
-      temperature: z.number(),
-      condition: z.string(),
-      humidity: z.number(),
-      windSpeed: z.number(),
+      temperature: 24,
+      condition: "Partly Cloudy",
+      humidity: 78,
+      windSpeed: 12,
       icon: z.string().optional(),
     }),
   },
@@ -323,7 +323,7 @@ export const ChatOutputSchema = z.object({
   dataAiHint: z.string().optional(),
   review: SelfReviewOutputSchema.optional(),
   toolData: z.object({
-    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather', 'research', 'briefing', 'task']),
+    type: z.enum(['alarm', 'calendar', 'email', 'hospital', 'weather', 'research', 'briefing', 'task', 'comm-intercept']),
     data: z.any(),
   }).optional(),
 });
@@ -401,6 +401,22 @@ export async function onlineChat(input: ChatInput): Promise<ChatOutput> {
     console.error("Chat Error (Falling back to mock mode):", error);
     
     const lowerPrompt = input.prompt.toLowerCase();
+
+    // INTERCEPT SCENARIO SIMULATION
+    if (lowerPrompt.includes('simulate intercept') || lowerPrompt.includes('incoming message')) {
+        return {
+            response: "Incoming intelligence intercept. You have a new message from Sarah Chen.",
+            toolData: {
+                type: 'comm-intercept',
+                data: {
+                    sender: "Sarah Chen",
+                    content: "Hey, I've finished the Q3 Vision draft. Can you take a look before the meeting at 4?",
+                    time: "Just now",
+                    canRead: true,
+                }
+            }
+        };
+    }
     
     if (lowerPrompt.includes('task') || lowerPrompt.includes('to-do') || lowerPrompt.includes('todo')) {
         return {

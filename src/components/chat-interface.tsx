@@ -69,6 +69,27 @@ export default function ChatInterface() {
     scrollToBottom();
   }, [messages, isSending, isProcessingTask, scrollToBottom]);
 
+  const speak = useCallback(async (text: string) => {
+    try {
+      setIsSpeaking(true);
+      const { media } = await tts({ text });
+      if (audioRef.current) {
+        audioRef.current.src = media;
+        audioRef.current.play();
+        return new Promise((resolve) => {
+            if (audioRef.current) {
+                audioRef.current.onended = () => {
+                    setIsSpeaking(false);
+                    resolve(true);
+                };
+            }
+        });
+      }
+    } catch (error) {
+      setIsSpeaking(false);
+    }
+  }, []);
+
   const handleImageSelect = useCallback((file: File) => {
     setSelectedImage(file);
     const reader = new FileReader();
@@ -142,6 +163,10 @@ export default function ChatInterface() {
           review: aiResponse.review,
           toolData: aiResponse.toolData,
         });
+
+        if (aiResponse.response && !aiResponse.imageUrl) {
+            await speak(aiResponse.response);
+        }
       }
     } catch (error) {
       console.error(error);
@@ -151,7 +176,7 @@ export default function ChatInterface() {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);
     }
-  }, [isOnline, addMessage, messages, user, imagePreview, selectedFile, clearSelections]);
+  }, [isOnline, addMessage, messages, user, imagePreview, selectedFile, clearSelections, speak]);
 
   const handleGenerateImage = useCallback(async () => {
     if (!input.trim()) return;
@@ -235,6 +260,10 @@ export default function ChatInterface() {
     sendMessage("Give me my daily briefing.");
   }, [sendMessage]);
 
+  const handleSimulateIntercept = useCallback(() => {
+    sendMessage("Simulate a message intercept from Sarah Chen.");
+  }, [sendMessage]);
+
   const handleWebSearch = useCallback(() => {
     if (!input.trim()) return;
     sendMessage(input, { performResearch: true });
@@ -276,21 +305,28 @@ export default function ChatInterface() {
       return;
     }
     setCurrentlyPlayingId(messageId);
-    setIsSpeaking(true);
-    try {
-      const { media } = await tts({ text });
-      if (audioRef.current) {
-        audioRef.current.src = media;
-        audioRef.current.play();
-        audioRef.current.onended = () => { setIsSpeaking(false); setCurrentlyPlayingId(null); };
-      }
-    } catch (error) {
-      setIsSpeaking(false);
-      setCurrentlyPlayingId(null);
-    }
-  }, [isSpeaking, currentlyPlayingId]);
+    await speak(text);
+    setCurrentlyPlayingId(null);
+  }, [isSpeaking, currentlyPlayingId, speak]);
 
   const isDisabled = isSending || isEnhancing || isRecording || isProcessingTask || isSpeaking;
+
+  // SETUP SPEECH RECOGNITION
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.continuous = false;
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          setInput(transcript);
+          sendMessage(transcript);
+        };
+        recognitionRef.current.onend = () => setIsRecording(false);
+      }
+    }
+  }, [sendMessage]);
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground relative overflow-hidden">
@@ -329,6 +365,7 @@ export default function ChatInterface() {
                   {...msg}
                   onPlayAudio={handlePlayAudio}
                   isSpeaking={isSpeaking && currentlyPlayingId === msg.id}
+                  onVoiceAction={sendMessage}
                 />
               ))
             )}
@@ -399,6 +436,7 @@ export default function ChatInterface() {
                 onWebSearch={handleWebSearch}
                 onDeepResearch={handleDeepResearch}
                 onDailyBriefing={handleDailyBriefing}
+                onSimulateIntercept={handleSimulateIntercept}
                 onImageSelect={handleImageSelect}
                 onFileSelect={handleFileSelect}
               />

@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText, LayoutDashboard, Zap, Play, Activity, ListTodo, CheckCircle2 } from "lucide-react";
+import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText, LayoutDashboard, Zap, Play, Activity, ListTodo, CheckCircle2, MessageSquare, Headphones, Reply } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
@@ -27,11 +27,12 @@ type ChatMessageProps = {
   dataAiHint?: string;
   review?: SelfReviewOutput;
   toolData?: {
-    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather' | 'research' | 'briefing' | 'task';
+    type: 'alarm' | 'calendar' | 'email' | 'hospital' | 'weather' | 'research' | 'briefing' | 'task' | 'comm-intercept';
     data: any;
   };
   onPlayAudio?: (messageId: string, text: string) => void;
   isSpeaking?: boolean;
+  onVoiceAction?: (prompt: string) => void;
 };
 
 const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
@@ -66,6 +67,45 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
       </div>
     </PopoverContent>
   </Popover>
+);
+
+const CommInterceptCard = ({ data, onAction }: { data: any, onAction?: (prompt: string) => void }) => (
+    <Card className="mt-3 overflow-hidden border-primary/20 bg-primary/5 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
+        <div className="p-7 relative">
+            <div className="absolute top-0 right-0 p-6 flex gap-2">
+                <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-[8px] font-bold text-red-500 uppercase tracking-widest">Live Intercept</span>
+            </div>
+            <div className="flex items-center gap-4 mb-6">
+                <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40">
+                    <MessageSquare className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                    <CardTitle className="text-foreground text-lg font-bold">{data.sender}</CardTitle>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-primary/60">{data.time}</p>
+                </div>
+            </div>
+            <p className="text-sm font-medium text-foreground/80 leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1">
+                "Message detected. Ask me to read it aloud or reply."
+            </p>
+        </div>
+        <div className="grid grid-cols-2 border-t border-primary/10 bg-primary/5">
+            <button 
+                onClick={() => onAction?.(`Read the message from ${data.sender} aloud.`)}
+                className="flex flex-col items-center justify-center gap-2 py-4 text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-primary/10 transition-all border-r border-primary/10"
+            >
+                <Headphones className="h-4 w-4" />
+                Read Aloud
+            </button>
+            <button 
+                onClick={() => onAction?.(`Reply to ${data.sender}.`)}
+                className="flex flex-col items-center justify-center gap-2 py-4 text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-primary/10 transition-all"
+            >
+                <Reply className="h-4 w-4" />
+                Voice Reply
+            </button>
+        </div>
+    </Card>
 );
 
 const TaskCard = ({ data }: { data: any }) => (
@@ -429,7 +469,7 @@ const BriefingCard = ({ data }: { data: any }) => (
   </Card>
 );
 
-export default function ChatMessage({ id, role, content, isLoading, imageUrl, altText, dataAiHint, review, toolData, onPlayAudio, isSpeaking }: ChatMessageProps) {
+export default function ChatMessage({ id, role, content, isLoading, imageUrl, altText, dataAiHint, review, toolData, onPlayAudio, isSpeaking, onVoiceAction }: ChatMessageProps) {
   const isAi = role === "AIva";
   const isVideo = imageUrl?.startsWith('data:video/mp4');
   const isAudio = imageUrl?.startsWith('data:audio/wav');
@@ -496,6 +536,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
                   {toolData.type === 'research' && <ResearchCard data={toolData.data} />}
                   {toolData.type === 'briefing' && <BriefingCard data={toolData.data} />}
                   {toolData.type === 'task' && <TaskCard data={toolData.data} />}
+                  {toolData.type === 'comm-intercept' && <CommInterceptCard data={toolData.data} onAction={onVoiceAction} />}
                 </div>
               )}
 

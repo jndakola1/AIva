@@ -8,7 +8,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Camera, FileText, Globe, Image as ImageIcon, Plus, Telescope, Wand2, Film, Music, ChevronRight, Zap } from 'lucide-react';
+import { Camera, FileText, Globe, Image as ImageIcon, Plus, Telescope, Wand2, Film, Music, ChevronRight, Zap, MessageSquare } from 'lucide-react';
 import type React from 'react';
 import { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -51,6 +51,7 @@ const AttachmentMenu = ({
   onWebSearch,
   onDeepResearch,
   onDailyBriefing,
+  onSimulateIntercept,
   onImageSelect,
   onFileSelect,
 }: { 
@@ -61,6 +62,7 @@ const AttachmentMenu = ({
   onWebSearch: () => void,
   onDeepResearch: () => void,
   onDailyBriefing: () => void,
+  onSimulateIntercept: () => void,
   onImageSelect: (file: File) => void,
   onFileSelect: (file: File) => void,
 }) => {
@@ -129,6 +131,7 @@ const AttachmentMenu = ({
         </div>
         <div className="space-y-1.5">
             <MenuLink icon={Zap} onClick={() => handleAction(onDailyBriefing)} detail="Context Synthesis">Daily Briefing</MenuLink>
+            <MenuLink icon={MessageSquare} onClick={() => handleAction(onSimulateIntercept)} detail="Scenario 1">Simulate Intercept</MenuLink>
             <MenuLink icon={Wand2} onClick={() => handleAction(onGenerateImage)} disabled={disabled}>Pixel Synthesis</MenuLink>
             <MenuLink icon={Film} onClick={() => handleAction(onGenerateVideo)} detail="Veo 3 Pro" disabled={disabled}>Motion Engine</MenuLink>
             <MenuLink icon={Music} onClick={() => handleAction(onGenerateMusic)} detail="Neural Studio" disabled={disabled}>Audio Mastering</MenuLink>

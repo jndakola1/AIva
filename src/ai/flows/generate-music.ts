@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview An AI agent that generates AI Music or Audio snippets.
+ * @fileOverview An AI agent that generates AI Music or Audio snippets using Gemini 2.5.
  *
  * - generateMusic - A function that handles music/audio generation.
  * - GenerateMusicInput - The input type for the function.
@@ -56,16 +56,11 @@ const generateMusicFlow = ai.defineFlow(
   },
   async ({ prompt }) => {
     try {
-      // Transitioned to stable Gemini 1.5 Flash for audio generation tasks
+      // Upgraded to Gemini 2.5 Flash for high-performance audio synthesis
       const { media } = await ai.generate({
-        model: googleAI.model('gemini-1.5-flash-latest'),
+        model: googleAI.model('gemini-2.5-flash'),
         config: {
           responseModalities: ['AUDIO'],
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Algenib' },
-            },
-          },
         },
         prompt: `Synthesizing a high-performance audio environment for: ${prompt}. [System: Neural Mastering Active]`,
       });

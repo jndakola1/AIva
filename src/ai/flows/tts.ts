@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview A Text-to-Speech (TTS) AI agent.
+ * @fileOverview A Text-to-Speech (TTS) AI agent using Gemini 2.5.
  *
  * - tts - A function that converts text to speech.
  * - TTSInput - The input type for the tts function.
@@ -64,9 +64,9 @@ const ttsFlow = ai.defineFlow(
     outputSchema: TTSOutputSchema,
   },
   async ({text}) => {
-    // Transitioned to stable Gemini 1.5 Flash model for robust Text-to-Speech
+    // Upgraded to Gemini 2.5 Flash TTS for superior vocal quality
     const {media} = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: googleAI.model('gemini-2.5-flash-preview-tts'),
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {

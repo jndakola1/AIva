@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview An image generation AI agent.
+ * @fileOverview An image generation AI agent using Gemini 2.5.
  *
  * - generateImage - A function that handles image generation.
  * - GenerateImageInput - The input type for the generateImage function.
@@ -34,10 +34,12 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async ({ prompt }) => {
-    // Transitioned to stable Imagen 3.0 model for reliable long-term performance
+    // Upgraded to Gemini 2.5 Flash Image for cutting-edge multimodal generation
     const { media } = await ai.generate({
-      model: 'googleai/imagen-3.0-fast-generate-001',
-      prompt: `Generate a high-fidelity cinematic image of: ${prompt}`,
+      model: 'googleai/gemini-2.5-flash-image',
+      prompt: [
+        { text: `Generate a high-fidelity cinematic image of: ${prompt}` },
+      ],
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },

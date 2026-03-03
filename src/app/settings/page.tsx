@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -40,7 +41,10 @@ import {
   Languages,
   CreditCard,
   CheckCircle2,
-  ZapOff
+  ZapOff,
+  Heart,
+  Camera,
+  Music
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
@@ -97,7 +101,6 @@ const SettingsItem = ({ label, description, children, icon: Icon }: { label: str
 );
 
 export default function SettingsPage() {
-  const { clearHistory } = useChatHistory();
   const { settings, updateSettings, loading: settingsLoading } = useSettings();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -106,22 +109,6 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/login');
-  };
-
-  const handleToggleTier = async () => {
-    setIsUpgrading(true);
-    const nextTier = settings.tier === 'free' ? 'pro' : 'free';
-    try {
-      await updateSettings('tier' as any, '', nextTier); // updateSettings needs to handle top-level keys if we change the context, but for now we follow the existing pattern
-      // Our updateSettings in context is (category, key, value). 
-      // For top-level tier, we might need a workaround or update the context.
-      // Let's assume we update the whole settings object or a specific field.
-      // Looking at context: updateSettings = async (category, key, value) => { ... updateUserSettings(user.uid, { [category]: updatedCategory }); }
-      // If we pass category as 'tier' and key as '', we need to fix the context. 
-      // Actually, let's just use updateUserSettings directly for this specific case if context is rigid.
-    } finally {
-      setIsUpgrading(false);
-    }
   };
 
   return (
@@ -133,14 +120,69 @@ export default function SettingsPage() {
 
       <main className="flex-1 p-8 pt-4 overflow-y-auto no-scrollbar">
         <div className="max-w-4xl mx-auto pb-24">
-          <Tabs defaultValue="account" className="w-full">
+          <Tabs defaultValue="soul" className="w-full">
             <TabsList className="flex h-auto p-1.5 bg-foreground/[0.03] border border-foreground/5 rounded-[2rem] mb-12 backdrop-blur-xl overflow-x-auto no-scrollbar justify-start md:justify-center gap-2">
+              <TabsTrigger value="soul" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Heart className="w-4 h-4 mr-2" />Soul Matrix</TabsTrigger>
               <TabsTrigger value="account" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
-              <TabsTrigger value="subscription" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><CreditCard className="w-4 h-4 mr-2" />Subscription</TabsTrigger>
-              <TabsTrigger value="personality" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Smile className="w-4 h-4 mr-2" />Mood</TabsTrigger>
+              <TabsTrigger value="subscription" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><CreditCard className="w-4 h-4 mr-2" />Neural Tier</TabsTrigger>
               <TabsTrigger value="system" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Monitor className="w-4 h-4 mr-2" />Interface</TabsTrigger>
             </TabsList>
             
+            <TabsContent value="soul" className="space-y-8">
+                <SettingsSection icon={Heart} title="Presence Configuration" description="Design AIva to carry the voice and image of someone special.">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-8 rounded-[2.5rem] bg-foreground/[0.03] border border-foreground/5 flex flex-col items-center justify-center gap-6 group hover:bg-foreground/[0.05] transition-all">
+                            <div className="h-24 w-24 rounded-full border-2 border-dashed border-primary/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <Camera className="h-8 w-8 text-primary/40" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-sm font-bold uppercase tracking-widest mb-1">Visual DNA</p>
+                                <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">Upload a reference image for the holographic projection layer.</p>
+                            </div>
+                            <Button variant="outline" className="rounded-xl border-foreground/10 text-[10px] font-bold uppercase tracking-widest h-10 px-6">Upload Image</Button>
+                        </div>
+                        <div className="p-8 rounded-[2.5rem] bg-foreground/[0.03] border border-foreground/5 flex flex-col items-center justify-center gap-6 group hover:bg-foreground/[0.05] transition-all">
+                            <div className="h-24 w-24 rounded-full border-2 border-dashed border-primary/40 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                <Music className="h-8 w-8 text-primary/40" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-sm font-bold uppercase tracking-widest mb-1">Vocal Signature</p>
+                                <p className="text-[10px] text-foreground/40 font-medium leading-relaxed">Adjust the pitch and warmth of AIva’s synthesized voice.</p>
+                            </div>
+                            <Button variant="outline" className="rounded-xl border-foreground/10 text-[10px] font-bold uppercase tracking-widest h-10 px-6">Configure Audio</Button>
+                        </div>
+                    </div>
+                    
+                    <SettingsItem label="Tone Synthesis" description="Adjust the verbal style of the AI assistant." icon={Smile}>
+                        <div className="w-64">
+                            <Select 
+                            value={settings.personality.tone} 
+                            onValueChange={(value) => updateSettings('personality', 'tone', value)}
+                            >
+                            <SelectTrigger className="rounded-2xl bg-foreground/5 border-foreground/10 h-12">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="friendly">Friendly & Warm</SelectItem>
+                                <SelectItem value="professional">Professional</SelectItem>
+                                <SelectItem value="witty">Sharp & Witty</SelectItem>
+                                <SelectItem value="concise">Hyper-Concise</SelectItem>
+                            </SelectContent>
+                            </Select>
+                        </div>
+                    </SettingsItem>
+                    <SettingsItem label="Assistant Alias" icon={Bot}>
+                        <div className="w-64">
+                            <Input 
+                                value={settings.personality.name} 
+                                onChange={(e) => updateSettings('personality', 'name', e.target.value)}
+                                className="bg-foreground/5 border-foreground/10 rounded-2xl h-12 font-bold"
+                            />
+                        </div>
+                    </SettingsItem>
+                </SettingsSection>
+            </TabsContent>
+
             <TabsContent value="account" className="space-y-8">
                <SettingsSection icon={User} title="User Profile" description="Manage your core identity and linked accounts.">
                   {authLoading ? (
@@ -163,7 +205,7 @@ export default function SettingsPage() {
                           <p className="text-2xl font-bold text-foreground tracking-tight">{user.displayName || 'Authorized User'}</p>
                           <p className="text-sm text-foreground/40 font-medium uppercase tracking-widest mt-1">{user.email}</p>
                           <Badge variant="outline" className={cn("mt-2 border-primary/20 bg-primary/5 text-primary", settings.tier === 'pro' && "bg-primary text-white")}>
-                            {settings.tier === 'pro' ? 'Neural Pro Active' : 'Neural Basic Tier'}
+                            {settings.tier === 'pro' ? 'Neural Ultra Active' : 'Neural Basic Tier'}
                           </Badge>
                         </div>
                       </div>
@@ -231,38 +273,6 @@ export default function SettingsPage() {
                             </Button>
                         </div>
                     </div>
-                </SettingsSection>
-            </TabsContent>
-
-            <TabsContent value="personality" className="space-y-8">
-               <SettingsSection icon={Smile} title="Personality Matrix" description="Fine-tune AIva’s behavioral parameters.">
-                  <SettingsItem label="Tone Synthesis" description="Adjust the verbal style of the AI assistant." icon={Palette}>
-                     <div className="w-64">
-                        <Select 
-                          value={settings.personality.tone} 
-                          onValueChange={(value) => updateSettings('personality', 'tone', value)}
-                        >
-                          <SelectTrigger className="rounded-2xl bg-foreground/5 border-foreground/10 h-12">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="friendly">Friendly & Warm</SelectItem>
-                            <SelectItem value="professional">Professional</SelectItem>
-                            <SelectItem value="witty">Sharp & Witty</SelectItem>
-                            <SelectItem value="concise">Hyper-Concise</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                  </SettingsItem>
-                  <SettingsItem label="Assistant Alias" icon={Bot}>
-                     <div className="w-64">
-                        <Input 
-                            value={settings.personality.name} 
-                            onChange={(e) => updateSettings('personality', 'name', e.target.value)}
-                            className="bg-foreground/5 border-foreground/10 rounded-2xl h-12 font-bold"
-                        />
-                     </div>
-                  </SettingsItem>
                 </SettingsSection>
             </TabsContent>
 

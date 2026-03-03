@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CORE PHILOSOPHY:
+     * This ruleset enforces a strict user-ownership model designed for secure, 
+     * private data access. All application data is siloed within user-specific 
+     * document paths to ensure maximum privacy and scalability.
+     *
+     * DATA STRUCTURE:
+     * The primary hierarchy is organized under `/users/{userId}/...`. Specifically,
+     * tasks are stored in the subcollection `/users/{userId}/tasks/{taskId}`.
+     *
+     * KEY SECURITY DECISIONS:
+     * 1. Path-Based Authorization: Access is primarily determined by comparing the 
+     *    authenticated user's UID against the `{userId}` wildcard in the path.
+     * 2. Denormalization for Integrity: The `userId` is stored both in the path 
+     *    and as a field within the Task document. Rules enforce that these values 
+     *    must match, preventing cross-user data injection.
+     * 3. Prototyping Flexibility: While authorization is strictly enforced, 
+     *    general data types and optional fields are not validated to allow for 
+     *    rapid iteration of the Task schema.
+     */
+
+    // --- Helper Functions ---
+
+    /** 
+     * @description Checks if the request is made by an authenticated user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /** 
+     * @description Checks if the authenticated user's UID matches the provided userId.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /** 
+     * @description Ensures the user is the owner and the document exists before 
+     * performing state-changing operations (update/delete).
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    // --- Collection Rules ---
+
+    /**
+     * @description Rules for user-specific Task documents.
+     * @path /users/{userId}/tasks/{taskId}
+     * @allow (get) If the user is the owner of the path.
+     * @allow (create) If the user is the owner AND the internal 'userId' field matches their UID.
+     * @deny (list) If a user attempts to list tasks belonging to a different userId.
+     * @principle Restricts access to a user's own data tree and validates relational integrity.
+     */
+    match /users/{userId}/tasks/{taskId} {
+      
+      // Read access: Only the owner can read or list their own tasks.
+      allow get, list: if isOwner(userId);
+
+      // Create access: Only the owner can create tasks in their own path.
+      // Validates that the internal userId matches the path for relational integrity.
+      allow create: if isOwner(userId) && request.resource.data.userId == userId;
+
+      // Update access: Only the owner can update existing tasks.
+      // Enforces immutability of the userId field to prevent ownership transfer.
+      allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+
+      // Delete access: Only the owner can delete their own existing tasks.
+      allow delete: if isExistingOwner(userId);
+    }
+
+  }
+}

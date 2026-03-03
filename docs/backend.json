@@ -1,0 +1,90 @@
+{
+  "entities": {
+    "Task": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Task",
+      "type": "object",
+      "description": "Represents a distinct task or to-do item that a user needs to complete or track within the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Task entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who owns this task. (Relationship: User 1:N Task)"
+        },
+        "title": {
+          "type": "string",
+          "description": "A concise title or summary of the task."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed explanation or additional notes for the task."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the task (e.g., 'pending', 'in-progress', 'completed', 'blocked')."
+        },
+        "priority": {
+          "type": "string",
+          "description": "The priority level of the task (e.g., 'low', 'medium', 'high', 'urgent')."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "The optional date and time by which the task is expected to be completed.",
+          "format": "date-time"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the task was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the task was last updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/tasks/{taskId}",
+        "definition": {
+          "entityName": "Task",
+          "schema": {
+            "$ref": "#/backend/entities/Task"
+          },
+          "description": "Represents a distinct task or to-do item belonging to a specific user. This subcollection uses path-based ownership for secure, scalable access control. Includes denormalized 'userId' field for authorization independence, reinforcing ownership and enabling efficient security rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user who owns this task."
+            },
+            {
+              "name": "taskId",
+              "description": "The unique identifier for the specific task."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure for 'Task' entities will follow a hierarchical path-based ownership model: `/users/{userId}/tasks/{taskId}`. This design prioritizes Authorization Independence and robust Query-as-Permission (QAP) capabilities.\n\n**Authorization Independence (CRITICAL):** Each `Task` document will be nested under its owner's user document (`/users/{userId}/tasks/{taskId}`). The `{userId}` wildcard in the path directly represents the owner, which can be compared against `request.auth.uid` in security rules (e.g., `request.auth.uid == userId`). Crucially, the `Task` entity's schema also includes a `userId` field. This field serves as a denormalized owner ID within the document itself. This dual presence of the `userId` (in the path and as a document field) completely eliminates the need for `get()` calls to a parent `User` document for authorization checks. Rules can simply check `request.auth.uid == userId` against either the path segment or `resource.data.userId`, ensuring atomic, performant, and easily debuggable security without hierarchical dependencies.\n\n**QAPs (Queries as Permissions):** This structure inherently supports secure `list` operations. When a user requests their tasks, they will query the path specific to their user ID (e.g., `db.collection('users').doc(request.auth.uid).collection('tasks')`). The security rules will enforce that `request.auth.uid` matches the `{userId}` in the path for any read operation on this subcollection. This means that any `list` query automatically retrieves only the tasks the requesting user is authorized to see, making the query itself the filter and preventing unauthorized data access without relying on costly or insecure server-side filtering logic within rules. This adheres to the principle that security rules are for authorization, not for filtering data.\n\n**Structural Segregation and Access Modeling:** All documents within a given `/users/{userId}/tasks` subcollection will share the same security posture – they are private to that specific `userId`. This ensures homogeneous security requirements, simplifying rule logic. This design directly implements the 'Private Data' and 'Use Hierarchical Paths for User-Owned Data' access modeling mandates, providing a clear, consistent, and secure pattern for user-specific data."
+  }
+}

@@ -64,8 +64,9 @@ const ttsFlow = ai.defineFlow(
     outputSchema: TTSOutputSchema,
   },
   async ({text}) => {
+    // Transitioned to stable Gemini 1.5 Flash model for robust Text-to-Speech
     const {media} = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
+      model: googleAI.model('gemini-1.5-flash-latest'),
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {

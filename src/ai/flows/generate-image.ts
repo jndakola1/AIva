@@ -34,9 +34,10 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async ({ prompt }) => {
+    // Transitioned to stable Imagen 3.0 model for reliable long-term performance
     const { media } = await ai.generate({
-      model: 'googleai/gemini-2.0-flash-preview-image-generation',
-      prompt: `Generate an image of: ${prompt}`,
+      model: 'googleai/imagen-3.0-fast-generate-001',
+      prompt: `Generate a high-fidelity cinematic image of: ${prompt}`,
       config: {
         responseModalities: ['TEXT', 'IMAGE'],
       },

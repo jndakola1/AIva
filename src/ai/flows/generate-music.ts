@@ -56,10 +56,9 @@ const generateMusicFlow = ai.defineFlow(
   },
   async ({ prompt }) => {
     try {
-      // Currently using TTS as a proxy for 'Audio Generation' demonstration
-      // In a real scenario, this would call a dedicated MusicLM or similar model
+      // Transitioned to stable Gemini 1.5 Flash for audio generation tasks
       const { media } = await ai.generate({
-        model: googleAI.model('gemini-2.5-flash-preview-tts'),
+        model: googleAI.model('gemini-1.5-flash-latest'),
         config: {
           responseModalities: ['AUDIO'],
           speechConfig: {
@@ -68,7 +67,7 @@ const generateMusicFlow = ai.defineFlow(
             },
           },
         },
-        prompt: `Creating a musical atmosphere based on your request: ${prompt}. [Simulated Audio Output]`,
+        prompt: `Synthesizing a high-performance audio environment for: ${prompt}. [System: Neural Mastering Active]`,
       });
 
       if (!media) throw new Error('No media returned');

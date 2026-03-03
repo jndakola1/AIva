@@ -74,7 +74,7 @@ const CommInterceptCard = ({ data, onAction }: { data: any, onAction?: (prompt: 
     const isVoicemail = data.isVoicemail;
 
     return (
-        <Card className="mt-3 overflow-hidden border-primary/20 bg-primary/5 backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
+        <Card className="mt-3 overflow-hidden border-primary/20 holographic-glass rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
             <div className="p-7 relative">
                 <div className="absolute top-0 right-0 p-6 flex gap-2">
                     <div className="h-2 w-2 bg-red-500 rounded-full animate-pulse" />
@@ -116,8 +116,8 @@ const CommInterceptCard = ({ data, onAction }: { data: any, onAction?: (prompt: 
 };
 
 const TaskCard = ({ data }: { data: any }) => (
-  <Card className="mt-3 overflow-hidden border-foreground/10 bg-foreground/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
-    <div className="p-7 relative bg-gradient-to-br from-primary/10 to-transparent">
+  <Card className="mt-3 overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
+    <div className="p-7 relative">
         <div className="flex items-center gap-3 mb-6">
             <div className="h-10 w-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40">
                 <ListTodo className="h-5 w-5 text-white" />
@@ -153,8 +153,7 @@ const TaskCard = ({ data }: { data: any }) => (
 
 const AlarmCard = ({ data }: { data: any }) => (
   <div className="space-y-4 max-w-[300px] animate-in slide-in-from-left-4 duration-500">
-    <Card className="mt-3 overflow-hidden border-foreground/10 bg-foreground/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl relative group">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
+    <Card className="mt-3 overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl relative group">
       <div className="relative aspect-[4/3] w-full bg-primary/5 flex items-center justify-center p-8">
         <Image 
           src={placeholderData.alarm.imageUrl}
@@ -189,8 +188,7 @@ const AlarmCard = ({ data }: { data: any }) => (
 
 const CalendarCard = ({ data }: { data: any }) => (
   <div className="space-y-4 max-w-[340px] animate-in slide-in-from-left-4 duration-500">
-    <Card className="mt-3 overflow-hidden border-foreground/10 bg-foreground/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
+    <Card className="mt-3 overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl relative">
       <div className="relative h-32 w-full flex flex-col items-center justify-center bg-primary/5">
         <Image 
           src={placeholderData.calendar.imageUrl}
@@ -230,9 +228,8 @@ const CalendarCard = ({ data }: { data: any }) => (
 );
 
 const EmailCard = ({ data }: { data: any }) => (
-  <Card className="mt-3 overflow-hidden border-foreground/10 bg-foreground/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
+  <Card className="mt-3 overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
     <div className="p-7 relative">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
       <div className="relative flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
             <div className="h-10 w-10 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40">
@@ -267,8 +264,7 @@ const EmailCard = ({ data }: { data: any }) => (
 const HospitalCard = ({ data }: { data: any }) => (
   <div className="space-y-4 max-w-[360px] animate-in slide-in-from-left-4 duration-500">
     {data.recommendations?.map((hosp: any, i: number) => (
-      <Card key={i} className="overflow-hidden border-foreground/10 bg-foreground/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
+      <Card key={i} className="overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl relative">
         <div className="p-6 relative space-y-5">
           <div className="flex items-center gap-5">
             <div className="relative h-16 w-16 rounded-[1.25rem] overflow-hidden border-2 border-foreground/10 shadow-lg">
@@ -313,9 +309,8 @@ const HospitalCard = ({ data }: { data: any }) => (
 );
 
 const WeatherCard = ({ data }: { data: any }) => (
-  <Card className="mt-3 overflow-hidden border-foreground/10 bg-foreground/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-[320px] animate-in slide-in-from-left-4 duration-500">
+  <Card className="mt-3 overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl max-w-[320px] animate-in slide-in-from-left-4 duration-500">
     <div className="relative aspect-[4/3] w-full bg-primary/5 flex items-center justify-center group">
-       <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-transparent" />
        <Image 
           src={placeholderData.weather.imageUrl}
           alt="Weather Illustration"
@@ -364,7 +359,7 @@ const WeatherCard = ({ data }: { data: any }) => (
 );
 
 const ResearchCard = ({ data }: { data: any }) => (
-  <Card className="mt-3 overflow-hidden border-foreground/10 bg-foreground/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-2xl animate-in slide-in-from-left-4 duration-500">
+  <Card className="mt-3 overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl max-w-2xl animate-in slide-in-from-left-4 duration-500">
     <div className="p-7 relative bg-gradient-to-br from-primary/10 via-transparent to-transparent">
       <div className="flex items-center gap-4 mb-6">
         <div className="h-12 w-12 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30 shadow-lg shadow-primary/20">
@@ -404,8 +399,8 @@ const ResearchCard = ({ data }: { data: any }) => (
 );
 
 const BriefingCard = ({ data }: { data: any }) => (
-  <Card className="mt-3 overflow-hidden border-foreground/10 bg-foreground/[0.02] backdrop-blur-3xl rounded-[2.5rem] shadow-2xl max-w-xl animate-in slide-in-from-left-4 duration-500">
-    <div className="p-8 relative bg-gradient-to-br from-primary/20 via-transparent to-transparent">
+  <Card className="mt-3 overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl max-w-xl animate-in slide-in-from-left-4 duration-500">
+    <div className="p-8 relative">
         <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
                 <div className="h-12 w-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/40">
@@ -513,7 +508,7 @@ export default function ChatMessage({ id, role, content, isLoading, imageUrl, al
         <div className={cn(
             "relative max-w-full md:max-w-2xl px-6 py-4 rounded-[2rem] transition-all duration-300 shadow-2xl",
             isAi 
-                ? "bg-foreground/[0.03] border border-foreground/10 rounded-tl-none text-foreground" 
+                ? "holographic-glass rounded-tl-none text-foreground" 
                 : "bg-primary border border-primary shadow-[0_10px_30px_rgba(217,119,87,0.2)] rounded-tr-none text-white font-semibold"
         )}>
           {isLoading ? (

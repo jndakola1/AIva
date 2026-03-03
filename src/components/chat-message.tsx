@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Bot, User, BadgeCheck, BrainCircuit, Volume2, Loader2, Film, AlarmClock, Calendar as CalendarIcon, Mail, Clock, ChevronRight, Plus, Star, Globe, Navigation, Cloud, Thermometer, Droplets, Wind, Sparkles, Music, Telescope, FileText, LayoutDashboard, Zap, Play, Activity } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import type { SelfReviewOutput } from "@/ai/flows/self-review";
 import {
   Popover,
@@ -382,9 +383,11 @@ const BriefingCard = ({ data }: { data: any }) => (
         </p>
     </div>
     <div className="bg-[#1A1A1C] p-4 border-t border-white/5">
-        <Button className="w-full h-12 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 font-bold text-[10px] uppercase tracking-[0.2em] transition-all">
-            Open Full Dashboard
-        </Button>
+        <Link href="/dashboard" className="block w-full">
+          <Button className="w-full h-12 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 font-bold text-[10px] uppercase tracking-[0.2em] transition-all">
+              Open Full Dashboard
+          </Button>
+        </Link>
     </div>
   </Card>
 );

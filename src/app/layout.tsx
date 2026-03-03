@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutProvider } from '@/components/layout-provider';
 import { ChatHistoryProvider } from '@/context/chat-history-context';
+import { FirebaseClientProvider } from '@/firebase';
 import Script from 'next/script';
 
 const inter = Inter({
@@ -54,11 +55,13 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased font-sans">
-        <ChatHistoryProvider>
-          <LayoutProvider>
-            {children}
-          </LayoutProvider>
-        </ChatHistoryProvider>
+        <FirebaseClientProvider>
+          <ChatHistoryProvider>
+            <LayoutProvider>
+              {children}
+            </LayoutProvider>
+          </ChatHistoryProvider>
+        </FirebaseClientProvider>
         <Toaster />
         <Script
           src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"

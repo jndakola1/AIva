@@ -78,25 +78,25 @@ export default function CategoriesPage() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col h-full bg-[#0A0A0B] text-white">
+    <div className="flex flex-col h-full bg-background text-foreground">
       {/* Header */}
       <header className="p-8 flex items-center justify-between">
         <Button 
           variant="ghost" 
           size="icon" 
-          className="rounded-2xl bg-white/5 hover:bg-white/10 text-white h-12 w-12 border border-white/10 shadow-xl"
+          className="rounded-2xl bg-foreground/5 hover:bg-foreground/10 text-foreground h-12 w-12 border border-foreground/10 shadow-xl"
           onClick={() => router.back()}
         >
           <ChevronLeft className="h-6 w-6" />
         </Button>
         <div className="flex-1 px-6">
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent">Capabilities</h1>
-            <p className="text-xs uppercase tracking-[0.3em] font-bold text-white/30 mt-1">AIva OS v1.2</p>
+            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/40 bg-clip-text text-transparent">Capabilities</h1>
+            <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-foreground/30 mt-1">AIva OS v1.2</p>
         </div>
         <Button 
           variant="ghost" 
           size="icon" 
-          className="rounded-2xl bg-white/5 hover:bg-white/10 text-white h-12 w-12 border border-white/10 shadow-xl"
+          className="rounded-2xl bg-foreground/5 hover:bg-foreground/10 text-foreground h-12 w-12 border border-foreground/10 shadow-xl"
         >
           <MoreHorizontal className="h-6 w-6" />
         </Button>
@@ -109,7 +109,7 @@ export default function CategoriesPage() {
             <button
               key={i}
               onClick={() => router.push(feature.href)}
-              className="flex flex-col items-start p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] hover:border-primary/30 transition-all text-left group shadow-2xl h-64 md:h-72 relative overflow-hidden"
+              className="flex flex-col items-start p-8 rounded-[2.5rem] bg-foreground/[0.03] border border-foreground/5 hover:bg-foreground/[0.06] hover:border-primary/30 transition-all text-left group shadow-2xl h-64 md:h-72 relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-all group-hover:translate-x-0 translate-x-4">
                   <ChevronRight className="h-6 w-6 text-primary" />
@@ -118,13 +118,13 @@ export default function CategoriesPage() {
                 <feature.icon className="h-7 w-7" />
               </div>
               <div className="space-y-2">
-                <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-white/30 group-hover:text-primary transition-colors">
+                <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-foreground/30 group-hover:text-primary transition-colors">
                   {feature.category}
                 </p>
-                <h3 className="text-2xl font-bold leading-tight text-white/90 group-hover:text-white">
+                <h3 className="text-2xl font-bold leading-tight text-foreground/90 group-hover:text-foreground">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-white/40 font-medium leading-relaxed max-w-[200px]">
+                <p className="text-sm text-foreground/40 font-medium leading-relaxed max-w-[200px]">
                     {feature.description}
                 </p>
               </div>
@@ -135,32 +135,32 @@ export default function CategoriesPage() {
         {/* Pro Features Section */}
         <div className="mt-20 max-w-7xl mx-auto mb-12">
             <div className="flex items-center gap-4 mb-8">
-                <div className="h-1px flex-1 bg-gradient-to-r from-transparent to-white/10" />
+                <div className="h-1px flex-1 bg-gradient-to-r from-transparent to-foreground/10" />
                 <h2 className="text-sm font-bold uppercase tracking-[0.4em] text-primary flex items-center gap-3">
                     <Sparkles className="h-5 w-5" />
                     Neural Modules
                 </h2>
-                <div className="h-1px flex-1 bg-gradient-to-l from-transparent to-white/10" />
+                <div className="h-1px flex-1 bg-gradient-to-l from-transparent to-foreground/10" />
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4 group hover:bg-white/[0.04] transition-all">
+                <div className="p-8 rounded-[2.5rem] bg-foreground/[0.02] border border-foreground/5 flex flex-col gap-4 group hover:bg-foreground/[0.04] transition-all">
                     <div className="h-12 w-12 bg-red-500/10 rounded-2xl flex items-center justify-center border border-red-500/20 group-hover:scale-110 transition-transform">
                         <Video className="h-6 w-6 text-red-400" />
                     </div>
-                    <p className="text-sm font-bold text-white/80 leading-relaxed">Veo 3 Pro now synthesizes high-fidelity 4K sequences with spatial audio tracks.</p>
+                    <p className="text-sm font-bold text-foreground/80 leading-relaxed">Veo 3 Pro now synthesizes high-fidelity 4K sequences with spatial audio tracks.</p>
                 </div>
-                <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4 group hover:bg-white/[0.04] transition-all">
+                <div className="p-8 rounded-[2.5rem] bg-foreground/[0.02] border border-foreground/5 flex flex-col gap-4 group hover:bg-foreground/[0.04] transition-all">
                     <div className="h-12 w-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 group-hover:scale-110 transition-transform">
                         <Music className="h-6 w-6 text-indigo-400" />
                     </div>
-                    <p className="text-sm font-bold text-white/80 leading-relaxed">Compose atmospheric audio loops and neural soundscapes for multimedia projects.</p>
+                    <p className="text-sm font-bold text-foreground/80 leading-relaxed">Compose atmospheric audio loops and neural soundscapes for multimedia projects.</p>
                 </div>
-                <div className="p-8 rounded-[2.5rem] bg-white/[0.02] border border-white/5 flex flex-col gap-4 group hover:bg-white/[0.04] transition-all">
+                <div className="p-8 rounded-[2.5rem] bg-foreground/[0.02] border border-foreground/5 flex flex-col gap-4 group hover:bg-foreground/[0.04] transition-all">
                     <div className="h-12 w-12 bg-blue-500/10 rounded-2xl flex items-center justify-center border border-blue-500/20 group-hover:scale-110 transition-transform">
                         <Zap className="h-6 w-6 text-blue-400" />
                     </div>
-                    <p className="text-sm font-bold text-white/80 leading-relaxed">Multimodal input terminal now supports direct camera injection and encrypted files.</p>
+                    <p className="text-sm font-bold text-foreground/80 leading-relaxed">Multimodal input terminal now supports direct camera injection and encrypted files.</p>
                 </div>
             </div>
         </div>

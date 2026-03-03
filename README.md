@@ -4,7 +4,7 @@ AIva is a high-performance, multimodal AI companion designed as a "Command Cente
 
 ## 🚀 Hackathon Pitch: The Future of Neural Interaction
 
-AIva transcends traditional chatbots by integrating creative media generation, deep research synthesis, and real-time communication simulation into a single, adaptive interface. It is designed as a "Neural OS" that bridge the gap between abstract AI intelligence and practical daily utility.
+AIva transcends traditional chatbots by integrating creative media generation, deep research synthesis, and real-time communication simulation into a single, adaptive interface. It is designed as a "Neural OS" that bridges the gap between abstract AI intelligence and practical daily utility.
 
 ### 🏆 Hackathon Judging Alignment
 - **Technical Complexity**: Multi-model integration (Gemini 2.5 + Veo 3 + Llama 3 fallback), Real-time Firestore synchronization, and Contextual Security Rules.
@@ -80,4 +80,3 @@ graph TD
 
 ---
 *Developed as a high-fidelity prototype for the future of AI Operating Systems.*
-# AIva

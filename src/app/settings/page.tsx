@@ -20,24 +20,23 @@ import {
   Palette, 
   Shield, 
   Bot, 
-  Mic, 
   Smile, 
   BrainCircuit, 
-  VenetianMask, 
   Settings as SettingsIcon, 
   AlertTriangle, 
   Loader2,
-  Volume2,
-  Zap,
-  Fingerprint,
   Sparkles,
   ChevronRight,
   Globe,
   Mail,
   Calendar,
   Cloud,
-  CheckCircle2,
-  ShieldCheck
+  ShieldCheck,
+  Zap,
+  Monitor,
+  Sun,
+  Moon,
+  Languages
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { auth, db } from '@/lib/firebase';
@@ -46,7 +45,6 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -75,8 +73,8 @@ function SettingsSection({ icon: Icon, title, description, children }: { icon: R
             <Icon className="w-6 h-6" />
           </div>
           <div className="flex-grow">
-            <CardTitle className="text-xl font-bold tracking-tight text-white">{title}</CardTitle>
-            <CardDescription className="text-white/40 font-medium">{description}</CardDescription>
+            <CardTitle className="text-xl font-bold tracking-tight text-foreground">{title}</CardTitle>
+            <CardDescription className="text-foreground/40 font-medium">{description}</CardDescription>
           </div>
         </div>
       </CardHeader>
@@ -91,14 +89,14 @@ const SettingsItem = ({ label, description, children, icon: Icon }: { label: str
   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 rounded-[2rem] bg-white/[0.03] border border-white/5 gap-4 transition-all hover:bg-white/[0.05] group">
     <div className="flex items-center gap-4 flex-grow">
       {Icon && (
-        <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 text-white/40 group-hover:text-primary group-hover:bg-primary/5 transition-all">
+        <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 text-foreground/40 group-hover:text-primary group-hover:bg-primary/5 transition-all">
             <Icon className="h-5 w-5" />
         </div>
       )}
       <div className="flex-grow">
-        <Label className="text-sm font-bold uppercase tracking-widest text-white/90">{label}</Label>
+        <Label className="text-sm font-bold uppercase tracking-widest text-foreground/90">{label}</Label>
         {description && (
-          <p className="text-xs text-white/40 font-medium mt-1 pr-4 leading-relaxed">
+          <p className="text-xs text-foreground/40 font-medium mt-1 pr-4 leading-relaxed">
             {description}
           </p>
         )}
@@ -112,13 +110,13 @@ const IntegrationCard = ({ icon: Icon, name, description, connected }: { icon: R
     <div className="p-6 rounded-[2.5rem] bg-white/[0.03] border border-white/5 flex flex-col gap-4 group hover:bg-white/[0.05] transition-all">
         <div className="flex items-center justify-between">
             <div className="h-14 w-14 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 group-hover:border-primary/30 transition-all">
-                <Icon className={cn("h-7 w-7 transition-all group-hover:scale-110", connected ? "text-primary" : "text-white/20")} />
+                <Icon className={cn("h-7 w-7 transition-all group-hover:scale-110", connected ? "text-primary" : "text-foreground/20")} />
             </div>
             <Switch checked={connected} className="data-[state=checked]:bg-primary" />
         </div>
         <div>
-            <p className="text-lg font-bold text-white">{name}</p>
-            <p className="text-xs text-white/40 font-medium mt-1">{description}</p>
+            <p className="text-lg font-bold text-foreground">{name}</p>
+            <p className="text-xs text-foreground/40 font-medium mt-1">{description}</p>
         </div>
         <Button variant="ghost" className="w-full h-11 rounded-xl bg-white/5 border border-white/5 text-[10px] font-bold uppercase tracking-widest">
             Configure Intercept
@@ -139,34 +137,27 @@ export default function SettingsPage() {
   useEffect(() => {
     if (user) {
       const fetchSettings = async () => {
-        const settingsRef = doc(db, 'users', user.uid, 'settings');
-        const docSnap = await getDoc(settingsRef);
-        if (docSnap.exists()) {
-          const dbSettings = docSnap.data();
-          setSettings({
-            ...DEFAULT_SETTINGS,
-            ...dbSettings,
-            personality: {
-              ...DEFAULT_SETTINGS.personality,
-              ...(dbSettings.personality || {})
-            }
-          });
-        }
+        const userSettings = await getUserSettings(user.uid);
+        setSettings(userSettings);
       };
-      fetchHistory();
+      fetchSettings();
     }
   }, [user]);
 
-  const handlePersonalityChange = async (key: keyof UserSettings['personality'], value: any) => {
+  const handleSettingChange = async (category: keyof UserSettings, key: string, value: any) => {
     if (!user) return;
 
     setIsSaving(true);
-    const updatedPersonality = { ...settings.personality, [key]: value };
-    const updatedSettings = { ...settings, personality: updatedPersonality };
+    const updatedCategory = { ...settings[category], [key]: value };
+    const updatedSettings = { ...settings, [category]: updatedCategory };
     setSettings(updatedSettings);
 
     try {
-      await updateUserSettings(user.uid, { personality: updatedPersonality });
+      await updateUserSettings(user.uid, { [category]: updatedCategory });
+      if (category === 'appearance' && key === 'theme') {
+          // Trigger a local layout refresh if needed
+          window.location.reload();
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -193,11 +184,11 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0A0A0B] text-white">
-      <header className="p-8 pb-4 flex items-center justify-between bg-gradient-to-b from-black/20 to-transparent">
+    <div className="flex flex-col h-full bg-background text-foreground">
+      <header className="p-8 pb-4 flex items-center justify-between bg-gradient-to-b from-black/5 to-transparent">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-white/40 bg-clip-text text-transparent">Preferences</h1>
-          <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-white/30 mt-1">AIva OS v1.2 Core Config</p>
+          <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/40 bg-clip-text text-transparent">Preferences</h1>
+          <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-foreground/30 mt-1">AIva OS v1.2 Core Config</p>
         </div>
         {isSaving && <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary text-[10px] font-bold uppercase tracking-widest animate-pulse">
           <Loader2 className="h-3 w-3 animate-spin" />
@@ -212,7 +203,7 @@ export default function SettingsPage() {
               <TabsTrigger value="account" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
               <TabsTrigger value="integrations" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Cloud className="w-4 h-4 mr-2" />Neural Cloud</TabsTrigger>
               <TabsTrigger value="personality" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Smile className="w-4 h-4 mr-2" />Mood</TabsTrigger>
-              <TabsTrigger value="intelligence" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Zap className="w-4 h-4 mr-2" />Neural Core</TabsTrigger>
+              <TabsTrigger value="system" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Monitor className="w-4 h-4 mr-2" />Interface</TabsTrigger>
             </TabsList>
             
             <TabsContent value="account" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -235,8 +226,8 @@ export default function SettingsPage() {
                           {user.displayName?.[0] || user.email?.[0]?.toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-2xl font-bold text-white tracking-tight">{user.displayName || 'Authorized User'}</p>
-                          <p className="text-sm text-white/40 font-medium uppercase tracking-widest mt-1">{user.email}</p>
+                          <p className="text-2xl font-bold text-foreground tracking-tight">{user.displayName || 'Authorized User'}</p>
+                          <p className="text-sm text-foreground/40 font-medium uppercase tracking-widest mt-1">{user.email}</p>
                         </div>
                       </div>
                       <Button variant="ghost" onClick={handleSignOut} className="rounded-2xl h-14 px-8 bg-red-500/10 text-red-500 hover:bg-red-500/20 hover:text-red-400 border border-red-500/20 font-bold uppercase tracking-widest text-xs relative">
@@ -247,11 +238,11 @@ export default function SettingsPage() {
                   ) : (
                     <div className="p-12 rounded-[2.5rem] bg-white/[0.02] border border-white/5 text-center space-y-6">
                       <div className="h-20 w-20 bg-white/5 rounded-[2rem] flex items-center justify-center mx-auto border border-white/10">
-                        <SettingsIcon className="h-10 w-10 text-white/20" />
+                        <SettingsIcon className="h-10 w-10 text-foreground/20" />
                       </div>
                       <div className="space-y-2">
-                        <p className="text-xl font-bold text-white">Guest Access Detected</p>
-                        <p className="text-sm text-white/40 max-w-sm mx-auto">Sign in to sync your AIva neural settings and conversation history across all terminals.</p>
+                        <p className="text-xl font-bold text-foreground">Guest Access Detected</p>
+                        <p className="text-sm text-foreground/40 max-w-sm mx-auto">Sign in to sync your AIva neural settings and conversation history across all terminals.</p>
                       </div>
                       <Button asChild className="rounded-[1.5rem] h-14 px-10 bg-primary text-white font-bold uppercase tracking-widest text-xs shadow-xl shadow-primary/20 hover:scale-105 transition-transform">
                         <Link href="/login">Authenticate Terminal</Link>
@@ -268,18 +259,18 @@ export default function SettingsPage() {
                           Initiate Wipe
                         </Button>
                       </AlertDialogTrigger>
-                      <AlertDialogContent className="rounded-[2.5rem] bg-[#0A0A0B]/95 backdrop-blur-3xl border border-white/10 p-8 shadow-2xl">
+                      <AlertDialogContent className="rounded-[2.5rem] bg-background/95 backdrop-blur-3xl border border-white/10 p-8 shadow-2xl">
                         <AlertDialogHeader>
-                          <AlertDialogTitle className="flex items-center gap-3 text-white text-2xl font-bold tracking-tight">
+                          <AlertDialogTitle className="flex items-center gap-3 text-foreground text-2xl font-bold tracking-tight">
                             <AlertTriangle className="h-6 w-6 text-red-500" />
                             Confirm Terminal Wipe?
                           </AlertDialogTitle>
-                          <AlertDialogDescription className="text-white/60 font-medium leading-relaxed mt-4">
+                          <AlertDialogDescription className="text-foreground/60 font-medium leading-relaxed mt-4">
                             You are about to initiate a full memory purge. This will permanently erase all interaction data from the AIva cloud terminal.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter className="mt-8 gap-4">
-                          <AlertDialogCancel className="rounded-2xl h-12 font-bold uppercase tracking-widest text-[10px] bg-white/5 border-white/10 text-white">Abort</AlertDialogCancel>
+                          <AlertDialogCancel className="rounded-2xl h-12 font-bold uppercase tracking-widest text-[10px] bg-white/5 border-white/10 text-foreground">Abort</AlertDialogCancel>
                           <AlertDialogAction 
                             onClick={handleClearHistory} 
                             className="rounded-2xl h-12 font-bold uppercase tracking-widest text-[10px] bg-red-600 hover:bg-red-700 text-white"
@@ -311,17 +302,17 @@ export default function SettingsPage() {
                      <div className="w-full sm:w-64">
                         <Select 
                           value={settings.personality.tone} 
-                          onValueChange={(value) => handlePersonalityChange('tone', value)}
+                          onValueChange={(value) => handleSettingChange('personality', 'tone', value)}
                           disabled={!user || isSaving}
                         >
-                          <SelectTrigger className="rounded-2xl bg-white/5 border-white/10 text-white font-bold h-12 focus:ring-primary/40">
+                          <SelectTrigger className="rounded-2xl bg-white/5 border-white/10 text-foreground font-bold h-12 focus:ring-primary/40">
                             <SelectValue placeholder="Select tone" />
                           </SelectTrigger>
-                          <SelectContent className="bg-[#161618]/95 backdrop-blur-2xl border-white/10 rounded-2xl">
-                            <SelectItem value="friendly" className="text-white hover:bg-white/5 cursor-pointer rounded-xl">Friendly & Warm</SelectItem>
-                            <SelectItem value="professional" className="text-white hover:bg-white/5 cursor-pointer rounded-xl">Executive & Professional</SelectItem>
-                            <SelectItem value="witty" className="text-white hover:bg-white/5 cursor-pointer rounded-xl">Sharp & Witty</SelectItem>
-                            <SelectItem value="concise" className="text-white hover:bg-white/5 cursor-pointer rounded-xl">Hyper-Concise</SelectItem>
+                          <SelectContent className="bg-popover/95 backdrop-blur-2xl border-white/10 rounded-2xl">
+                            <SelectItem value="friendly" className="text-foreground hover:bg-white/5 cursor-pointer rounded-xl">Friendly & Warm</SelectItem>
+                            <SelectItem value="professional" className="text-foreground hover:bg-white/5 cursor-pointer rounded-xl">Executive & Professional</SelectItem>
+                            <SelectItem value="witty" className="text-foreground hover:bg-white/5 cursor-pointer rounded-xl">Sharp & Witty</SelectItem>
+                            <SelectItem value="concise" className="text-foreground hover:bg-white/5 cursor-pointer rounded-xl">Hyper-Concise</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -329,7 +320,7 @@ export default function SettingsPage() {
                   <SettingsItem label="Wit & Humor" description="Toggle AIva’s ability to utilize humor and metaphors." icon={Sparkles}>
                     <Switch 
                       checked={settings.personality.enableHumor} 
-                      onCheckedChange={(checked) => handlePersonalityChange('enableHumor', checked)}
+                      onCheckedChange={(checked) => handleSettingChange('personality', 'enableHumor', checked)}
                       disabled={!user || isSaving}
                       className="data-[state=checked]:bg-primary"
                     />
@@ -338,8 +329,8 @@ export default function SettingsPage() {
                      <div className="w-full sm:w-64 relative group">
                         <Input 
                             value={settings.personality.name} 
-                            onChange={(e) => handlePersonalityChange('name', e.target.value)}
-                            className="bg-white/5 border-white/10 rounded-2xl h-12 text-white font-bold px-4 focus-visible:ring-primary/40"
+                            onChange={(e) => handleSettingChange('personality', 'name', e.target.value)}
+                            className="bg-white/5 border-white/10 rounded-2xl h-12 text-foreground font-bold px-4 focus-visible:ring-primary/40"
                             placeholder="AIva"
                             disabled={!user || isSaving}
                         />
@@ -349,24 +340,71 @@ export default function SettingsPage() {
                 </SettingsSection>
             </TabsContent>
 
-            <TabsContent value="intelligence" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <SettingsSection icon={BrainCircuit} title="Neural Engine" description="Manage the high-performance AI models powering the terminal.">
+            <TabsContent value="system" className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8">
+               <SettingsSection icon={Monitor} title="Interface Appearance" description="Customize how the AIva terminal looks and feels.">
+                  <SettingsItem label="System Theme" description="Switch between high-fidelity light and dark neural modes." icon={Palette}>
+                     <div className="w-full sm:w-64">
+                        <Select 
+                          value={settings.appearance.theme} 
+                          onValueChange={(value) => handleSettingChange('appearance', 'theme', value)}
+                          disabled={!user || isSaving}
+                        >
+                          <SelectTrigger className="rounded-2xl bg-white/5 border-white/10 text-foreground font-bold h-12 focus:ring-primary/40">
+                            <SelectValue placeholder="Select theme" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover/95 backdrop-blur-2xl border-white/10 rounded-2xl">
+                            <SelectItem value="light" className="text-foreground hover:bg-white/5 cursor-pointer rounded-xl">
+                              <div className="flex items-center gap-2"><Sun className="h-4 w-4" /> Neural Light</div>
+                            </SelectItem>
+                            <SelectItem value="dark" className="text-foreground hover:bg-white/5 cursor-pointer rounded-xl">
+                              <div className="flex items-center gap-2"><Moon className="h-4 w-4" /> Deep Dark</div>
+                            </SelectItem>
+                            <SelectItem value="system" className="text-foreground hover:bg-white/5 cursor-pointer rounded-xl">
+                              <div className="flex items-center gap-2"><Monitor className="h-4 w-4" /> Device Sync</div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                  </SettingsItem>
+               </SettingsSection>
+
+               <SettingsSection icon={Languages} title="Global Language Terminal" description="Translate the AIva interface into your preferred language.">
+                  <div className="p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 space-y-6">
+                      <div className="flex items-center gap-4">
+                          <div className="h-12 w-12 bg-blue-500/10 rounded-2xl flex items-center justify-center border border-blue-500/20">
+                              <Globe className="h-6 w-6 text-blue-400" />
+                          </div>
+                          <div>
+                              <p className="text-lg font-bold text-foreground">Language Intercept</p>
+                              <p className="text-[10px] uppercase tracking-widest font-bold text-blue-400">Powered by Google Translate</p>
+                          </div>
+                      </div>
+                      <p className="text-sm text-foreground/60 leading-relaxed font-medium">Use the language terminal below to switch the entire application's text into another language.</p>
+                      
+                      <div className="relative p-6 bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden min-h-[80px]">
+                        <div id="google_translate_element" className="relative z-10" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent pointer-events-none" />
+                      </div>
+                  </div>
+               </SettingsSection>
+
+               <SettingsSection icon={BrainCircuit} title="Neural Engine" description="Manage the high-performance AI models powering the terminal.">
                     <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-primary/10 to-transparent border border-primary/20 space-y-6">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-primary rounded-2xl text-white shadow-xl shadow-primary/20">
                                 <Sparkles className="h-6 w-6" />
                             </div>
                             <div>
-                                <p className="text-xl font-bold text-white">Gemini Pro 2.0</p>
+                                <p className="text-xl font-bold text-foreground">Gemini Pro 2.0</p>
                                 <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-primary">Ultra-Performance Core</p>
                             </div>
                             <Badge className="ml-auto bg-primary text-white font-bold border-none h-7 px-3">ACTIVE</Badge>
                         </div>
-                        <p className="text-sm text-white/60 leading-relaxed font-medium">Currently utilizing the Gemini Ultra core for complex reasoning, image analysis, and deep synthesis tasks. Offline mode utilizes Llama 3 via local intercept.</p>
+                        <p className="text-sm text-foreground/60 leading-relaxed font-medium">Currently utilizing the Gemini Ultra core for complex reasoning, image analysis, and deep synthesis tasks. Offline mode utilizes Llama 3 via local intercept.</p>
                         <div className="pt-4 border-t border-white/5">
-                            <Button variant="ghost" className="w-full justify-between h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-[10px] group">
+                            <Button variant="ghost" className="w-full justify-between h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-foreground font-bold uppercase tracking-widest text-[10px] group">
                                 Model Benchmark Report
-                                <ChevronRight className="h-4 w-4 text-white/20 group-hover:translate-x-1 group-hover:text-primary transition-all" />
+                                <ChevronRight className="h-4 w-4 text-foreground/20 group-hover:translate-x-1 group-hover:text-primary transition-all" />
                             </Button>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export type PersonalitySettings = {
   tone: 'friendly' | 'professional' | 'witty' | 'concise';
@@ -7,9 +7,13 @@ export type PersonalitySettings = {
   name: string;
 };
 
+export type AppearanceSettings = {
+  theme: 'light' | 'dark' | 'system';
+};
+
 export type UserSettings = {
   personality: PersonalitySettings;
-  // Add other settings categories here in the future
+  appearance: AppearanceSettings;
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -17,6 +21,9 @@ export const DEFAULT_SETTINGS: UserSettings = {
     tone: 'friendly',
     enableHumor: true,
     name: 'AIva',
+  },
+  appearance: {
+    theme: 'dark',
   },
 };
 
@@ -37,6 +44,10 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
       personality: {
         ...DEFAULT_SETTINGS.personality,
         ...(dbSettings.personality || {}),
+      },
+      appearance: {
+        ...DEFAULT_SETTINGS.appearance,
+        ...(dbSettings.appearance || {}),
       },
     };
   } else {

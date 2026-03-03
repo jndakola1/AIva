@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { LayoutProvider } from '@/components/layout-provider';
 import { ChatHistoryProvider } from '@/context/chat-history-context';
+import Script from 'next/script';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -39,6 +40,18 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              function googleTranslateElementInit() {
+                new google.translate.TranslateElement({
+                  pageLanguage: 'en',
+                  layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                }, 'google_translate_element');
+              }
+            `,
+          }}
+        />
       </head>
       <body className="antialiased font-sans">
         <ChatHistoryProvider>
@@ -47,6 +60,10 @@ export default function RootLayout({
           </LayoutProvider>
         </ChatHistoryProvider>
         <Toaster />
+        <Script
+          src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

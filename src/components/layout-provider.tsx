@@ -26,20 +26,62 @@ import {
   Video, 
   PlusCircle,
   LayoutDashboard,
-  Sparkles
+  Sparkles,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChatHistory } from '@/context/chat-history-context';
+import { useAuth } from '@/hooks/use-auth';
+import { getUserSettings } from '@/lib/user-settings';
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { messages } = useChatHistory();
+  const { user } = useAuth();
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
     setIsSheetOpen(false);
   }, [pathname]);
+
+  // Handle Theme Persistence and Application
+  useEffect(() => {
+    const applyTheme = async () => {
+      let activeTheme: 'light' | 'dark' = 'dark';
+      
+      if (user) {
+        try {
+          const settings = await getUserSettings(user.uid);
+          if (settings.appearance.theme === 'system') {
+            activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          } else {
+            activeTheme = settings.appearance.theme as 'light' | 'dark';
+          }
+        } catch (e) {
+          console.error("Failed to load theme settings");
+        }
+      } else {
+        // Guest fallback to system or dark
+        activeTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+
+      setTheme(activeTheme);
+      document.documentElement.classList.toggle('dark', activeTheme === 'dark');
+      document.documentElement.style.colorScheme = activeTheme;
+    };
+
+    applyTheme();
+    
+    // Listen for system theme changes if set to system (simulated)
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = () => applyTheme();
+    mediaQuery.addEventListener('change', handleSystemChange);
+    
+    return () => mediaQuery.removeEventListener('change', handleSystemChange);
+  }, [user]);
 
   const navLinks = [
     { href: '/', label: 'Chat', icon: MessageSquare },
@@ -58,7 +100,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen w-full flex bg-[#0A0A0B] text-foreground overflow-hidden">
+      <div className="min-h-screen w-full flex bg-background text-foreground overflow-hidden">
         {/* Desktop Sidebar */}
         <nav className="hidden md:flex flex-col items-center gap-4 px-3 py-6 border-r border-white/5 bg-white/[0.02] backdrop-blur-2xl w-16 lg:w-64 transition-all">
           <div className="flex items-center gap-3 w-full px-2 mb-6 group cursor-pointer" onClick={() => router.push('/')}>
@@ -66,7 +108,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
               <Bot className="h-6 w-6 text-white" />
             </div>
             <div className="hidden lg:block">
-              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">AIva</span>
+              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">AIva</span>
               <p className="text-[10px] uppercase tracking-widest font-bold opacity-40">Pro Assistant</p>
             </div>
           </div>
@@ -138,7 +180,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
         {/* Main Content Area */}
         <div className="flex flex-1 flex-col h-screen overflow-hidden">
             {/* Mobile Header */}
-            <header className="sticky top-0 z-20 flex h-16 items-center justify-between bg-[#0A0A0B]/80 backdrop-blur-xl px-4 border-b border-white/5 md:hidden">
+            <header className="sticky top-0 z-20 flex h-16 items-center justify-between bg-background/80 backdrop-blur-xl px-4 border-b border-white/5 md:hidden">
                 <div className="flex items-center gap-3">
                   <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(217,119,87,0.4)]">
                     <Bot className="h-5 w-5 text-white" />
@@ -158,7 +200,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                             <Menu className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
                         </Button>
                       </SheetTrigger>
-                      <SheetContent side="left" className="w-[300px] p-0 border-r border-white/5 bg-[#0A0A0B]">
+                      <SheetContent side="left" className="w-[300px] p-0 border-r border-white/5 bg-background">
                           <div className="flex flex-col h-full">
                             <SheetHeader className="p-6 border-b border-white/5 bg-white/[0.02]">
                               <SheetTitle className="flex items-center gap-4">
@@ -216,7 +258,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
             </main>
 
             {/* Mobile Bottom Navigation */}
-            <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-20 items-center justify-around bg-[#0A0A0B]/80 backdrop-blur-2xl border-t border-white/5 md:hidden px-4 pb-4">
+            <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-20 items-center justify-around bg-background/80 backdrop-blur-2xl border-t border-white/5 md:hidden px-4 pb-4">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}

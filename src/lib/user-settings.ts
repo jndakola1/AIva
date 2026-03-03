@@ -15,6 +15,7 @@ export type AppearanceSettings = {
 export type UserSettings = {
   personality: PersonalitySettings;
   appearance: AppearanceSettings;
+  tier: 'free' | 'pro';
 };
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -27,6 +28,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
     theme: 'dark',
     primaryColor: 'orange',
   },
+  tier: 'free',
 };
 
 /**
@@ -50,6 +52,7 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
         ...DEFAULT_SETTINGS.appearance,
         ...(dbSettings.appearance || {}),
       },
+      tier: dbSettings.tier || 'free',
     };
   } else {
     return DEFAULT_SETTINGS;

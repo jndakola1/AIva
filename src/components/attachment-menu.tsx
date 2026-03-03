@@ -8,10 +8,12 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Camera, FileText, Globe, Image as ImageIcon, Plus, Telescope, Wand2, Film, Music, ChevronRight, Zap, MessageSquare } from 'lucide-react';
+import { Camera, FileText, Globe, Image as ImageIcon, Plus, Telescope, Wand2, Film, Music, ChevronRight, Zap, MessageSquare, Sparkles } from 'lucide-react';
 import type React from 'react';
 import { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { useSettings } from '@/context/settings-context';
+import { Badge } from './ui/badge';
 
 const ActionButton = ({ icon: Icon, children, onClick }: { icon: React.ElementType, children: React.ReactNode, onClick?: () => void }) => (
     <button 
@@ -25,17 +27,22 @@ const ActionButton = ({ icon: Icon, children, onClick }: { icon: React.ElementTy
     </button>
 );
 
-const MenuLink = ({ icon: Icon, children, detail, onClick, disabled }: { icon: React.ElementType, children: React.ReactNode, detail?: string, onClick?: () => void, disabled?: boolean }) => (
+const MenuLink = ({ icon: Icon, children, detail, onClick, disabled, isPro }: { icon: React.ElementType, children: React.ReactNode, detail?: string, onClick?: () => void, disabled?: boolean, isPro?: boolean }) => (
     <button 
       onClick={onClick} 
       disabled={disabled} 
-      className="flex items-center w-full text-left h-16 text-base font-bold gap-4 px-5 rounded-[1.5rem] hover:bg-foreground/5 border border-transparent hover:border-foreground/5 transition-all group active:scale-98 disabled:opacity-30"
+      className="flex items-center w-full text-left h-16 text-base font-bold gap-4 px-5 rounded-[1.5rem] hover:bg-foreground/5 border border-transparent hover:border-foreground/5 transition-all group active:scale-98 disabled:opacity-30 relative"
     >
         <div className="p-2.5 bg-foreground/5 rounded-xl group-hover:bg-primary/10 group-hover:text-primary transition-all">
           <Icon className="h-5 w-5 text-foreground/40 group-hover:text-primary" />
         </div>
         <div className="flex-grow">
-          <span className="text-foreground/80 group-hover:text-foreground transition-colors">{children}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-foreground/80 group-hover:text-foreground transition-colors">{children}</span>
+            {isPro && (
+                <Badge variant="outline" className="h-4 px-1.5 border-primary/40 bg-primary/10 text-primary text-[7px] font-black uppercase tracking-widest animate-pulse">PRO</Badge>
+            )}
+          </div>
           {detail && <p className="text-[9px] uppercase tracking-widest text-foreground/20 font-bold mt-0.5">{detail}</p>}
         </div>
         <ChevronRight className="h-4 w-4 text-foreground/10 group-hover:text-primary group-hover:translate-x-1 transition-all" />
@@ -69,6 +76,8 @@ const AttachmentMenu = ({
   const [isOpen, setIsOpen] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { settings } = useSettings();
+  const isPro = settings.tier === 'pro';
 
   const handleAction = (action: () => void) => {
     if (disabled) return;
@@ -133,10 +142,10 @@ const AttachmentMenu = ({
             <MenuLink icon={Zap} onClick={() => handleAction(onDailyBriefing)} detail="Context Synthesis">Daily Briefing</MenuLink>
             <MenuLink icon={MessageSquare} onClick={() => handleAction(onSimulateIntercept)} detail="Scenario 1">Simulate Intercept</MenuLink>
             <MenuLink icon={Wand2} onClick={() => handleAction(onGenerateImage)} disabled={disabled}>Pixel Synthesis</MenuLink>
-            <MenuLink icon={Film} onClick={() => handleAction(onGenerateVideo)} detail="Veo 3 Pro" disabled={disabled}>Motion Engine</MenuLink>
-            <MenuLink icon={Music} onClick={() => handleAction(onGenerateMusic)} detail="Neural Studio" disabled={disabled}>Audio Mastering</MenuLink>
+            <MenuLink icon={Film} onClick={() => handleAction(onGenerateVideo)} detail="Veo 3 Pro" isPro disabled={disabled}>Motion Engine</MenuLink>
+            <MenuLink icon={Music} onClick={() => handleAction(onGenerateMusic)} detail="Neural Studio" isPro disabled={disabled}>Audio Mastering</MenuLink>
             <MenuLink icon={Globe} onClick={() => handleAction(onWebSearch)} disabled={disabled}>Global Search</MenuLink>
-            <MenuLink icon={Telescope} onClick={() => handleAction(onDeepResearch)} detail="Deep Synthesis" disabled={disabled}>Intel Report</MenuLink>
+            <MenuLink icon={Telescope} onClick={() => handleAction(onDeepResearch)} detail="Deep Synthesis" isPro disabled={disabled}>Intel Report</MenuLink>
         </div>
       </SheetContent>
     </Sheet>

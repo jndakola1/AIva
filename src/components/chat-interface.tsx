@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Loader, Mic, Send, SlidersHorizontal, X, Image as ImageIcon, Sparkles, Brain, Globe, Palette, Film, Telescope, Music, Zap } from "lucide-react";
+import { Loader, Mic, Send, SlidersHorizontal, X, Image as ImageIcon, Sparkles, Brain, Globe, Palette, Film, Telescope, Music, Zap, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -21,6 +21,7 @@ import { useChatHistory } from "@/context/chat-history-context";
 import { tts } from "@/ai/flows/tts";
 import { useAuth } from "@/hooks/use-auth";
 import Image from "next/image";
+import { useSettings } from "@/context/settings-context";
 
 declare global {
   interface Window {
@@ -31,9 +32,9 @@ declare global {
 
 const STARTER_PROMPTS = [
   { icon: Zap, text: "Give me my daily briefing.", color: "text-primary bg-primary/10 border-primary/20" },
-  { icon: Sparkles, text: "Create a cinematic video of a futuristic forest.", color: "text-amber-400 bg-amber-400/10 border-amber-400/20" },
+  { icon: Sparkles, text: "Create a cinematic video of a futuristic forest.", color: "text-amber-400 bg-amber-400/10 border-amber-400/20", isPro: true },
   { icon: Brain, text: "Explain quantum physics to a five-year-old.", color: "text-orange-400 bg-orange-400/10 border-orange-400/20" },
-  { icon: Telescope, text: "Perform deep research on neural synthesis.", color: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20" },
+  { icon: Telescope, text: "Perform deep research on neural synthesis.", color: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20", isPro: true },
 ];
 
 export default function ChatInterface() {
@@ -58,6 +59,10 @@ export default function ChatInterface() {
   const { toast } = useToast();
   const isOnline = useOnlineStatus();
   const { user } = useAuth();
+  const { settings } = useSettings();
+  const router = useRouter();
+
+  const isPro = settings.tier === 'pro';
 
   const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
@@ -114,6 +119,16 @@ export default function ChatInterface() {
     if (!prompt.trim() && !imagePreview && !selectedFile) return;
 
     const { performResearch = false, isDeep = false } = options || {};
+
+    if (isDeep && !isPro) {
+        toast({
+            title: "Pro Access Required",
+            description: "Deep Synthesis is a Neural Ultra feature. Please upgrade your profile.",
+            action: <Button variant="outline" size="sm" onClick={() => router.push('/settings')}>Upgrade</Button>
+        });
+        return;
+    }
+
     let userMessageContent = prompt;
     if (performResearch) userMessageContent = `Research: ${prompt}`;
     if (isDeep) userMessageContent = `Deep Research: ${prompt}`;
@@ -176,7 +191,7 @@ export default function ChatInterface() {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);
     }
-  }, [isOnline, addMessage, messages, user, imagePreview, selectedFile, clearSelections, speak]);
+  }, [isOnline, isPro, addMessage, messages, user, imagePreview, selectedFile, clearSelections, speak, toast, router]);
 
   const handleGenerateImage = useCallback(async () => {
     if (!input.trim()) return;
@@ -202,6 +217,14 @@ export default function ChatInterface() {
   }, [input, addMessage]);
 
   const handleGenerateVideo = useCallback(async () => {
+    if (!isPro) {
+        toast({
+            title: "Pro Access Required",
+            description: "Veo 3 Motion Engine is a Neural Ultra feature.",
+            action: <Button variant="outline" size="sm" onClick={() => router.push('/settings')}>Upgrade</Button>
+        });
+        return;
+    }
     if (!input.trim()) {
       toast({ title: "Prompt Required", description: "Please describe the video you want to generate." });
       return;
@@ -227,9 +250,17 @@ export default function ChatInterface() {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);
     }
-  }, [input, addMessage, toast]);
+  }, [input, isPro, addMessage, toast, router]);
 
   const handleGenerateMusic = useCallback(async () => {
+    if (!isPro) {
+        toast({
+            title: "Pro Access Required",
+            description: "Neural Studio mastering is a Neural Ultra feature.",
+            action: <Button variant="outline" size="sm" onClick={() => router.push('/settings')}>Upgrade</Button>
+        });
+        return;
+    }
     if (!input.trim()) {
       toast({ title: "Prompt Required", description: "Please describe the music you want to generate." });
       return;
@@ -254,7 +285,7 @@ export default function ChatInterface() {
       setIsProcessingTask(false);
       setCurrentTaskLabel(null);
     }
-  }, [input, addMessage, toast]);
+  }, [input, isPro, addMessage, toast, router]);
 
   const handleDailyBriefing = useCallback(() => {
     sendMessage("Give me my daily briefing.");
@@ -347,13 +378,21 @@ export default function ChatInterface() {
                     {STARTER_PROMPTS.map((starter, i) => (
                       <button
                         key={i}
-                        onClick={() => sendMessage(starter.text)}
-                        className="flex items-center gap-4 p-5 rounded-3xl bg-foreground/[0.03] border border-foreground/5 hover:bg-foreground/[0.06] hover:border-primary/30 transition-all text-left group shadow-lg"
+                        onClick={() => sendMessage(starter.text, { isDeep: starter.isPro })}
+                        className="flex items-center gap-4 p-5 rounded-3xl bg-foreground/[0.03] border border-foreground/5 hover:bg-foreground/[0.06] hover:border-primary/30 transition-all text-left group shadow-lg relative overflow-hidden"
                       >
+                        {starter.isPro && !isPro && (
+                            <div className="absolute top-0 right-0 p-2">
+                                <Lock className="h-3 w-3 text-foreground/20" />
+                            </div>
+                        )}
                         <div className={cn("p-3 rounded-2xl group-hover:scale-110 transition-transform border", starter.color)}>
                           <starter.icon className="h-5 w-5" />
                         </div>
-                        <span className="text-sm font-semibold text-foreground/80 group-hover:text-foreground transition-colors">{starter.text}</span>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-foreground/80 group-hover:text-foreground transition-colors">{starter.text}</span>
+                            {starter.isPro && <span className="text-[8px] font-bold uppercase tracking-widest text-primary mt-0.5">Neural Ultra</span>}
+                        </div>
                       </button>
                     ))}
                   </div>

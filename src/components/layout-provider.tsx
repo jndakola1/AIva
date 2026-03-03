@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-context';
+import { Badge } from './ui/badge';
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -115,8 +116,13 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
               <Bot className="h-6 w-6 text-white" />
             </div>
             <div className="hidden lg:block">
-              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">AIva</span>
-              <p className="text-[10px] uppercase tracking-widest font-bold opacity-40">Pro Assistant</p>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">AIva</span>
+                {settings.tier === 'pro' && (
+                    <Badge className="bg-primary text-white border-none text-[8px] h-4 font-black">PRO</Badge>
+                )}
+              </div>
+              <p className="text-[10px] uppercase tracking-widest font-bold opacity-40">{settings.tier === 'pro' ? 'Neural Ultra' : 'Basic Assistant'}</p>
             </div>
           </div>
 
@@ -198,8 +204,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                   <div className="h-9 w-9 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                     <Bot className="h-5 w-5 text-white" />
                   </div>
-                  <div>
-                    <span className="font-bold text-lg tracking-tight">AIva</span>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-lg tracking-tight">AIva</span>
+                        {settings.tier === 'pro' && <Badge className="bg-primary text-white border-none text-[6px] h-3 px-1 font-black">PRO</Badge>}
+                    </div>
                   </div>
                 </div>
                 
@@ -221,8 +230,11 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                   <Bot className="h-6 w-6" />
                                 </div>
                                 <div className="text-left">
-                                  <span className="font-bold text-xl block">AIva Assistant</span>
-                                  <span className="text-[10px] uppercase tracking-widest font-bold opacity-40">Pro Experience</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-xl block">AIva Assistant</span>
+                                    {settings.tier === 'pro' && <Badge className="bg-primary text-white border-none text-[8px] h-4 font-black">PRO</Badge>}
+                                  </div>
+                                  <span className="text-[10px] uppercase tracking-widest font-bold opacity-40">{settings.tier === 'pro' ? 'Neural Ultra active' : 'Basic Neural Experience'}</span>
                                 </div>
                               </SheetTitle>
                             </SheetHeader>

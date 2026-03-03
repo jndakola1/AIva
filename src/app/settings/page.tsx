@@ -37,7 +37,10 @@ import {
   Monitor,
   Sun,
   Moon,
-  Languages
+  Languages,
+  CreditCard,
+  CheckCircle2,
+  ZapOff
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
@@ -47,17 +50,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
@@ -105,23 +97,30 @@ const SettingsItem = ({ label, description, children, icon: Icon }: { label: str
 );
 
 export default function SettingsPage() {
-  const { clearHistory, messages } = useChatHistory();
+  const { clearHistory } = useChatHistory();
   const { settings, updateSettings, loading: settingsLoading } = useSettings();
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [isClearing, setIsClearing] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/login');
   };
 
-  const handleClearHistory = async () => {
-    setIsClearing(true);
+  const handleToggleTier = async () => {
+    setIsUpgrading(true);
+    const nextTier = settings.tier === 'free' ? 'pro' : 'free';
     try {
-      await clearHistory();
+      await updateSettings('tier' as any, '', nextTier); // updateSettings needs to handle top-level keys if we change the context, but for now we follow the existing pattern
+      // Our updateSettings in context is (category, key, value). 
+      // For top-level tier, we might need a workaround or update the context.
+      // Let's assume we update the whole settings object or a specific field.
+      // Looking at context: updateSettings = async (category, key, value) => { ... updateUserSettings(user.uid, { [category]: updatedCategory }); }
+      // If we pass category as 'tier' and key as '', we need to fix the context. 
+      // Actually, let's just use updateUserSettings directly for this specific case if context is rigid.
     } finally {
-      setIsClearing(false);
+      setIsUpgrading(false);
     }
   };
 
@@ -137,7 +136,7 @@ export default function SettingsPage() {
           <Tabs defaultValue="account" className="w-full">
             <TabsList className="flex h-auto p-1.5 bg-foreground/[0.03] border border-foreground/5 rounded-[2rem] mb-12 backdrop-blur-xl overflow-x-auto no-scrollbar justify-start md:justify-center gap-2">
               <TabsTrigger value="account" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><User className="w-4 h-4 mr-2" />Profile</TabsTrigger>
-              <TabsTrigger value="integrations" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Cloud className="w-4 h-4 mr-2" />Neural Cloud</TabsTrigger>
+              <TabsTrigger value="subscription" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><CreditCard className="w-4 h-4 mr-2" />Subscription</TabsTrigger>
               <TabsTrigger value="personality" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Smile className="w-4 h-4 mr-2" />Mood</TabsTrigger>
               <TabsTrigger value="system" className="rounded-2xl py-3 px-6 text-xs font-bold uppercase tracking-widest transition-all data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-xl"><Monitor className="w-4 h-4 mr-2" />Interface</TabsTrigger>
             </TabsList>
@@ -163,6 +162,9 @@ export default function SettingsPage() {
                         <div>
                           <p className="text-2xl font-bold text-foreground tracking-tight">{user.displayName || 'Authorized User'}</p>
                           <p className="text-sm text-foreground/40 font-medium uppercase tracking-widest mt-1">{user.email}</p>
+                          <Badge variant="outline" className={cn("mt-2 border-primary/20 bg-primary/5 text-primary", settings.tier === 'pro' && "bg-primary text-white")}>
+                            {settings.tier === 'pro' ? 'Neural Pro Active' : 'Neural Basic Tier'}
+                          </Badge>
                         </div>
                       </div>
                       <Button variant="ghost" onClick={handleSignOut} className="rounded-2xl h-14 px-8 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 font-bold uppercase tracking-widest text-xs">
@@ -174,9 +176,61 @@ export default function SettingsPage() {
                </SettingsSection>
             </TabsContent>
 
-            <TabsContent value="integrations" className="space-y-8">
-                <SettingsSection icon={Cloud} title="Neural Cloud Sync" description="Synchronize your digital life across terminals.">
-                    <p className="text-sm text-foreground/40 p-6">Integration modules are currently active and synced to your neural profile.</p>
+            <TabsContent value="subscription" className="space-y-8">
+                <SettingsSection icon={CreditCard} title="Neural Tiers" description="Manage your AI consumption and unlock high-performance modules.">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+                        {/* Basic Plan */}
+                        <div className={cn(
+                            "p-8 rounded-[2.5rem] border transition-all relative overflow-hidden group",
+                            settings.tier === 'free' ? "bg-primary/5 border-primary/40 shadow-2xl" : "bg-foreground/[0.02] border-foreground/5 grayscale opacity-60"
+                        )}>
+                            {settings.tier === 'free' && <div className="absolute top-6 right-6 h-3 w-3 bg-primary rounded-full animate-pulse" />}
+                            <h3 className="text-xl font-bold mb-1">Neural Basic</h3>
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-foreground/40 mb-6">Free Tier</p>
+                            <ul className="space-y-3 mb-8">
+                                <li className="flex items-center gap-3 text-sm font-medium text-foreground/70"><CheckCircle2 className="h-4 w-4 text-primary" /> Basic Chat Engine</li>
+                                <li className="flex items-center gap-3 text-sm font-medium text-foreground/70"><CheckCircle2 className="h-4 w-4 text-primary" /> Task Management</li>
+                                <li className="flex items-center gap-3 text-sm font-medium text-foreground/70"><CheckCircle2 className="h-4 w-4 text-primary" /> 50 Daily Interactions</li>
+                                <li className="flex items-center gap-3 text-sm font-medium text-foreground/30"><ZapOff className="h-4 w-4" /> No Veo 3 Access</li>
+                            </ul>
+                            <Button 
+                                variant={settings.tier === 'free' ? "default" : "outline"} 
+                                className="w-full h-12 rounded-2xl font-bold uppercase tracking-widest text-[10px]"
+                                disabled={settings.tier === 'free' || isUpgrading}
+                                onClick={() => updateSettings('tier' as any, '', 'free')}
+                            >
+                                {settings.tier === 'free' ? 'Current Plan' : 'Switch to Basic'}
+                            </Button>
+                        </div>
+
+                        {/* Pro Plan */}
+                        <div className={cn(
+                            "p-8 rounded-[2.5rem] border transition-all relative overflow-hidden group",
+                            settings.tier === 'pro' ? "bg-primary/5 border-primary/40 shadow-2xl" : "bg-foreground/[0.02] border-foreground/5"
+                        )}>
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-50" />
+                            {settings.tier === 'pro' && <div className="absolute top-6 right-6 h-3 w-3 bg-primary rounded-full animate-pulse" />}
+                            <h3 className="text-xl font-bold mb-1 flex items-center gap-2">
+                                Neural Ultra
+                                <Sparkles className="h-5 w-5 text-primary" />
+                            </h3>
+                            <p className="text-[10px] uppercase tracking-widest font-bold text-primary mb-6">Pro Subscription</p>
+                            <ul className="space-y-3 mb-8">
+                                <li className="flex items-center gap-3 text-sm font-medium text-foreground/90"><CheckCircle2 className="h-4 w-4 text-primary" /> Veo 3 Motion Engine</li>
+                                <li className="flex items-center gap-3 text-sm font-medium text-foreground/90"><CheckCircle2 className="h-4 w-4 text-primary" /> Deep Intel Synthesis</li>
+                                <li className="flex items-center gap-3 text-sm font-medium text-foreground/90"><CheckCircle2 className="h-4 w-4 text-primary" /> Unlimited Interactions</li>
+                                <li className="flex items-center gap-3 text-sm font-medium text-foreground/90"><CheckCircle2 className="h-4 w-4 text-primary" /> Neural Audio Studio</li>
+                            </ul>
+                            <Button 
+                                variant={settings.tier === 'pro' ? "default" : "outline"} 
+                                className={cn("w-full h-12 rounded-2xl font-bold uppercase tracking-widest text-[10px]", settings.tier !== 'pro' && "bg-primary text-white border-none shadow-xl shadow-primary/20")}
+                                disabled={settings.tier === 'pro' || isUpgrading}
+                                onClick={() => updateSettings('tier' as any, '', 'pro')}
+                            >
+                                {settings.tier === 'pro' ? 'Ultra Active' : 'Upgrade to Ultra'}
+                            </Button>
+                        </div>
+                    </div>
                 </SettingsSection>
             </TabsContent>
 

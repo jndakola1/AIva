@@ -29,17 +29,22 @@ import {
   Sparkles,
   Sun,
   Moon,
-  Palette
+  Palette,
+  LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSettings } from '@/context/settings-context';
 import { Badge } from './ui/badge';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
+import { useAuth } from '@/hooks/use-auth';
 
 export function LayoutProvider({ children }: { children: React.ReactNode }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { settings, updateSettings } = useSettings();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsSheetOpen(false);
@@ -59,7 +64,6 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.toggle('dark', activeTheme === 'dark');
       document.documentElement.style.colorScheme = activeTheme;
       
-      // Map primary color selection to CSS variables defined in globals.css
       const colorMap: Record<string, string> = {
         orange: 'var(--primary-orange)',
         blue: 'var(--primary-blue)',
@@ -103,6 +107,15 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
       window.location.reload();
     } else {
       router.push('/');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   };
 
@@ -193,6 +206,22 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
               </TooltipTrigger>
               <TooltipContent side="right" className="lg:hidden">Settings</TooltipContent>
             </Tooltip>
+
+            {user && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    onClick={handleLogout}
+                    className="w-full lg:justify-start gap-4 rounded-2xl transition-all h-12 text-red-500 hover:bg-red-500/10"
+                  >
+                    <LogOut className="h-5 w-5 shrink-0" />
+                    <span className="hidden lg:block font-medium">Logout</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="lg:hidden">Logout</TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </nav>
         
@@ -254,7 +283,7 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                         {link.label}
                                     </Link>
                                 ))}
-                                <div className="mt-4 pt-4 border-t border-foreground/5">
+                                <div className="mt-4 pt-4 border-t border-foreground/5 space-y-2">
                                   <Link
                                       href="/settings"
                                       className={cn(
@@ -267,6 +296,13 @@ export function LayoutProvider({ children }: { children: React.ReactNode }) {
                                       <Settings className="h-5 w-5" />
                                       Settings
                                   </Link>
+                                  <button
+                                      onClick={handleLogout}
+                                      className="flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all text-base font-medium text-red-500 hover:bg-red-500/10 w-full"
+                                  >
+                                      <LogOut className="h-5 w-5" />
+                                      Logout
+                                  </button>
                                 </div>
                             </nav>
                           </div>

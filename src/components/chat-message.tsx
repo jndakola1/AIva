@@ -56,13 +56,13 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
       <div className="p-4 space-y-3 text-xs leading-relaxed text-foreground/80">
            <div className="flex justify-between items-center bg-foreground/5 p-2 rounded-xl">
               <span className="text-foreground/40">Evaluation</span>
-              <span className="font-bold text-primary uppercase">{review.summaryEvaluation}</span>
+              <span className="font-bold text-primary uppercase">{review?.summaryEvaluation}</span>
            </div>
-           {review.issuesFound && <div className="space-y-1"><p className="text-foreground/40 uppercase text-[9px] font-bold">Issues Found</p><p className="bg-red-500/5 p-2 rounded-xl border border-red-500/10">{review.issuesFound}</p></div>}
-           {review.suggestedFixes && <div className="space-y-1"><p className="text-foreground/40 uppercase text-[9px] font-bold">Fix Suggestions</p><p className="bg-green-500/5 p-2 rounded-xl border border-red-500/10">{review.suggestedFixes}</p></div>}
+           {review?.issuesFound && <div className="space-y-1"><p className="text-foreground/40 uppercase text-[9px] font-bold">Issues Found</p><p className="bg-red-500/5 p-2 rounded-xl border border-red-500/10">{review.issuesFound}</p></div>}
+           {review?.suggestedFixes && <div className="space-y-1"><p className="text-foreground/40 uppercase text-[9px] font-bold">Fix Suggestions</p><p className="bg-green-500/5 p-2 rounded-xl border border-red-500/10">{review.suggestedFixes}</p></div>}
            <div className="flex justify-between items-center border-t border-foreground/5 pt-3">
               <span className="text-foreground/40">Final Verdict</span>
-              <span className="font-bold uppercase text-primary">{review.finalVerdict}</span>
+              <span className="font-bold uppercase text-primary">{review?.finalVerdict}</span>
            </div>
       </div>
     </PopoverContent>
@@ -70,8 +70,8 @@ const ReviewPopover = ({ review }: { review: SelfReviewOutput }) => (
 );
 
 const CommInterceptCard = ({ data, onAction }: { data: any, onAction?: (prompt: string) => void }) => {
-    const isCall = data.isCall;
-    const isVoicemail = data.isVoicemail;
+    const isCall = data?.isCall;
+    const isVoicemail = data?.isVoicemail;
 
     return (
         <Card className="mt-3 overflow-hidden border-primary/20 holographic-glass rounded-[2.5rem] shadow-2xl max-w-[340px] animate-in slide-in-from-left-4 duration-500">
@@ -87,8 +87,8 @@ const CommInterceptCard = ({ data, onAction }: { data: any, onAction?: (prompt: 
                         {isCall ? <Phone className="h-6 w-6 text-white" /> : isVoicemail ? <Mic className="h-6 w-6 text-white" /> : <MessageSquare className="h-6 w-6 text-white" />}
                     </div>
                     <div>
-                        <CardTitle className="text-foreground text-lg font-bold">{data.sender}</CardTitle>
-                        <p className="text-[10px] uppercase tracking-widest font-bold text-primary/60">{data.time}</p>
+                        <CardTitle className="text-foreground text-lg font-bold">{data?.sender}</CardTitle>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-primary/60">{data?.time}</p>
                     </div>
                 </div>
                 <p className="text-sm font-medium text-foreground/80 leading-relaxed italic border-l-2 border-primary/20 pl-4 py-1">
@@ -97,14 +97,14 @@ const CommInterceptCard = ({ data, onAction }: { data: any, onAction?: (prompt: 
             </div>
             <div className="grid grid-cols-2 border-t border-primary/10 bg-primary/5">
                 <button 
-                    onClick={() => onAction?.(isCall ? `Accept call from ${data.sender}.` : isVoicemail ? `Play voicemail from ${data.sender}.` : `Read the message from ${data.sender} aloud.`)}
+                    onClick={() => onAction?.(isCall ? `Accept call from ${data?.sender}.` : isVoicemail ? `Play voicemail from ${data?.sender}.` : `Read the message from ${data?.sender} aloud.`)}
                     className="flex flex-col items-center justify-center gap-2 py-4 text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-primary/10 transition-all border-r border-primary/10"
                 >
                     {isCall ? <PhoneIncoming className="h-4 w-4" /> : isVoicemail ? <Play className="h-4 w-4" /> : <Headphones className="h-4 w-4" />}
                     {isCall ? "Accept" : isVoicemail ? "Play" : "Read Aloud"}
                 </button>
                 <button 
-                    onClick={() => onAction?.(isCall ? `Divert call from ${data.sender} to voicemail.` : isVoicemail ? `Call back ${data.sender}.` : `Reply to ${data.sender}.`)}
+                    onClick={() => onAction?.(isCall ? `Divert call from ${data?.sender} to voicemail.` : isVoicemail ? `Call back ${data?.sender}.` : `Reply to ${data?.sender}.`)}
                     className="flex flex-col items-center justify-center gap-2 py-4 text-[10px] font-bold uppercase tracking-widest text-primary hover:bg-primary/10 transition-all"
                 >
                     {isCall ? <PhoneOff className="h-4 w-4" /> : isVoicemail ? <PhoneForwarded className="h-4 w-4" /> : <Reply className="h-4 w-4" />}
@@ -125,7 +125,7 @@ const TaskCard = ({ data }: { data: any }) => (
             <CardTitle className="text-foreground text-lg font-bold">Intelligence Tasks</CardTitle>
         </div>
         <div className="space-y-3 relative">
-            {data.tasks?.map((task: any, i: number) => (
+            {data?.tasks?.map((task: any) => (
                 <div key={task.id} className="flex items-center gap-4 p-4 rounded-3xl bg-foreground/[0.03] border border-foreground/5 hover:bg-foreground/[0.06] transition-all group">
                     <Checkbox checked={task.completed} className="border-foreground/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary" />
                     <div className="flex-1 min-w-0">
@@ -166,8 +166,8 @@ const AlarmCard = ({ data }: { data: any }) => (
       <div className="relative bg-background/50 p-7 space-y-6 border-t border-foreground/5">
         <div className="flex justify-between items-start">
           <div className="space-y-1">
-            <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-[0.2em]">{data.alarmDetails?.label || 'General Reminder'}</p>
-            <p className="text-4xl font-bold tracking-tighter text-foreground">{data.alarmDetails?.time}</p>
+            <p className="text-[10px] text-foreground/40 font-bold uppercase tracking-[0.2em]">{data?.alarmDetails?.label || 'General Reminder'}</p>
+            <p className="text-4xl font-bold tracking-tighter text-foreground">{data?.alarmDetails?.time}</p>
           </div>
           <Switch defaultChecked className="data-[state=checked]:bg-primary scale-125" />
         </div>
@@ -205,11 +205,11 @@ const CalendarCard = ({ data }: { data: any }) => (
         </div>
       </div>
       <div className="relative bg-background/50 p-5 space-y-3 border-t border-foreground/5">
-        {data.events?.map((event: any, i: number) => (
+        {data?.events?.map((event: any, i: number) => (
           <div key={i} className="flex items-center gap-4 p-4 rounded-3xl bg-foreground/[0.03] border border-foreground/5 group hover:bg-foreground/[0.06] hover:border-primary/30 transition-all cursor-pointer">
             <div className="text-center w-14 shrink-0 border-r border-foreground/5 pr-4">
               <p className="text-[9px] uppercase font-bold text-primary tracking-widest mb-1">{event.date}</p>
-              <p className="text-sm font-bold text-foreground">{event.time.split(' ')[0]}</p>
+              <p className="text-sm font-bold text-foreground">{event.time?.split(' ')[0]}</p>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-foreground/90 truncate group-hover:text-foreground">{(event.title || 'Untitled Event')}</p>
@@ -237,14 +237,14 @@ const EmailCard = ({ data }: { data: any }) => (
             </div>
             <CardTitle className="text-foreground text-lg font-bold">Inbox Overview</CardTitle>
         </div>
-        <Badge className="bg-primary/20 text-primary border border-primary/30 rounded-lg font-bold px-3 py-1 h-7">{data.emails?.length || 0} New</Badge>
+        <Badge className="bg-primary/20 text-primary border border-primary/30 rounded-lg font-bold px-3 py-1 h-7">{data?.emails?.length || 0} New</Badge>
       </div>
       <p className="relative text-sm text-foreground/60 leading-relaxed font-medium mb-2">
-        {data.summary || "You have some important messages needing attention."}
+        {data?.summary || "You have some important messages needing attention."}
       </p>
     </div>
     <div className="bg-background/50 p-4 space-y-2.5 border-t border-foreground/5">
-      {data.emails?.map((email: any, i: number) => (
+      {data?.emails?.map((email: any, i: number) => (
         <div key={i} className="p-4 rounded-3xl bg-foreground/[0.03] border border-foreground/5 hover:bg-foreground/[0.06] hover:border-primary/30 transition-all cursor-pointer group">
           <div className="flex justify-between items-center mb-1.5">
             <p className="text-xs font-bold text-primary uppercase tracking-wider">{email.sender}</p>
@@ -263,7 +263,7 @@ const EmailCard = ({ data }: { data: any }) => (
 
 const HospitalCard = ({ data }: { data: any }) => (
   <div className="space-y-4 max-w-[360px] animate-in slide-in-from-left-4 duration-500">
-    {data.recommendations?.map((hosp: any, i: number) => (
+    {data?.recommendations?.map((hosp: any, i: number) => (
       <Card key={i} className="overflow-hidden border-foreground/10 holographic-glass rounded-[2.5rem] shadow-2xl relative">
         <div className="p-6 relative space-y-5">
           <div className="flex items-center gap-5">
@@ -320,17 +320,17 @@ const WeatherCard = ({ data }: { data: any }) => (
         />
         <div className="absolute top-6 left-6 flex items-center gap-3 bg-foreground/10 backdrop-blur-2xl rounded-2xl px-4 py-2 border border-foreground/20 shadow-xl">
           <Cloud className="h-4 w-4 text-primary" />
-          <span className="text-[10px] font-bold text-foreground uppercase tracking-[0.2em]">{data.location}</span>
+          <span className="text-[10px] font-bold text-foreground uppercase tracking-[0.2em]">{data?.location}</span>
         </div>
     </div>
     <div className="bg-background/50 p-8 text-foreground relative">
       <div className="flex justify-between items-end mb-8">
         <div>
           <div className="flex items-start">
-            <p className="text-6xl font-bold tracking-tighter text-foreground">{data.temperature}</p>
+            <p className="text-6xl font-bold tracking-tighter text-foreground">{data?.temperature}</p>
             <span className="text-2xl font-bold text-primary mt-1">°</span>
           </div>
-          <p className="text-sm font-bold uppercase tracking-widest text-foreground/40 mt-2">{data.condition}</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-foreground/40 mt-2">{data?.condition}</p>
         </div>
         <Badge className="bg-primary/20 text-primary border border-primary/30 rounded-xl px-4 py-1.5 font-bold h-9">CELSIUS</Badge>
       </div>
@@ -341,7 +341,7 @@ const WeatherCard = ({ data }: { data: any }) => (
           </div>
           <div className="space-y-0.5">
             <p className="text-[9px] uppercase font-bold tracking-widest text-foreground/30">Humidity</p>
-            <p className="text-sm font-bold text-foreground">{data.humidity}%</p>
+            <p className="text-sm font-bold text-foreground">{data?.humidity}%</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -350,7 +350,7 @@ const WeatherCard = ({ data }: { data: any }) => (
           </div>
           <div className="space-y-0.5">
             <p className="text-[9px] uppercase font-bold tracking-widest text-foreground/30">Wind</p>
-            <p className="text-sm font-bold text-foreground">{data.windSpeed}km/h</p>
+            <p className="text-sm font-bold text-foreground">{data?.windSpeed}km/h</p>
           </div>
         </div>
       </div>
@@ -371,7 +371,7 @@ const ResearchCard = ({ data }: { data: any }) => (
         </div>
       </div>
       <div className="space-y-6 text-sm leading-relaxed text-foreground/90">
-          {data.sections ? (
+          {data?.sections ? (
               data.sections.map((section: any, i: number) => (
                   <div key={i} className="space-y-2">
                       <div className="flex items-center gap-2">
@@ -382,7 +382,7 @@ const ResearchCard = ({ data }: { data: any }) => (
                   </div>
               ))
           ) : (
-              <p className="whitespace-pre-wrap">{data.summary}</p>
+              <p className="whitespace-pre-wrap">{data?.summary}</p>
           )}
       </div>
     </div>
@@ -408,15 +408,15 @@ const BriefingCard = ({ data }: { data: any }) => (
                 </div>
                 <div>
                     <CardTitle className="text-foreground text-xl font-bold">Daily Synthesis</CardTitle>
-                    <p className="text-[10px] uppercase tracking-widest font-bold text-primary">{data.date}</p>
+                    <p className="text-[10px] uppercase tracking-widest font-bold text-primary">{data?.date}</p>
                 </div>
             </div>
             <div className="text-right">
                 <div className="flex items-center gap-2 justify-end">
                     <Cloud className="h-4 w-4 text-foreground/40" />
-                    <span className="text-2xl font-bold text-foreground">{data.weather.temp}°</span>
+                    <span className="text-2xl font-bold text-foreground">{data?.weather?.temp}°</span>
                 </div>
-                <p className="text-[9px] uppercase font-bold text-foreground/30 tracking-widest">{data.weather.condition}</p>
+                <p className="text-[9px] uppercase font-bold text-foreground/30 tracking-widest">{data?.weather?.condition}</p>
             </div>
         </div>
 
@@ -426,9 +426,9 @@ const BriefingCard = ({ data }: { data: any }) => (
                     <CalendarIcon className="h-4 w-4 text-primary" />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Schedule</span>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{data.eventsCount} <span className="text-sm font-medium text-foreground/40">Events</span></p>
+                <p className="text-2xl font-bold text-foreground">{data?.eventsCount || 0} <span className="text-sm font-medium text-foreground/40">Events</span></p>
                 <div className="mt-4 space-y-1">
-                    {data.topEvents.map((ev: string, i: number) => (
+                    {data?.topEvents?.map((ev: string, i: number) => (
                         <p key={i} className="text-[10px] text-foreground/60 font-medium truncate">• {ev}</p>
                     ))}
                 </div>
@@ -438,9 +438,10 @@ const BriefingCard = ({ data }: { data: any }) => (
                     <Mail className="h-4 w-4 text-primary" />
                     <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Activity</span>
                 </div>
-                <p className="text-2xl font-bold text-foreground">{data.emailsCount} <span className="text-sm font-medium text-foreground/40">Alerts</span></p>
+                <p className="text-2xl font-bold text-foreground">{data?.emailsCount || 0} <span className="text-sm font-medium text-foreground/40">Alerts</span></p>
                 <div className="h-16 w-full mt-4">
-                    <ResponsiveContainer width="100%" height="100%">
+                    {data?.activityData && (
+                      <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={data.activityData}>
                             <Line 
                               type="monotone" 
@@ -451,14 +452,15 @@ const BriefingCard = ({ data }: { data: any }) => (
                               animationDuration={2000}
                             />
                         </LineChart>
-                    </ResponsiveContainer>
+                      </ResponsiveContainer>
+                    )}
                 </div>
             </div>
         </div>
 
         <p className="text-sm text-foreground/70 leading-relaxed font-medium bg-foreground/5 p-4 rounded-2xl border border-foreground/5">
             <Sparkles className="h-4 w-4 inline mr-2 text-primary" />
-            {data.summary}
+            {data?.summary}
         </p>
     </div>
     <div className="bg-background/50 p-4 border-t border-foreground/5">

@@ -1,12 +1,9 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { firebaseConfig } from "@/firebase/config";
+/**
+ * Shared Firebase SDK instances.
+ * This file is isomorphic and can be imported by both Client and Server components.
+ */
+import { initializeFirebase } from "@/firebase";
 
-// Initialize Firebase using the same config as the main SDK provider
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+const { firebaseApp: app, auth, firestore: db } = initializeFirebase();
 
 export { app, auth, db };

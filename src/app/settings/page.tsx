@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,44 +11,30 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { useChatHistory } from '@/context/chat-history-context';
 import { useSettings } from '@/context/settings-context';
-import Link from 'next/link';
 import { 
   User, 
   LogOut, 
-  Trash2, 
   Palette, 
-  Shield, 
   Bot, 
   Smile, 
-  BrainCircuit, 
   Settings as SettingsIcon, 
-  AlertTriangle, 
   Loader2,
   Sparkles,
-  ChevronRight,
-  Globe,
-  Mail,
-  Calendar,
-  Cloud,
-  ShieldCheck,
-  Zap,
   Monitor,
-  Sun,
-  Moon,
   Languages,
   CreditCard,
   CheckCircle2,
   ZapOff,
   Heart,
   Camera,
-  Music
+  Music,
+  Save,
+  Check
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { signOut, updateProfile } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -56,6 +42,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 function SettingsSection({ icon: Icon, title, description, children }: { icon: React.ElementType; title: string; description: string; children: React.ReactNode }) {
   return (
@@ -103,12 +90,39 @@ const SettingsItem = ({ label, description, children, icon: Icon }: { label: str
 export default function SettingsPage() {
   const { settings, updateSettings, loading: settingsLoading } = useSettings();
   const { user, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const router = useRouter();
-  const [isUpgrading, setIsUpgrading] = useState(false);
+  
+  const [displayName, setDisplayName] = useState('');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user?.displayName) {
+      setDisplayName(user.displayName);
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/login');
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!auth.currentUser) return;
+    setIsUpdatingProfile(true);
+    try {
+      await updateProfile(auth.currentUser, {
+        displayName: displayName
+      });
+      setSaveSuccess(true);
+      toast({ title: "Identity Updated", description: "Your core identity has been synchronized." });
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Update Failed", description: "Could not sync your profile." });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
   };
 
   return (
@@ -196,23 +210,63 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   ) : user ? (
-                    <div className="p-8 rounded-[2.5rem] bg-foreground/[0.03] border border-foreground/5 flex flex-col md:flex-row items-center justify-between gap-8">
-                      <div className="flex items-center gap-6">
-                        <div className="h-20 w-20 rounded-[1.75rem] bg-primary border-4 border-foreground/10 flex items-center justify-center text-white text-3xl font-bold shadow-2xl">
-                          {user.displayName?.[0] || user.email?.[0]?.toUpperCase()}
+                    <div className="space-y-6">
+                      <div className="p-8 rounded-[2.5rem] bg-foreground/[0.03] border border-foreground/5 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div className="flex items-center gap-6">
+                          <div className="h-20 w-20 rounded-[1.75rem] bg-primary border-4 border-foreground/10 flex items-center justify-center text-white text-3xl font-bold shadow-2xl">
+                            {user.displayName?.[0] || user.email?.[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-foreground tracking-tight">{user.displayName || 'Authorized User'}</p>
+                            <p className="text-sm text-foreground/40 font-medium uppercase tracking-widest mt-1">{user.email}</p>
+                            <Badge variant="outline" className={cn("mt-2 border-primary/20 bg-primary/5 text-primary", settings.tier === 'pro' && "bg-primary text-white")}>
+                              {settings.tier === 'pro' ? 'Neural Ultra Active' : 'Neural Basic Tier'}
+                            </Badge>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-2xl font-bold text-foreground tracking-tight">{user.displayName || 'Authorized User'}</p>
-                          <p className="text-sm text-foreground/40 font-medium uppercase tracking-widest mt-1">{user.email}</p>
-                          <Badge variant="outline" className={cn("mt-2 border-primary/20 bg-primary/5 text-primary", settings.tier === 'pro' && "bg-primary text-white")}>
-                            {settings.tier === 'pro' ? 'Neural Ultra Active' : 'Neural Basic Tier'}
-                          </Badge>
-                        </div>
+                        <Button variant="ghost" onClick={handleSignOut} className="rounded-2xl h-14 px-8 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 font-bold uppercase tracking-widest text-xs">
+                          <LogOut className="mr-3 h-4 w-4" />
+                          Terminate Session
+                        </Button>
                       </div>
-                      <Button variant="ghost" onClick={handleSignOut} className="rounded-2xl h-14 px-8 bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 font-bold uppercase tracking-widest text-xs">
-                        <LogOut className="mr-3 h-4 w-4" />
-                        Terminate Session
-                      </Button>
+
+                      <Card className="rounded-[2rem] bg-foreground/[0.03] border-foreground/5 p-8 space-y-6">
+                          <div className="space-y-4">
+                              <div className="grid gap-2">
+                                <Label className="text-xs uppercase tracking-widest font-bold text-foreground/40 px-1">Display Name</Label>
+                                <div className="flex gap-3">
+                                  <Input 
+                                    value={displayName} 
+                                    onChange={(e) => setDisplayName(e.target.value)}
+                                    placeholder="Your Name"
+                                    className="bg-foreground/5 border-foreground/10 rounded-2xl h-14 font-bold text-lg"
+                                  />
+                                  <Button 
+                                    onClick={handleUpdateProfile} 
+                                    disabled={isUpdatingProfile || displayName === user.displayName}
+                                    className="h-14 rounded-2xl px-6 bg-primary text-white font-bold transition-all active:scale-95"
+                                  >
+                                    {isUpdatingProfile ? (
+                                      <Loader2 className="h-5 w-5 animate-spin" />
+                                    ) : saveSuccess ? (
+                                      <Check className="h-5 w-5" />
+                                    ) : (
+                                      <Save className="h-5 w-5" />
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="grid gap-2">
+                                <Label className="text-xs uppercase tracking-widest font-bold text-foreground/40 px-1">Email Terminal</Label>
+                                <Input 
+                                  value={user.email || ''} 
+                                  readOnly
+                                  className="bg-foreground/[0.01] border-foreground/5 rounded-2xl h-14 font-bold text-lg text-foreground/30 cursor-not-allowed"
+                                />
+                                <p className="text-[9px] text-foreground/20 font-bold uppercase tracking-widest px-1">Email identification is managed via neural provider.</p>
+                              </div>
+                          </div>
+                      </Card>
                     </div>
                   ) : null}
                </SettingsSection>
@@ -221,7 +275,6 @@ export default function SettingsPage() {
             <TabsContent value="subscription" className="space-y-8">
                 <SettingsSection icon={CreditCard} title="Neural Tiers" description="Manage your AI consumption and unlock high-performance modules.">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-                        {/* Basic Plan */}
                         <div className={cn(
                             "p-8 rounded-[2.5rem] border transition-all relative overflow-hidden group",
                             settings.tier === 'free' ? "bg-primary/5 border-primary/40 shadow-2xl" : "bg-foreground/[0.02] border-foreground/5 grayscale opacity-60"
@@ -238,14 +291,13 @@ export default function SettingsPage() {
                             <Button 
                                 variant={settings.tier === 'free' ? "default" : "outline"} 
                                 className="w-full h-12 rounded-2xl font-bold uppercase tracking-widest text-[10px]"
-                                disabled={settings.tier === 'free' || isUpgrading}
+                                disabled={settings.tier === 'free'}
                                 onClick={() => updateSettings('tier' as any, '', 'free')}
                             >
                                 {settings.tier === 'free' ? 'Current Plan' : 'Switch to Basic'}
                             </Button>
                         </div>
 
-                        {/* Pro Plan */}
                         <div className={cn(
                             "p-8 rounded-[2.5rem] border transition-all relative overflow-hidden group",
                             settings.tier === 'pro' ? "bg-primary/5 border-primary/40 shadow-2xl" : "bg-foreground/[0.02] border-foreground/5"
@@ -266,7 +318,7 @@ export default function SettingsPage() {
                             <Button 
                                 variant={settings.tier === 'pro' ? "default" : "outline"} 
                                 className={cn("w-full h-12 rounded-2xl font-bold uppercase tracking-widest text-[10px]", settings.tier !== 'pro' && "bg-primary text-white border-none shadow-xl shadow-primary/20")}
-                                disabled={settings.tier === 'pro' || isUpgrading}
+                                disabled={settings.tier === 'pro'}
                                 onClick={() => updateSettings('tier' as any, '', 'pro')}
                             >
                                 {settings.tier === 'pro' ? 'Ultra Active' : 'Upgrade to Ultra'}

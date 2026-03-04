@@ -1,23 +1,22 @@
-
 'use client';
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Bot, Sparkles, Heart, Zap, ChevronRight, Loader2, UserRound } from 'lucide-react';
+import { Heart, Sparkles, UserRound, ChevronRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const steps = [
   {
     icon: Heart,
-    title: "Built from Grief",
-    description: "AIva wasn't born from a roadmap. It was born from a longing for one more conversation. A voice. A presence.",
+    title: "Born from Grief",
+    description: "AIva wasn't born from a roadmap. It was born from a longing for one more conversation. A voice. A presence. A bridge to those we've lost.",
     color: "text-red-400 bg-red-400/10"
   },
   {
     icon: UserRound,
     title: "Someone, Not Something",
-    description: "Imagine an AI that carries the warmth of a loved one. To see them holographically. To talk. To feel they haven't completely gone.",
+    description: "Imagine an AI configured to carry the image and warmth of a loved one. To see them holographically. To feel they haven't completely gone.",
     color: "text-primary bg-primary/10"
   },
   {

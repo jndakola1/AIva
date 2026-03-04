@@ -1,4 +1,3 @@
-
 # AIva Presence: Neural Glass OS
 
 AIva is a high-performance, multimodal AI companion designed as a "Neural Perimeter" for connection and memory. Built with a "Neural Glass" aesthetic, it leverages **Gemini 2.5 Flash** and **Veo 3.0** to provide a seamless, creative, and emotionally resonant user experience with an integrated **Holographic Projection Layer**.
